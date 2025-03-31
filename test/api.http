@@ -1,0 +1,203 @@
+### 健康检查
+GET http://localhost:3000/api/health
+
+### 登录
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "password123",
+  "tenantId": "1f3e7a9b-5c4d-8e6f-2a1b-7c8d9e0f1a2b"
+}
+
+### 获取当前用户信息
+GET http://localhost:3000/api/users/me
+Authorization: Bearer {{authToken}}
+
+### 创建新租户
+POST http://localhost:3000/api/tenants
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "Test Tenant",
+  "subdomain": "test",
+  "planId": "3b2c1d4e-5f6a-7b8c-9d0e-1f2a3b4c5d6e",
+  "adminEmail": "admin@test.com",
+  "adminName": "Test Admin",
+  "adminPassword": "securePassword123"
+}
+
+### 获取所有租户
+GET http://localhost:3000/api/tenants
+Authorization: Bearer {{authToken}}
+
+### 获取指定租户信息
+GET http://localhost:3000/api/tenants/{{tenantId}}
+Authorization: Bearer {{authToken}}
+
+### 更新租户信息
+PUT http://localhost:3000/api/tenants/{{tenantId}}
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "Updated Tenant Name"
+}
+
+### 获取租户用户列表
+GET http://localhost:3000/api/tenants/{{tenantId}}/users
+Authorization: Bearer {{authToken}}
+
+### 创建新用户
+POST http://localhost:3000/api/users
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "New User",
+  "email": "newuser@example.com",
+  "password": "securePassword",
+  "role": "USER"
+}
+
+### 获取用户信息
+GET http://localhost:3000/api/users/{{userId}}
+Authorization: Bearer {{authToken}}
+
+### 更新用户信息
+PUT http://localhost:3000/api/users/{{userId}}
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "Updated User Name",
+  "email": "updated.email@example.com"
+}
+
+### 重置用户密码
+POST http://localhost:3000/api/users/{{userId}}/reset-password
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "newPassword": "newSecurePassword"
+}
+
+### 获取所有AI模型
+GET http://localhost:3000/api/ai-models
+Authorization: Bearer {{authToken}}
+
+### 获取租户可用AI模型
+GET http://localhost:3000/api/ai-models/tenant
+Authorization: Bearer {{authToken}}
+
+### 创建新AI模型
+POST http://localhost:3000/api/ai-models
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "GPT-4",
+  "provider": "OpenAI",
+  "modelVersion": "4.0",
+  "description": "Advanced language model",
+  "capabilities": ["text-generation", "code-generation", "summarization"],
+  "contextLength": 8192,
+  "inputPrice": 0.03,
+  "outputPrice": 0.06,
+  "planIds": ["3b2c1d4e-5f6a-7b8c-9d0e-1f2a3b4c5d6e"]
+}
+
+### 获取AI模型详情
+GET http://localhost:3000/api/ai-models/{{modelId}}
+Authorization: Bearer {{authToken}}
+
+### 更新AI模型
+PUT http://localhost:3000/api/ai-models/{{modelId}}
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "description": "Updated model description",
+  "isActive": true
+}
+
+### 为租户启用AI模型
+POST http://localhost:3000/api/ai-models/{{modelId}}/tenant
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "tenantId": "{{tenantId}}",
+  "isEnabled": true,
+  "customInputPrice": 0.025,
+  "customOutputPrice": 0.05
+}
+
+### 获取AI模型使用统计
+GET http://localhost:3000/api/ai-models/stats?startDate=2023-01-01&endDate=2023-12-31
+Authorization: Bearer {{authToken}}
+
+### 获取租户的AI模型使用记录
+GET http://localhost:3000/api/ai-models/tenant/{{tenantId}}/usage
+Authorization: Bearer {{authToken}}
+
+### 获取租户API使用情况
+GET http://localhost:3000/api/tenants/{{tenantId}}/api-usage
+Authorization: Bearer {{authToken}}
+
+### 获取租户计费信息
+GET http://localhost:3000/api/tenants/{{tenantId}}/billing
+Authorization: Bearer {{authToken}}
+
+### 添加域名
+POST http://localhost:3000/api/tenants/{{tenantId}}/domains
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "domain": "custom.example.com",
+  "isPrimary": false
+}
+
+### 验证域名
+POST http://localhost:3000/api/tenants/{{tenantId}}/domains/{{domainId}}/verify
+Authorization: Bearer {{authToken}}
+
+### 创建API密钥
+POST http://localhost:3000/api/auth/api-keys
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "My API Key",
+  "expiresAt": "2024-12-31T23:59:59Z"
+}
+
+### 获取API密钥
+GET http://localhost:3000/api/auth/api-keys
+Authorization: Bearer {{authToken}}
+
+### 吊销API密钥
+DELETE http://localhost:3000/api/auth/api-keys/{{apiKeyId}}
+Authorization: Bearer {{authToken}}
+
+### 请求密码重置
+POST http://localhost:3000/api/auth/password-reset/request
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "tenantId": "{{tenantId}}"
+}
+
+### 重置密码
+POST http://localhost:3000/api/auth/password-reset
+Content-Type: application/json
+
+{
+  "token": "reset-token-from-email",
+  "newPassword": "newSecurePassword"
+} 

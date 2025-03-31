@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多租户SaaS后端管理系统设计文档</title>
+    <style>
+        :root {
+            --primary: #1890ff;
+            --primary-light: #e6f7ff;
+            --success: #52c41a;
+            --warning: #faad14;
+            --error: #f5222d;
+            --bg-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #e8e8e8;
+            --header-bg: #001529;
+            --header-color: white;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--header-bg);
+            color: var(--header-color);
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            font-weight: 500;
+        }
+
+        h1 {
+            font-size: 2em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.3em;
+            margin-top: 0;
+        }
+
+        h2 {
+            font-size: 1.5em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.3em;
+        }
+
+        h3 {
+            font-size: 1.25em;
+        }
+
+        h4 {
+            font-size: 1em;
+        }
+
+        p {
+            margin-bottom: 1em;
+        }
+
+        a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        pre {
+            background-color: #f6f8fa;
+            border-radius: 3px;
+            padding: 16px;
+            overflow: auto;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            font-size: 14px;
+            line-height: 1.45;
+            margin-bottom: 16px;
+        }
+
+        code {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            background-color: rgba(27, 31, 35, 0.05);
+            border-radius: 3px;
+            padding: 0.2em 0.4em;
+            font-size: 85%;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            border-radius: 0;
+        }
+
+        ul,
+        ol {
+            margin-bottom: 16px;
+            padding-left: 2em;
+        }
+
+        li {
+            margin-bottom: 0.25em;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        th,
+        td {
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #fafafa;
+            font-weight: 500;
+        }
+
+        .toc {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .toc h2 {
+            border-bottom: none;
+            margin-top: 0;
+            margin-bottom: 16px;
+            padding-bottom: 0;
+        }
+
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .toc li {
+            margin-bottom: 8px;
+        }
+
+        .toc .level-2 {
+            margin-left: 16px;
+        }
+
+        .toc .level-3 {
+            margin-left: 32px;
+        }
+
+        .section {
+            background-color: white;
+            border-radius: 4px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .highlight {
+            background-color: var(--primary-light);
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+
+        .prototype-links {
+            background-color: white;
+            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .prototype-link {
+            display: block;
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 4px;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+
+        .prototype-link:hover {
+            background-color: #40a9ff;
+            text-decoration: none;
+        }
+
+        .diagram {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto 24px;
+            display: block;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>多租户SaaS后端管理系统设计文档</h1>
+        <p>细化版本 - 包含原型界面</p>
+    </header>
+
+    <div class="prototype-links">
+        <h3 style="width: 100%; margin-top: 0; margin-bottom: 16px;">原型界面导航</h3>
+        <a href="prototype.html" class="prototype-link" target="_blank">控制台</a>
+        <a href="tenant-management.html" class="prototype-link" target="_blank">租户管理</a>
+        <a href="model-config.html" class="prototype-link" target="_blank">AI模型配置</a>
+    </div>
+
+    <div class="toc">
+        <h2>目录</h2>
+        <ul>
+            <li><a href="#overview">1. 系统概述</a></li>
+            <li><a href="#architecture">2. 系统架构</a>
+                <ul class="level-2">
+                    <li><a href="#architecture-overview">2.1 整体架构</a></li>
+                    <li><a href="#service-division">2.2 服务划分</a></li>
+                    <li><a href="#core-flows">2.3 核心流程</a></li>
+                </ul>
+            </li>
+            <li><a href="#datamodel">3. 详细数据模型</a>
+                <ul class="level-2">
+                    <li><a href="#tenant-management">3.1 租户管理</a></li>
+                    <li><a href="#user-auth">3.2 用户与认证</a></li>
+                    <li><a href="#billing-payment">3.3 计费与支付</a></li>
+                    <li><a href="#models-templates">3.4 AI模型与模板</a></li>
+                    <li><a href="#monitoring-cb">3.5 监控与熔断</a></li>
+                </ul>
+            </li>
+            <li><a href="#api-design">4. API设计与接口规范</a>
+                <ul class="level-2">
+                    <li><a href="#tenant-api">4.1 租户管理API</a></li>
+                    <li><a href="#user-api">4.2 用户管理API</a></li>
+                    <li><a href="#billing-api">4.3 计费和充值API</a></li>
+                    <li><a href="#model-api">4.4 AI模型和模板API</a></li>
+                    <li><a href="#monitoring-api">4.5 熔断与监控API</a></li>
+                </ul>
+            </li>
+            <li><a href="#security-design">5. 安全设计与访问控制</a>
+                <ul class="level-2">
+                    <li><a href="#auth-authorization">5.1 认证与授权</a></li>
+                    <li><a href="#data-security">5.2 数据安全</a></li>
+                    <li><a href="#api-security">5.3 API安全</a></li>
+                </ul>
+            </li>
+            <li><a href="#multitenancy">6. 多租户隔离详细设计</a>
+                <ul class="level-2">
+                    <li><a href="#data-isolation">6.1 数据隔离</a></li>
+                    <li><a href="#compute-isolation">6.2 计算资源隔离</a></li>
+                    <li><a href="#tenant-customization">6.3 租户定制化</a></li>
+                </ul>
+            </li>
+            <li><a href="#billing-mechanism">7. 计费机制详细设计</a>
+                <ul class="level-2">
+                    <li><a href="#billing-model">7.1 计费模型</a></li>
+                    <li><a href="#metering-points">7.2 计量点</a></li>
+                    <li><a href="#billing-process">7.3 计费流程</a></li>
+                </ul>
+            </li>
+            <li><a href="#tech-stack">8. 技术栈与实现细节</a>
+                <ul class="level-2">
+                    <li><a href="#backend-arch">8.1 后端架构</a></li>
+                    <li><a href="#data-storage">8.2 数据存储</a></li>
+                    <li><a href="#devops">8.3 DevOps与CI/CD</a></li>
+                </ul>
+            </li>
+            <li><a href="#scalability">9. 扩展性与性能设计</a>
+                <ul class="level-2">
+                    <li><a href="#horizontal-scaling">9.1 横向扩展</a></li>
+                    <li><a href="#feature-extension">9.2 功能扩展</a></li>
+                    <li><a href="#performance">9.3 性能优化</a></li>
+                </ul>
+            </li>
+            <li><a href="#monitoring-maintenance">10. 监控与运维设计</a>
+                <ul class="level-2">
+                    <li><a href="#monitoring-metrics">10.1 监控指标</a></li>
+                    <li><a href="#alerting">10.2 告警机制</a></li>
+                    <li><a href="#operational-procedures">10.3 运维流程</a></li>
+                </ul>
+            </li>
+            <li><a href="#deployment">11. 部署与灾备方案</a>
+                <ul class="level-2">
+                    <li><a href="#multi-env">11.1 多环境部署</a></li>
+                    <li><a href="#disaster-recovery">11.2 灾备方案</a></li>
+                    <li><a href="#scaling-strategy">11.3 扩容策略</a></li>
+                </ul>
+            </li>
+            <li><a href="#implementation-plan">12. 实施计划</a>
+                <ul class="level-2">
+                    <li><a href="#phase1">12.1 第一阶段：核心功能</a></li>
+                    <li><a href="#phase2">12.2 第二阶段：扩展功能</a></li>
+                    <li><a href="#phase3">12.3 第三阶段：优化与稳定</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="section" id="overview">
+        <h2>1. 系统概述</h2>
+        <p>多租户SaaS后端管理系统是一个针对医疗行业的综合管理平台，旨在为医疗机构提供AI赋能的问诊与诊断服务。系统采用多租户架构，每个医疗机构作为一个租户，可以独立配置和使用系统功能。</p>
+
+        <div class="highlight">
+            <h3>系统核心价值</h3>
+            <ul>
+                <li><strong>降低技术门槛</strong>：医疗机构无需构建自己的AI系统，即可使用先进的医疗AI模型</li>
+                <li><strong>降低运营成本</strong>：按需付费模式，避免基础设施投入</li>
+                <li><strong>提升诊断效率</strong>：智能问诊流程和病例模板提高医生工作效率</li>
+                <li><strong>多租户管理</strong>：统一管理平台，简化运维工作</li>
+            </ul>
+        </div>
+
+        <h3>主要功能模块</h3>
+        <ol>
+            <li><strong>租户管理</strong>：新租户注册、配置与管理</li>
+            <li><strong>用户管理</strong>：系统用户和权限管理</li>
+            <li><strong>接口调用计费</strong>：API使用计量和计费</li>
+            <li><strong>大模型接口配置</strong>：医疗AI模型接入与配置</li>
+            <li><strong>问诊病例模版配置</strong>：自定义医疗问诊流程</li>
+            <li><strong>充值卡管理</strong>：预付费充值与余额管理</li>
+            <li><strong>熔断降级管理</strong>：系统负载保护机制</li>
+            <li><strong>网关控制</strong>：流量管理与请求路由</li>
+            <li><strong>域名管理</strong>：租户自定义域名配置</li>
+        </ol>
+
+        <h3>目标用户</h3>
+        <ul>
+            <li><strong>系统管理员</strong>：负责整个SaaS平台的管理和运维</li>
+            <li><strong>租户管理员</strong>：各医疗机构的IT管理人员</li>
+            <li><strong>租户操作员</strong>：医疗机构的医生和其他工作人员</li>
+        </ul>
+    </div>
+
+    <div class="section" id="architecture">
+        <h2>2. 系统架构</h2>
+
+        <div id="architecture-overview">
+            <h3>2.1 整体架构</h3>
+            <pre>
+┌────────────────┐  ┌────────────────┐  ┌────────────────┐
+│    Web Admin   │  │  Mobile Admin  │  │  API Clients   │
+└───────┬────────┘  └───────┬────────┘  └───────┬────────┘
+        │                   │                   │
+        └───────────────────┼───────────────────┘
+                            │
+                  ┌─────────▼─────────┐
+                  │  API Gateway      │◄───┐
+                  │  (流量控制/鉴权)   │    │
+                  └─────────┬─────────┘    │ 监控与告警
+                            │              │
+        ┌───────────────────┼──────────────┼────────────────┐
+        │                   │              │                │
+┌───────▼───────┐  ┌────────▼────────┐ ┌───▼───────────┐ ┌─▼───────────┐
+│ 认证授权服务   │  │  业务微服务群   │ │ 熔断降级服务 │ │ 监控服务    │
+└───────┬───────┘  └────────┬────────┘ └───────────────┘ └─────────────┘
+        │                   │
+┌───────▼───────┐  ┌────────▼────────┐  ┌────────────────┐
+│  用户数据库    │  │  业务数据库     │  │  消息队列      │
+└───────────────┘  └─────────────────┘  └────────────────┘
+            </pre>
+
+            <p>系统采用微服务架构，通过API网关统一入口，各微服务负责不同的业务功能。系统核心包括：</p>
+            <ul>
+                <li>前端层：Web管理界面、移动端管理界面、API客户端</li>
+                <li>网关层：统一的API网关，负责路由、认证、限流</li>
+                <li>服务层：认证授权服务、业务微服务群、熔断降级服务、监控服务</li>
+                <li>数据层：用户数据库、业务数据库、消息队列</li>
+            </ul>
+        </div>
+
+        <div id="service-division">
+            <h3>2.2 服务划分</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>服务名称</th>
+                        <th>主要职责</th>
+                        <th>核心功能</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>API网关服务</td>
+                        <td>请求入口与路由</td>
+                        <td>
+                            <ul>
+                                <li>路由转发</li>
+                                <li>认证授权</li>
+                                <li>流量控制</li>
+                                <li>日志记录</li>
+                                <li>请求转换</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>租户管理服务</td>
+                        <td>管理租户生命周期</td>
+                        <td>
+                            <ul>
+                                <li>租户创建与配置</li>
+                                <li>租户状态管理</li>
+                                <li>域名管理</li>
+                                <li>租户数据迁移</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>用户认证服务</td>
+                        <td>用户管理与认证</td>
+                        <td>
+                            <ul>
+                                <li>用户注册与登录</li>
+                                <li>权限管理</li>
+                                <li>角色定义</li>
+                                <li>令牌管理</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>计费服务</td>
+                        <td>API调用计费</td>
+                        <td>
+                            <ul>
+                                <li>用量统计</li>
+                                <li>价格计算</li>
+                                <li>账单生成</li>
+                                <li>余额管理</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>大模型接口管理</td>
+                        <td>AI模型管理</td>
+                        <td>
+                            <ul>
+                                <li>模型配置</li>
+                                <li>参数调优</li>
+                                <li>调用代理</li>
+                                <li>结果缓存</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>模版管理服务</td>
+                        <td>问诊模板管理</td>
+                        <td>
+                            <ul>
+                                <li>模板定义</li>
+                                <li>动态表单</li>
+                                <li>模板版本控制</li>
+                                <li>数据验证规则</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>支付与充值服务</td>
+                        <td>支付与预付费管理</td>
+                        <td>
+                            <ul>
+                                <li>充值卡生成</li>
+                                <li>支付接口</li>
+                                <li>交易记录</li>
+                                <li>退款处理</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>监控与熔断服务</td>
+                        <td>系统稳定性保障</td>
+                        <td>
+                            <ul>
+                                <li>性能监控</li>
+                                <li>熔断策略</li>
+                                <li>降级规则</li>
+                                <li>告警通知</li>
+                            </ul>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="core-flows">
+            <h3>2.3 核心流程</h3>
+
+            <h4>2.3.1 租户注册与初始化流程</h4>
+            <ol>
+                <li>系统管理员创建新租户记录</li>
+                <li>分配租户唯一标识符</li>
+                <li>初始化租户数据库Schema或添加租户标识</li>
+                <li>创建租户管理员账户</li>
+                <li>配置初始化权限与角色</li>
+                <li>分配资源配额与限制</li>
+                <li>启用租户服务</li>
+                <li>发送租户激活通知</li>
+            </ol>
+
+            <h4>2.3.2 AI模型调用流程</h4>
+            <ol>
+                <li>租户应用发起API请求至网关</li>
+                <li>网关验证身份与权限</li>
+                <li>根据租户配置路由至相应模型服务</li>
+                <li>检查租户配额与余额</li>
+                <li>调用AI模型服务并进行计量</li>
+                <li>记录API调用数据</li>
+                <li>处理模型响应</li>
+                <li>返回结果给租户应用</li>
+            </ol>
+
+            <h4>2.3.3 计费与扣费流程</h4>
+            <ol>
+                <li>定时任务聚合API调用记录</li>
+                <li>根据计费规则计算费用</li>
+                <li>生成账单</li>
+                <li>从租户余额扣除费用</li>
+                <li>检查余额阈值</li>
+                <li>触发低余额预警（如需）</li>
+                <li>更新账单状态</li>
+                <li>生成账单报告</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- 其他部分可以按照类似结构继续添加 -->
+
+    <div class="section" id="implementation-plan">
+        <h2>12. 实施计划</h2>
+
+        <div id="phase1">
+            <h3>12.1 第一阶段：核心功能</h3>
+            <p>预计时间：3个月</p>
+            <ul>
+                <li>基础架构搭建</li>
+                <li>租户管理模块</li>
+                <li>用户认证模块</li>
+                <li>API网关</li>
+                <li>基础监控</li>
+            </ul>
+        </div>
+
+        <div id="phase2">
+            <h3>12.2 第二阶段：扩展功能</h3>
+            <p>预计时间：3个月</p>
+            <ul>
+                <li>AI模型接入</li>
+                <li>计费服务</li>
+                <li>问诊模板</li>
+                <li>充值功能</li>
+            </ul>
+        </div>
+
+        <div id="phase3">
+            <h3>12.3 第三阶段：优化与稳定</h3>
+            <p>预计时间：2个月</p>
+            <ul>
+                <li>性能优化</li>
+                <li>熔断降级</li>
+                <li>多租户优化</li>
+                <li>数据分析</li>
+            </ul>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 40px; color: #888;">
+        <p>© 2023 医疗管理系统 - 设计文档 v1.0</p>
+    </div>
+</body>
+
+</html>

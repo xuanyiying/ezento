@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多租户SaaS后端管理系统原型</title>
+    <style>
+        :root {
+            --primary: #1890ff;
+            --success: #52c41a;
+            --warning: #faad14;
+            --error: #f5222d;
+            --bg-color: #f0f2f5;
+            --text-color: #333;
+            --border-color: #e8e8e8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.5;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 220px;
+            background-color: #001529;
+            color: rgba(255, 255, 255, 0.65);
+            padding-top: 20px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 16px 24px;
+            margin-bottom: 30px;
+        }
+
+        .sidebar-header h2 {
+            color: white;
+            margin: 0;
+        }
+
+        .menu {
+            list-style: none;
+        }
+
+        .menu-item {
+            padding: 12px 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .menu-item:hover,
+        .menu-item.active {
+            background-color: #1890ff;
+            color: white;
+        }
+
+        .menu-item i {
+            margin-right: 10px;
+        }
+
+        .content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .header {
+            background-color: white;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+            box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 2px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            margin-bottom: 24px;
+            padding: 24px;
+        }
+
+        .card-title {
+            margin-bottom: 16px;
+            font-size: 16px;
+            font-weight: 500;
+            color: rgba(0, 0, 0, 0.85);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #40a9ff;
+        }
+
+        .btn-danger {
+            background-color: var(--error);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #ff4d4f;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table th {
+            background-color: #fafafa;
+            font-weight: 500;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 2px;
+            font-size: 12px;
+        }
+
+        .badge-success {
+            background-color: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+        }
+
+        .badge-warning {
+            background-color: #fffbe6;
+            border: 1px solid #ffe58f;
+            color: #faad14;
+        }
+
+        .badge-error {
+            background-color: #fff2f0;
+            border: 1px solid #ffccc7;
+            color: #f5222d;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -12px;
+        }
+
+        .col {
+            padding: 0 12px;
+            flex: 1;
+        }
+
+        .stats-card {
+            background-color: white;
+            border-radius: 2px;
+            padding: 24px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .stats-card-title {
+            font-size: 14px;
+            color: rgba(0, 0, 0, 0.45);
+            margin-bottom: 16px;
+        }
+
+        .stats-card-value {
+            font-size: 24px;
+            color: rgba(0, 0, 0, 0.85);
+        }
+
+        .stats-card-footer {
+            margin-top: 16px;
+            font-size: 14px;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .align-center {
+            align-items: center;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 32px;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>医疗管理系统</h2>
+            </div>
+            <ul class="menu">
+                <li class="menu-item active">
+                    <i>📊</i> 控制台
+                </li>
+                <li class="menu-item">
+                    <i>🏢</i> 租户管理
+                </li>
+                <li class="menu-item">
+                    <i>👥</i> 用户管理
+                </li>
+                <li class="menu-item">
+                    <i>💰</i> 计费管理
+                </li>
+                <li class="menu-item">
+                    <i>🤖</i> AI模型配置
+                </li>
+                <li class="menu-item">
+                    <i>📝</i> 问诊模板
+                </li>
+                <li class="menu-item">
+                    <i>💳</i> 充值卡管理
+                </li>
+                <li class="menu-item">
+                    <i>🔌</i> 接口管理
+                </li>
+                <li class="menu-item">
+                    <i>🌐</i> 域名管理
+                </li>
+                <li class="menu-item">
+                    <i>📈</i> 监控与告警
+                </li>
+                <li class="menu-item">
+                    <i>⚙️</i> 系统设置
+                </li>
+            </ul>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="content">
+            <div class="header">
+                <div>
+                    <h2>控制台</h2>
+                </div>
+                <div>
+                    管理员 | 退出
+                </div>
+            </div>
+
+            <!-- 控制台页面 -->
+            <div style="margin-top: 24px;">
+                <div class="row" style="margin-bottom: 24px;">
+                    <div class="col">
+                        <div class="stats-card">
+                            <div class="stats-card-title">租户总数</div>
+                            <div class="stats-card-value">42</div>
+                            <div class="stats-card-footer">
+                                <span style="color: var(--success);">↑ 12% 较上月</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="stats-card">
+                            <div class="stats-card-title">今日API调用</div>
+                            <div class="stats-card-value">12,456</div>
+                            <div class="stats-card-footer">
+                                <span style="color: var(--success);">↑ 8% 较昨日</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="stats-card">
+                            <div class="stats-card-title">本月收入</div>
+                            <div class="stats-card-value">¥ 34,520</div>
+                            <div class="stats-card-footer">
+                                <span style="color: var(--success);">↑ 15% 较上月</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="stats-card">
+                            <div class="stats-card-title">服务健康度</div>
+                            <div class="stats-card-value">98.5%</div>
+                            <div class="stats-card-footer">
+                                <span style="color: var(--error);">↓ 0.3% 较昨日</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="flex justify-between align-center">
+                        <div class="card-title">租户概览</div>
+                        <button class="btn btn-primary">添加租户</button>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>租户名称</th>
+                                <th>状态</th>
+                                <th>创建日期</th>
+                                <th>API调用量</th>
+                                <th>当前计划</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>北京协和医院</td>
+                                <td><span class="badge badge-success">正常</span></td>
+                                <td>2023-01-15</td>
+                                <td>2,456 / 天</td>
+                                <td>企业版</td>
+                                <td>
+                                    <button class="btn btn-primary" style="margin-right: 8px;">管理</button>
+                                    <button class="btn btn-danger">停用</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>上海第一人民医院</td>
+                                <td><span class="badge badge-success">正常</span></td>
+                                <td>2023-02-10</td>
+                                <td>1,872 / 天</td>
+                                <td>企业版</td>
+                                <td>
+                                    <button class="btn btn-primary" style="margin-right: 8px;">管理</button>
+                                    <button class="btn btn-danger">停用</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>广州市第一医院</td>
+                                <td><span class="badge badge-warning">即将到期</span></td>
+                                <td>2023-03-05</td>
+                                <td>1,254 / 天</td>
+                                <td>标准版</td>
+                                <td>
+                                    <button class="btn btn-primary" style="margin-right: 8px;">管理</button>
+                                    <button class="btn btn-danger">停用</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>深圳市第二人民医院</td>
+                                <td><span class="badge badge-error">已暂停</span></td>
+                                <td>2023-01-20</td>
+                                <td>0 / 天</td>
+                                <td>标准版</td>
+                                <td>
+                                    <button class="btn btn-primary" style="margin-right: 8px;">管理</button>
+                                    <button class="btn btn-primary">启用</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">系统状态</div>
+                    <div class="tabs">
+                        <div class="tab active">服务健康</div>
+                        <div class="tab">API调用</div>
+                        <div class="tab">告警记录</div>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>服务名称</th>
+                                <th>状态</th>
+                                <th>响应时间</th>
+                                <th>内存使用</th>
+                                <th>CPU使用</th>
+                                <th>最后检查</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>API网关</td>
+                                <td><span class="badge badge-success">健康</span></td>
+                                <td>35ms</td>
+                                <td>45%</td>
+                                <td>32%</td>
+                                <td>1分钟前</td>
+                            </tr>
+                            <tr>
+                                <td>认证服务</td>
+                                <td><span class="badge badge-success">健康</span></td>
+                                <td>42ms</td>
+                                <td>38%</td>
+                                <td>25%</td>
+                                <td>1分钟前</td>
+                            </tr>
+                            <tr>
+                                <td>计费服务</td>
+                                <td><span class="badge badge-success">健康</span></td>
+                                <td>28ms</td>
+                                <td>42%</td>
+                                <td>18%</td>
+                                <td>1分钟前</td>
+                            </tr>
+                            <tr>
+                                <td>AI模型服务</td>
+                                <td><span class="badge badge-warning">性能下降</span></td>
+                                <td>320ms</td>
+                                <td>78%</td>
+                                <td>65%</td>
+                                <td>1分钟前</td>
+                            </tr>
+                            <tr>
+                                <td>消息队列</td>
+                                <td><span class="badge badge-success">健康</span></td>
+                                <td>18ms</td>
+                                <td>35%</td>
+                                <td>22%</td>
+                                <td>1分钟前</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

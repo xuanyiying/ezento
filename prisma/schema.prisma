@@ -1,0 +1,623 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// 枚举定义
+enum CircuitBreakerStatus {
+  CLOSED
+  OPEN
+  HALF_OPEN
+}
+
+enum CircuitBreakerRuleType {
+  ERROR_RATE
+  LATENCY
+  CUSTOM
+}
+
+enum CircuitBreakerEventType {
+  TRIGGER
+  RECOVER
+  RESET
+}
+
+enum ApiGatewayStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+}
+
+enum ApiRouteMethod {
+  GET
+  POST
+  PUT
+  DELETE
+  PATCH
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+}
+
+enum RechargeCardStatus {
+  UNUSED
+  USED
+  EXPIRED
+}
+
+enum RechargeRecordType {
+  RECHARGE
+  CONSUME
+}
+
+enum RechargeCardBatchStatus {
+  ACTIVE
+  COMPLETED
+  EXPIRED
+}
+
+// 更多枚举定义
+enum ModelType {
+  TEXT
+  IMAGE
+  AUDIO
+  MULTIMODAL
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  TERMINATED
+}
+
+enum TemplateStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum FormElementType {
+  TEXT
+  NUMBER
+  DATE
+  SELECT
+  MULTI_SELECT
+  CHECKBOX
+  RADIO
+  TEXTAREA
+  FILE
+}
+
+enum ValidationRuleType {
+  REQUIRED
+  MIN
+  MAX
+  PATTERN
+  CUSTOM
+}
+
+enum BillingCycle {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum InvoiceItemType {
+  SUBSCRIPTION
+  USAGE
+  CREDIT
+  TAX
+  OTHER
+}
+
+// 熔断器模型
+model CircuitBreaker {
+    id              String              @id @default(uuid())
+    tenantId        String
+    name            String
+    description     String?
+    target          String              // 目标服务或接口
+    threshold       Int                 // 失败阈值
+    timeout         Int                 // 熔断超时时间（毫秒）
+    halfOpenTimeout Int                 // 半开超时时间（毫秒）
+    status          CircuitBreakerStatus
+    failureCount    Int                 @default(0)
+    lastFailureTime DateTime?
+    lastSuccessTime DateTime?
+    metadata        Json?
+    createdAt       DateTime            @default(now())
+    updatedAt       DateTime            @updatedAt
+    rules           CircuitBreakerRule[]
+    events          CircuitBreakerEvent[]
+
+    @@index([tenantId])
+    @@index([status])
+}
+
+// 熔断规则模型
+model CircuitBreakerRule {
+    id              String        @id @default(uuid())
+    circuitBreakerId String
+    type            CircuitBreakerRuleType
+    condition       String        // 条件表达式
+    threshold       Float         // 阈值
+    action          String        // 动作类型
+    priority        Int           // 优先级
+    metadata        Json?
+    createdAt       DateTime      @default(now())
+    updatedAt       DateTime      @updatedAt
+    breaker         CircuitBreaker @relation(fields: [circuitBreakerId], references: [id], onDelete: Cascade)
+
+    @@index([circuitBreakerId])
+    @@index([type])
+}
+
+// 熔断事件模型
+model CircuitBreakerEvent {
+    id              String        @id @default(uuid())
+    circuitBreakerId String
+    type            CircuitBreakerEventType
+    reason          String        // 事件原因
+    metadata        Json?
+    createdAt       DateTime      @default(now())
+    breaker         CircuitBreaker @relation(fields: [circuitBreakerId], references: [id], onDelete: Cascade)
+
+    @@index([circuitBreakerId])
+    @@index([type])
+}
+
+// API网关模型
+model ApiGateway {
+    id              String    @id @default(uuid())
+    tenantId        String
+    name            String
+    description     String?
+    baseUrl         String
+    status          ApiGatewayStatus
+    rateLimit       Json      // { requests: number, period: number }
+    cors            Json      // { enabled: boolean, allowedOrigins: string[], allowedMethods: string[], allowedHeaders: string[] }
+    authentication   Json      // { type: string, config: any }
+    metadata        Json?
+    createdAt       DateTime  @default(now())
+    updatedAt       DateTime  @updatedAt
+    routes          ApiRoute[]
+    apiKeys         ApiKey[]
+    logs            ApiLog[]
+
+    @@index([tenantId])
+    @@index([status])
+}
+
+// API路由模型
+model ApiRoute {
+    id              String    @id @default(uuid())
+    gatewayId       String
+    path            String
+    method          ApiRouteMethod
+    target          Json      // { service: string, path: string, timeout: number }
+    rateLimit       Json?     // { requests: number, period: number }
+    authentication   Json?     // { required: boolean, type: string, config: any }
+    validation      Json?     // { requestSchema?: any, responseSchema?: any }
+    transformation  Json?     // { request?: any, response?: any }
+    metadata        Json?
+    createdAt       DateTime  @default(now())
+    updatedAt       DateTime  @updatedAt
+    gateway         ApiGateway @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+    logs            ApiLog[]
+
+    @@index([gatewayId])
+    @@index([path, method])
+}
+
+// API密钥模型
+model ApiKey {
+    id              String    @id @default(uuid())
+    gatewayId       String
+    key             String    @unique
+    name            String
+    description     String?
+    status          ApiKeyStatus
+    expiresAt       DateTime?
+    lastUsedAt      DateTime?
+    metadata        Json?
+    createdAt       DateTime  @default(now())
+    updatedAt       DateTime  @updatedAt
+    gateway         ApiGateway @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+
+    @@index([gatewayId])
+    @@index([status])
+    @@index([expiresAt])
+}
+
+// API日志模型
+model ApiLog {
+    id              String    @id @default(uuid())
+    gatewayId       String
+    routeId         String
+    requestId       String
+    method          ApiRouteMethod
+    path            String
+    statusCode      Int
+    duration        Int
+    clientIp        String
+    userAgent       String?
+    requestHeaders  Json?
+    requestBody     Json?
+    responseHeaders Json?
+    responseBody    Json?
+    error           String?
+    metadata        Json?
+    createdAt       DateTime  @default(now())
+    gateway         ApiGateway @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+    route           ApiRoute   @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+    @@index([gatewayId])
+    @@index([routeId])
+    @@index([requestId])
+    @@index([createdAt])
+    @@index([statusCode])
+    @@index([clientIp])
+}
+
+// 充值卡模型
+model RechargeCard {
+    id          String    @id @default(uuid())
+    tenantId    String
+    code        String    @unique
+    amount      Float
+    status      RechargeCardStatus
+    usedBy      String?
+    usedAt      DateTime?
+    expiredAt   DateTime
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+
+    @@index([tenantId])
+    @@index([status])
+    @@index([expiredAt])
+    @@index([code])
+}
+
+// 充值记录模型
+model RechargeRecord {
+    id            String    @id @default(uuid())
+    tenantId      String
+    userId        String
+    cardId        String
+    amount        Float
+    balanceBefore Float
+    balanceAfter  Float
+    type          RechargeRecordType
+    description   String
+    metadata      Json?
+    createdAt     DateTime  @default(now())
+
+    @@index([tenantId])
+    @@index([userId])
+    @@index([cardId])
+    @@index([type])
+    @@index([createdAt])
+}
+
+// 充值卡批次模型
+model RechargeCardBatch {
+    id          String    @id @default(uuid())
+    tenantId    String
+    name        String
+    amount      Float
+    count       Int
+    usedCount   Int       @default(0)
+    expiredAt   DateTime
+    status      RechargeCardBatchStatus
+    metadata    Json?
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+
+    @@index([tenantId])
+    @@index([status])
+    @@index([expiredAt])
+}
+
+// 模型定义
+model Model {
+    id              String    @id @default(uuid())
+    name            String
+    provider        String
+    type            ModelType
+    version         String
+    description     String?
+    contextWindow   Int
+    maxOutputTokens Int
+    isActive        Boolean   @default(true)
+    baseEndpoint    String
+    credentials     Json?
+    pricing         Json      // { inputTokens: number, outputTokens: number, currency: string }
+    parameters      Json      // ModelParameters
+    createdAt       DateTime  @default(now())
+    updatedAt       DateTime  @updatedAt
+    tenantConfigs   TenantModelConfig[]
+
+    @@index([provider])
+    @@index([type])
+    @@index([isActive])
+}
+
+model TenantModelConfig {
+    id              String    @id @default(uuid())
+    tenantId        String
+    modelId         String
+    isEnabled       Boolean   @default(true)
+    customParameters Json?
+    quotaLimit      Json?     // { daily?: number, monthly?: number }
+    createdAt       DateTime  @default(now())
+    updatedAt       DateTime  @updatedAt
+    model           Model     @relation(fields: [modelId], references: [id])
+
+    @@index([tenantId])
+    @@index([modelId])
+    @@index([isEnabled])
+}
+
+// 租户计划
+model TenantPlan {
+    id              String    @id @default(uuid())
+    code            String    @unique
+    name            String
+    price           Float
+    features        Json      // string[]
+    limits          Json      // { users?: number, storage?: number, apiCalls?: number, models?: string[] }
+    createdAt       DateTime  @default(now())
+    updatedAt       DateTime  @updatedAt
+
+    @@index([code])
+}
+
+// 租户
+model Tenant {
+    id              String        @id @default(uuid())
+    name            String
+    code            String        @unique
+    status          TenantStatus
+    plan            String        // changed from planId to plan
+    domains         Json?         // Added domains field as Json array
+    settings        Json?         // { logo?: string, colors?: any, features?: any }
+    theme           Json?
+    apiCallLimits   Json?         // { daily?: number, monthly?: number, perModel?: any }
+    createdAt       DateTime      @default(now())
+    updatedAt       DateTime      @updatedAt
+
+    @@index([status])
+    @@index([plan])
+}
+
+// 使用量记录
+model Usage {
+    id            String    @id @default(uuid())
+    tenantId      String
+    date          DateTime
+    modelId       String?
+    endpoint      String?
+    requestCount  Int
+    tokenCount    Int
+    costAmount    Float
+    isOverage     Boolean   @default(false)
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+
+    @@index([tenantId])
+    @@index([date])
+    @@index([modelId])
+}
+
+// 资源费率
+model Rate {
+    id              String    @id @default(uuid())
+    resourceType    String
+    modelId         String?
+    unitPrice       Float
+    currency        String
+    effectiveDate   DateTime
+    expirationDate  DateTime?
+    isActive        Boolean   @default(true)
+    createdAt       DateTime  @default(now())
+    updatedAt       DateTime  @updatedAt
+
+    @@index([resourceType])
+    @@index([modelId])
+    @@index([isActive])
+}
+
+// 超额设置
+model OverageSettings {
+    id                    String    @id @default(uuid())
+    tenantId              String    @unique
+    allowOverage          Boolean   @default(false)
+    notificationThreshold Float
+    notificationEmail     String?
+    autoDisable           Boolean   @default(false)
+    disableThreshold      Float?
+    createdAt             DateTime  @default(now())
+    updatedAt             DateTime  @updatedAt
+
+    @@index([tenantId])
+}
+
+// 计费计划
+model BillingPlan {
+    id                String        @id @default(uuid())
+    name              String
+    code              String        @unique
+    description       String?
+    basePrice         Float
+    currency          String
+    billingCycle      BillingCycle
+    includedResources Json          // { apiCalls?: number, tokens?: number, storage?: number, models?: string[] }
+    overagePricing    Json          // { apiCalls?: number, tokens?: number, storage?: number }
+    isActive          Boolean       @default(true)
+    createdAt         DateTime      @default(now())
+    updatedAt         DateTime      @updatedAt
+
+    @@index([code])
+    @@index([isActive])
+    @@index([billingCycle])
+}
+
+// 账单
+model Invoice {
+    id                 String        @id @default(uuid())
+    tenantId           String
+    invoiceNumber      String        @unique
+    status             InvoiceStatus
+    amount             Float
+    currency           String
+    dueDate            DateTime
+    paidDate           DateTime?
+    billingPeriodStart DateTime
+    billingPeriodEnd   DateTime
+    items              InvoiceItem[]
+    createdAt          DateTime      @default(now())
+    updatedAt          DateTime      @updatedAt
+
+    @@index([tenantId])
+    @@index([status])
+    @@index([dueDate])
+}
+
+// 账单项目
+model InvoiceItem {
+    id          String          @id @default(uuid())
+    invoiceId   String
+    description String
+    quantity    Float
+    unitPrice   Float
+    amount      Float
+    type        InvoiceItemType
+    invoice     Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+    @@index([invoiceId])
+}
+
+// 模板
+model Template {
+    id              String        @id @default(uuid())
+    name            String
+    code            String        @unique
+    description     String
+    category        String
+    version         String
+    status          TemplateStatus
+    metadata        Json?
+    createdAt       DateTime      @default(now())
+    updatedAt       DateTime      @updatedAt
+    sections        TemplateSection[]
+    versions        TemplateVersion[]
+    tenantId        String
+    @@index([tenantId])
+    @@index([status])
+    @@index([category])
+    @@index([code])
+}
+
+model TemplateSection {
+    id              String        @id @default(uuid())
+    templateId      String
+    name            String
+    code            String
+    description     String
+    order           Int
+    metadata        Json?
+    createdAt       DateTime      @default(now())
+    updatedAt       DateTime      @updatedAt
+    template        Template      @relation(fields: [templateId], references: [id], onDelete: Cascade)
+    elements        FormElement[]
+    validationRules ValidationRule[]
+
+    @@index([templateId])
+    @@unique([templateId, code])
+}
+
+model FormElement {
+    id              String        @id @default(uuid())
+    sectionId       String
+    type            FormElementType
+    name            String
+    code            String
+    label           String
+    placeholder     String?
+    required        Boolean       @default(false)
+    defaultValue    Json?
+    options         Json?         // { label: string, value: any }[]
+    metadata        Json?
+    createdAt       DateTime      @default(now())
+    updatedAt       DateTime      @updatedAt
+    section         TemplateSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+    validationRules ValidationRule[]
+
+    @@index([sectionId])
+    @@unique([sectionId, code])
+}
+
+model ValidationRule {
+    id              String        @id @default(uuid())
+    name            String
+    code            String
+    value           String
+    type            ValidationRuleType
+    message         String
+    parameters      Json?
+    metadata        Json?
+    createdAt       DateTime      @default(now())
+    updatedAt       DateTime      @updatedAt
+    sectionId       String?
+    section         TemplateSection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+    elementId       String?
+    element         FormElement? @relation(fields: [elementId], references: [id], onDelete: SetNull)
+    customValidator String?
+
+    @@index([type])
+}
+
+model TemplateVersion {
+    id              String        @id @default(uuid())
+    templateId      String
+    version         Int
+    changes         String
+    templateData    Json
+    createdBy       String
+    createdAt       DateTime      @default(now())
+    publishedAt     DateTime?
+    template        Template      @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+    @@index([templateId])
+    @@unique([templateId, version])
+}
+
+// 用户模型
+model User {
+    id              String    @id @default(uuid())
+    email           String    @unique
+    name            String
+    password        String
+    role            String
+    tenantId        String
+    createdAt       DateTime  @default(now())
+    updatedAt       DateTime  @updatedAt
+
+    @@index([tenantId])
+    @@index([role])
+} 
