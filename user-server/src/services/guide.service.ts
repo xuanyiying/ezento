@@ -35,11 +35,11 @@ class GuideService {
      */
     static async getDepartments() {
         try {
-            const departments = await Department.find().exec();
+            const departments = await Department.find().lean().exec();
             return departments.map(dept => ({
                 id: dept._id,
-                name: dept.name,
-                description: dept.description
+                name: (dept as any).name,
+                description: (dept as any).description
             }));
         } catch (error) {
             logger.error(`Error in getDepartments: ${error}`);
@@ -57,7 +57,7 @@ class GuideService {
             // to match symptoms with departments and doctors
             
             // For now, we'll return all departments and top-rated doctors
-            const departments = await Department.find().exec();
+            const departments = await Department.find().lean().exec();
             const doctors = await Doctor.find()
                 .populate('userId', 'name avatar')
                 .populate('departmentId', 'name')
@@ -68,8 +68,8 @@ class GuideService {
             return {
                 departments: departments.map(dept => ({
                     id: dept._id,
-                    name: dept.name,
-                    description: dept.description,
+                    name: (dept as any).name,
+                    description: (dept as any).description,
                     relevanceScore: Math.random() // Placeholder for relevance score
                 })),
                 doctors: doctors.map(doc => ({

@@ -1,10 +1,10 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import { IConsultation } from './Consultation';
-import { IUser } from './User';
+import { UserDocument } from '../interfaces/user.interface';
 
 export interface IMessage extends Document {
     consultationId: IConsultation['_id'] | IConsultation;
-    senderId: IUser['_id'] | string;
+    senderId: UserDocument['_id'] | string;
     senderType: 'patient' | 'doctor' | 'ai';
     content: string;
     messageType: 'text' | 'image' | 'audio' | 'video';

@@ -1,11 +1,11 @@
 import mongoose, { Schema } from 'mongoose';
-import { DepartmentDocument } from '../interfaces/department.interface';
+import { DepartmentBase, DepartmentDocument } from '../interfaces/department.interface';
 
 /**
  * 科室模型定义
  * 包含科室基本信息和分类
  */
-const DepartmentSchema = new Schema({
+const DepartmentSchema = new Schema<DepartmentBase>({
     name: {
         type: String,
         required: true,
@@ -40,7 +40,9 @@ const DepartmentSchema = new Schema({
     }
 }, { 
     timestamps: true, 
-    versionKey: false 
+    versionKey: false,
+    toJSON: { virtuals: true },  // Enable virtuals for JSON
+    toObject: { virtuals: true } // Enable virtuals for toObject
 });
 
 // 索引优化查询性能
@@ -49,4 +51,4 @@ DepartmentSchema.index({ status: 1 });
 DepartmentSchema.index({ parentId: 1 });
 DepartmentSchema.index({ order: 1 });
 
-export default mongoose.model<DepartmentDocument>('Department', DepartmentSchema);
+export default mongoose.model<DepartmentDocument>('Department', DepartmentSchema as any);

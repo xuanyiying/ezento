@@ -1,12 +1,16 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
 import { UserDocument } from '../interfaces/user.interface';
+import PasswordUtil from '../utils/passwordUtil';
 
 const userSchema = new mongoose.Schema({
     tenantId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Tenant',
         required: false
+    },
+    username: {
+        type: String,
+        sparse: true
     },
     name: {
         type: String,
@@ -18,12 +22,10 @@ const userSchema = new mongoose.Schema({
     },
     phone: {
         type: String,
-        required: true,
-        sparse: true
+        required: true
     },
     email: {
-        type: String,
-        sparse: true
+        type: String
     },
     password: {
         type: String,
@@ -43,8 +45,7 @@ const userSchema = new mongoose.Schema({
         default: 'user'
     },
     openId: {
-        type: String,
-        sparse: true
+        type: String
     },
     unionId: {
         type: String,
@@ -95,8 +96,7 @@ userSchema.index({ isActive: 1 });
 userSchema.pre<UserDocument>('save', async function(next) {
     if (this.isModified('password') && this.password) {
         try {
-            const salt = await bcrypt.genSalt(10);
-            this.password = await bcrypt.hash(this.password, salt);
+            this.password = await PasswordUtil.hashPassword(this.password);
             next();
         } catch (error: any) {
             next(error);
@@ -109,7 +109,7 @@ userSchema.pre<UserDocument>('save', async function(next) {
 // Method to compare password
 userSchema.methods.comparePassword = async function(password: string): Promise<boolean> {
     if (!this.password) return false;
-    return bcrypt.compare(password, this.password);
+    return PasswordUtil.comparePassword(password, this.password);
 };
 
 const User = mongoose.model<UserDocument>('User', userSchema);

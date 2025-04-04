@@ -1,9 +1,9 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import { IUser } from './User';
+import { UserDocument } from '../interfaces/user.interface';
 
 export interface IConsultation extends Document {
-    patientId: IUser['_id'] | IUser;
-    doctorId: IUser['_id'] | IUser;
+    patientId: UserDocument['_id'] | UserDocument;
+    doctorId: UserDocument['_id'] | UserDocument;
     symptoms: string;
     diagnosis?: string;
     prescription?: string;

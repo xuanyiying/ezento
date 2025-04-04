@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { Tenant, User, Patient, Doctor, Department } from '../models';
 import logger from '../config/logger';
+import PasswordUtil from '../utils/passwordUtil';
 
 // 加载环境变量
 dotenv.config({ path: '.env' });
@@ -9,7 +10,25 @@ dotenv.config({ path: '.env' });
 // 连接数据库
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ezento');
+    // 在连接字符串中添加authSource=admin
+    const connectionUri = `${process.env.MONGODB_URI || 'mongodb://localhost:27017/ezento'}`;
+    
+    // 设置连接选项
+    const mongooseOptions = {
+      connectTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      serverSelectionTimeoutMS: 30000,
+      retryWrites: false,
+      retryReads: false,
+      directConnection: true
+    };
+    
+    // 禁用严格查询
+    mongoose.set('strictQuery', false);
+    
+    // 连接到数据库
+    await mongoose.connect(connectionUri, mongooseOptions);
+    
     logger.info('MongoDB 连接成功');
   } catch (err: any) {
     logger.error(`MongoDB 连接失败: ${err.message}`);
@@ -82,24 +101,30 @@ const createDepartment = async () => {
 // 创建患者用户
 const createPatientUser = async (tenantId: mongoose.Types.ObjectId) => {
   try {
-    // 检查是否已存在测试患者用户
-    const existingUser = await User.findOne({ username: 'testpatient' });
+    // 检查是否已存在测试患者用户 (通过username或openId)
+    const existingUser = await User.findOne({ 
+      $or: [
+        { username: 'testuser' },
+        { openId: 'test_patient_openid' }
+      ]
+    });
     if (existingUser) {
-      logger.info('测试患者已存在，跳过创建');
-      const existingPatient = await Patient.findOne({ userId: existingUser._id });
-      return { user: existingUser, patient: existingPatient };
+      logger.info(`删除已存在的患者用户: ${existingUser.name}`);
+      await User.deleteOne({ _id: existingUser._id });
+      // 同时删除关联的患者记录
+      await Patient.deleteOne({ userId: existingUser._id });
     }
-
+    
     // 创建患者用户
     const user = new User({
       tenantId,
       openId: 'test_patient_openid',
-      userType: 'patient',
-      username: 'testpatient',
+      userType: 'user',
+      username: 'testuser',
       name: '测试患者',
       avatar: 'https://example.com/avatars/patient.png',
       phone: '13800138000',
-      password: 'password123',
+      password: 'password',
       gender: 'male',
       birthDate: new Date('1990-01-01'),
       isWechatUser: false
@@ -130,14 +155,21 @@ const createPatientUser = async (tenantId: mongoose.Types.ObjectId) => {
 // 创建医生用户
 const createDoctorUser = async (tenantId: mongoose.Types.ObjectId, departmentId: mongoose.Types.ObjectId) => {
   try {
-    // 检查是否已存在测试医生用户
-    const existingUser = await User.findOne({ username: 'testdoctor' });
+    // 检查是否已存在测试医生用户 (通过username或openId)
+    const existingUser = await User.findOne({ 
+      $or: [
+        { username: 'testdoctor' },
+        { openId: 'test_doctor_openid' }
+      ]
+    });
     if (existingUser) {
-      logger.info('测试医生已存在，跳过创建');
-      const existingDoctor = await Doctor.findOne({ userId: existingUser._id });
-      return { user: existingUser, doctor: existingDoctor };
+      logger.info(`删除已存在的医生用户: ${existingUser.name}`);
+      await User.deleteOne({ _id: existingUser._id });
+      // 同时删除关联的医生记录
+      await Doctor.deleteOne({ userId: existingUser._id });
     }
 
+    
     // 创建医生用户
     const user = new User({
       tenantId,
@@ -147,7 +179,7 @@ const createDoctorUser = async (tenantId: mongoose.Types.ObjectId, departmentId:
       name: '医生张',
       avatar: 'https://example.com/avatars/doctor.png',
       phone: '13900139000',
-      password: 'password123',
+      password: 'password',
       gender: 'male',
       birthDate: new Date('1985-05-15'),
       isWechatUser: false

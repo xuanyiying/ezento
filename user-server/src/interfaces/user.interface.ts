@@ -13,6 +13,7 @@ export type UserGender = 'male' | 'female' | 'other' | 'unknown';
 
 export interface UserBase {
     name: string;
+    username?: string;
     avatar?: string;
     phone?: string;
     email?: string;
@@ -34,6 +35,7 @@ export interface UserDocument extends Document, UserBase {
 
 export type UserCreateData = {
     name: string;
+    username?: string;
     avatar?: string;
     phone: string;
     email?: string;

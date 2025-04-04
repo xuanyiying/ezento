@@ -57,7 +57,7 @@ const TenantSchema: Schema = new Schema(
 );
 
 // Create indexes for faster queries
-TenantSchema.index({ code: 1 });
+// TenantSchema.index({ code: 1 }); // Already defined as unique in schema
 TenantSchema.index({ isActive: 1 });
 
 export default mongoose.model<ITenant>('Tenant', TenantSchema); 

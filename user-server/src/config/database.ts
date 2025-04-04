@@ -38,24 +38,25 @@ const connectDB = async (retryCount = 0) => {
     try {
         // 设置更长的超时时间和更多的连接选项
         const mongooseOptions = {
-            connectTimeoutMS: 60000, // 连接超时设为60秒
-            socketTimeoutMS: 60000,  // Socket超时设为60秒
-            serverSelectionTimeoutMS: 60000, // 服务器选择超时设为60秒
+            connectTimeoutMS: 30000, // 连接超时设为30秒
+            socketTimeoutMS: 45000,  // Socket超时设为45秒
+            serverSelectionTimeoutMS: 30000, // 服务器选择超时设为30秒
             maxPoolSize: 10, // 连接池大小
             minPoolSize: 2, // 最小连接数
-            retryWrites: true,
-            retryReads: true,
-            keepAlive: true,
-            keepAliveInitialDelay: 300000, // 5分钟
+            retryWrites: false, // 禁用重试写入
+            retryReads: false, // 禁用重试读取
+            directConnection: true, // 使用直接连接
             autoIndex: true, // 自动创建索引
-            useNewUrlParser: true, // 使用新的URL解析器
         };
+        
+        // 构建带有authSource=admin的连接URI
+        const connectionUri = `${config.mongoURI}`;
         
         // 连接到数据库前先禁用严格查询
         mongoose.set('strictQuery', false);
         
         // 连接到数据库
-        await mongoose.connect(config.mongoURI, mongooseOptions);
+        await mongoose.connect(connectionUri, mongooseOptions);
         
         isConnected = true;
         logger.info('MongoDB connected successfully');

@@ -47,13 +47,19 @@ const swaggerSpec = swaggerJsdoc(options);
 
 const apiDocs = (app: Express) => {
     // Swagger API文档路由
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-    
-    // API JSON文档
+    // 添加Swagger文档
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+        explorer: true,
+        customCss: '.swagger-ui .topbar { display: none }',
+        customSiteTitle: 'Ezento Admin API文档'
+    }));
+
+    // 提供Swagger规范的JSON端点
     app.get('/api-docs.json', (req, res) => {
         res.setHeader('Content-Type', 'application/json');
         res.send(swaggerSpec);
     });
+
 };
 
 export default apiDocs; 

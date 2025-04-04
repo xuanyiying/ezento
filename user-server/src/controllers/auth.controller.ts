@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import logger from '../config/logger';
 import { UserService } from '../services';
 import { ResponseUtil } from '../utils/responseUtil';
+import PasswordUtil from '../utils/passwordUtil';
 import axios from 'axios';
 import crypto from 'crypto';
 
@@ -17,38 +17,42 @@ export class AuthController {
      * 验证用户名和密码，生成JWT令牌
      */
     static async login(req: Request, res: Response): Promise<void> {
-            try {
-                const { username, password } = req.body;
+        try {
+            const { username, password } = req.body;
 
-                if (!username || !password) {
+            if (!username || !password) {
                 ResponseUtil.badRequest(res, '用户名和密码不能为空');
-                    return;
-                }
+                return;
+            }
 
-                const user = await UserService.findUserByUsername(username);
+            const user = await UserService.findUserByUsername(username);
+            if (!user) {
+                ResponseUtil.unauthorized(res, '用户不存在');
+                return;
+            }
 
-                if (!user) {
-                ResponseUtil.unauthorized(res, '用户名或密码错误');
-                    return;
-                }
-
+            console.log('user password:', user.password);
+            console.log('input password:', password);
             // 检查用户是否有密码
-                if (!user.password) {
-                ResponseUtil.unauthorized(res, '用户名或密码错误');
-                    return;
-                }
-
-                const isPasswordValid = await bcrypt.compare(password, user.password);
-
+            if (!user.password) {
+                ResponseUtil.unauthorized(res, '密码为空');
+                return;
+            }
+            
+            try {
+                // 使用标准化的密码工具进行比较
+                const isPasswordValid = await PasswordUtil.comparePassword(password, user.password);
+                console.log('Password comparison result:', isPasswordValid);
+                
                 if (!isPasswordValid) {
-                ResponseUtil.unauthorized(res, '用户名或密码错误');
+                    ResponseUtil.unauthorized(res, '密码错误');
                     return;
                 }
-
+                
                 const token = jwt.sign(
                     {
                         userId: user._id,
-                    role: user.role
+                        role: user.role
                     },
                     process.env.JWT_SECRET || 'your-secret-key',
                     { expiresIn: '24h' }
@@ -57,11 +61,15 @@ export class AuthController {
                 ResponseUtil.success(res, {
                     token,
                     userId: user._id,
-                role: user.role,
-                userName: user.name,
-                avatar: user.avatar
+                    role: user.role,
+                    userName: user.name,
+                    avatar: user.avatar
                 });
-            } catch (error: any) {
+            } catch (bcryptError: any) {
+                logger.error(`密码验证错误: ${bcryptError.message}`);
+                ResponseUtil.unauthorized(res, '用户名或密码错误');
+            }
+        } catch (error: any) {
             logger.error(`登录错误: ${error.message}`);
             ResponseUtil.serverError(res, '登录失败，请稍后重试');
         }
@@ -259,6 +267,7 @@ export class AuthController {
 
             ResponseUtil.success(res, {
                 userId: user._id,
+                username : user.username,
                 name: user.name,
                 phone: user.phone,
                 role: user.role,
@@ -279,37 +288,37 @@ export class AuthController {
      * 创建新用户账户
      */
     static async register(req: Request, res: Response): Promise<void> {
-            try {
-                const { username, password, name, phone, role } = req.body;
+        try {
+            const { username, password, name, phone, role } = req.body;
 
-                if (!username || !password || !name || !phone || !role) {
+            if (!username || !password || !name || !phone || !role) {
                 ResponseUtil.badRequest(res, '所有字段都是必填的');
-                    return;
-                }
+                return;
+            }
 
             // 检查用户名是否已存在
-                const existingUser = await UserService.findUserByUsername(username);
-                if (existingUser) {
+            const existingUser = await UserService.findUserByUsername(username);
+            if (existingUser) {
                 ResponseUtil.conflict(res, '用户名已存在');
-                    return;
-                }
-
+                return;
+            }
             // 创建新用户
             const user = await UserService.createUser({
+                username,
                 password,
-                    name,
-                    phone,
+                name,
+                phone,
                 role,
                 isActive: true,
-                });
+            });
 
-                ResponseUtil.created(res, {
+            ResponseUtil.created(res, {
                 userId: user._id
-                });
-            } catch (error: any) {
+            });
+        } catch (error: any) {
             logger.error(`注册错误: ${error.message}`);
             ResponseUtil.serverError(res, '注册失败，请稍后重试');
-            }
+        }
     }
 }
 

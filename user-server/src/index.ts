@@ -1,50 +1,13 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import compression from 'compression';
+import dotenv from 'dotenv';
+import app from './app';
 import connectDB from './config/database';
-import initializeAPIRoutes from './routes';
-import { errorHandler } from './middlewares/error';
 import logger from './config/logger';
 import { initializeCache } from './config/cache';
-import apiDocs from './config/swagger';
 
-// 创建Express应用
-const app = express();
-const PORT = process.env.PORT || 3000;
+// 加载环境变量
+dotenv.config();
 
-// 中间件
-// 配置跨域 http://localhost:5173
-app.use(cors({
-    origin: '*', 
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
-}));
-
-app.use(helmet());
-// 压缩
-app.use(compression({
-    level: 6,
-    threshold: 10 * 1024 * 1024,
-    filter: (req, res) => {
-        if (req.headers['x-no-compression']) return false;
-        return compression.filter(req, res);
-    }
-}));
-// 解析JSON请求体
-app.use(express.json({ limit: '50mb' }));
-// 解析URL编码请求体
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
-// API文档
-apiDocs(app);
-
-// 路由
-initializeAPIRoutes(app);
-
-// 错误处理
-app.use(errorHandler);
+const PORT = process.env.PORT || 3001;
 
 // 启动服务器函数
 const startServer = async () => {
