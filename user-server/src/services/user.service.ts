@@ -13,7 +13,7 @@ class UserService {
      */
     static async findUserByUsername(username: string) {
         try {
-            const user = await User.findOne({ username }).exec();
+            const user = await User.findOne({ username }).select('+password').exec();
             return user;
         } catch (error) {
             logger.error(`Error in UserService.findUserByUsername: ${error}`);
