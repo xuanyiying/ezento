@@ -4,6 +4,12 @@ import reportRoutes from './report.routes';
 import authRoutes from './auth.routes';
 import guideRoutes from './guide.routes';
 import consultationRoutes from './consultation.routes';
+import doctorPrediagnosisRoutes from './doctor.prediagnosis.routes';
+import doctorRoutes from './doctor.routes';
+import patientRoutes from './patient.routes';
+import prescriptionRoutes from './prescription.routes';
+import departmentRoutes from './department.routes';
+import conversationRoutes from './conversation.routes';
 
 const router = express.Router();
 
@@ -33,6 +39,24 @@ router.use('/api/doctors/:id/consultations', (req, res, next) => {
     req.body.doctorId = req.params.id;
     next();
 }, consultationRoutes);
+
+// Doctor prediagnosis routes
+router.use('/api/doctor/prediagnosis', doctorPrediagnosisRoutes);
+
+// Doctor routes
+router.use('/api/doctors', doctorRoutes);
+
+// Patient routes
+router.use('/api/patients', patientRoutes);
+
+// Prescription routes
+router.use('/api/prescriptions', prescriptionRoutes);
+
+// Department routes
+router.use('/api/departments', departmentRoutes);
+
+// Conversation routes
+router.use('/api/conversation', conversationRoutes);
 
 // 初始化API路由
 const initializeAPIRoutes = (app: Express) => {

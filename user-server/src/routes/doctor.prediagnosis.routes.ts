@@ -13,7 +13,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/doctor/prediagnosis/list:
+ * /doctor/prediagnosis/list:
  *   get:
  *     summary: Get all pre-diagnoses for a doctor
  *     tags: [Doctor Pre-Diagnosis]
@@ -30,7 +30,7 @@ const router = express.Router();
  *                 type: object
  *       401:
  *         description: Unauthorized
- * @route   GET /api/doctor/prediagnosis/list
+ * @route   GET /doctor/prediagnosis/list
  * @desc    Get all pre-diagnoses for a doctor
  * @access  Private/Doctor
  */
@@ -38,7 +38,7 @@ router.get('/list', auth, doctorAuth, PreDiagnosisController.getDoctorPreDiagnos
 
 /**
  * @swagger
- * /api/doctor/prediagnosis/advice:
+ * /doctor/prediagnosis/advice:
  *   post:
  *     summary: Submit doctor advice for a pre-diagnosis
  *     tags: [Doctor Pre-Diagnosis]
@@ -74,10 +74,10 @@ router.get('/list', auth, doctorAuth, PreDiagnosisController.getDoctorPreDiagnos
  *         description: Unauthorized
  *       404:
  *         description: Pre-diagnosis not found
- * @route   POST /api/doctor/prediagnosis/advice
+ * @route   POST /doctor/prediagnosis/advice
  * @desc    Submit doctor advice for a pre-diagnosis
  * @access  Private/Doctor
  */
 router.post('/advice', auth, doctorAuth, PreDiagnosisController.submitDoctorAdvice);
 
-export default router; 
+export default router;

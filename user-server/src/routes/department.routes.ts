@@ -44,7 +44,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/departments:
+ * /departments:
  *   get:
  *     summary: 获取所有科室列表
  *     description: 获取系统中所有可用的科室信息列表
@@ -72,7 +72,7 @@ const router = express.Router();
  *                         $ref: '#/components/schemas/Department'
  *       500:
  *         description: 服务器错误，获取科室列表失败
- * @route   GET /api/departments
+ * @route   GET /departments
  * @desc    获取所有科室列表
  * @access  公开
  */
@@ -80,7 +80,7 @@ router.get('/', DepartmentController.getAllDepartments);
 
 /**
  * @swagger
- * /api/departments/{id}:
+ * /departments/{id}:
  *   get:
  *     summary: 通过ID获取科室详情
  *     description: 根据科室ID获取单个科室的详细信息
@@ -109,7 +109,7 @@ router.get('/', DepartmentController.getAllDepartments);
  *         description: 未找到科室信息
  *       500:
  *         description: 服务器错误，获取科室详情失败
- * @route   GET /api/departments/:id
+ * @route   GET /departments/:id
  * @desc    通过ID获取科室详情
  * @access  公开
  */
@@ -117,7 +117,7 @@ router.get('/:id', DepartmentController.getDepartmentById);
 
 /**
  * @swagger
- * /api/departments:
+ * /departments:
  *   post:
  *     summary: 创建新科室
  *     description: 创建一个新的科室信息记录
@@ -165,7 +165,7 @@ router.get('/:id', DepartmentController.getDepartmentById);
  *         description: 科室名称已存在
  *       500:
  *         description: 服务器错误，创建科室失败
- * @route   POST /api/departments
+ * @route   POST /departments
  * @desc    创建新科室
  * @access  私有/管理员
  */
@@ -173,7 +173,7 @@ router.post('/', auth, DepartmentController.createDepartment);
 
 /**
  * @swagger
- * /api/departments/{id}:
+ * /departments/{id}:
  *   put:
  *     summary: 更新科室信息
  *     description: 根据科室ID更新科室的详细信息
@@ -234,7 +234,7 @@ router.put('/:id', auth, DepartmentController.updateDepartment);
 
 /**
  * @swagger
- * /api/departments/{id}:
+ * /departments/{id}:
  *   delete:
  *     summary: 删除科室
  *     description: 根据科室ID删除科室信息
@@ -271,7 +271,7 @@ router.put('/:id', auth, DepartmentController.updateDepartment);
  *         description: 未找到科室信息
  *       500:
  *         description: 服务器错误，删除科室失败
- * @route   DELETE /api/departments/:id
+ * @route   DELETE /departments/:id
  * @desc    删除科室
  * @access  私有/管理员
  */

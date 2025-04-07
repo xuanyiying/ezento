@@ -85,9 +85,9 @@ const router = express.Router();
  *         description: 未授权，请先登录
  *       500:
  *         description: 服务器错误，提交失败
- * @route   POST /api/patient/prediagnosis
- * @desc    提交新的预诊断
- * @access  私有/患者
+ * @route   POST /patient/prediagnosis
+ * @desc    Create a new pre-diagnosis
+ * @access  Private/Patient
  */
 router.post('/', auth, PreDiagnosisController.submitPrediagnosis);
 
@@ -163,9 +163,9 @@ router.post('/', auth, PreDiagnosisController.submitPrediagnosis);
  *         description: 未授权，请先登录
  *       500:
  *         description: 服务器错误，获取列表失败
- * @route   GET /api/patient/prediagnosis/list
- * @desc    获取患者的预诊断列表
- * @access  私有/患者
+ * @route   GET /patient/prediagnosis/list
+ * @desc    Get all pre-diagnoses for a patient
+ * @access  Private/Patient
  */
 router.get('/list', auth, PreDiagnosisController.getPrediagnosisList);
 
@@ -252,9 +252,9 @@ router.get('/list', auth, PreDiagnosisController.getPrediagnosisList);
  *         description: 未授权，请先登录
  *       500:
  *         description: 服务器错误，获取列表失败
- * @route   GET /api/patient/prediagnosis/doctor/list
- * @desc    获取医生的预诊断列表
- * @access  私有/医生
+ * @route   GET /patient/prediagnosis/doctor/list
+ * @desc    Get all pre-diagnoses for a doctor
+ * @access  Private/Doctor
  */
 router.get('/doctor/list', auth, PreDiagnosisController.getDoctorPreDiagnoses);
 
@@ -321,9 +321,9 @@ router.get('/doctor/list', auth, PreDiagnosisController.getDoctorPreDiagnoses);
  *         description: 未找到预诊断信息
  *       500:
  *         description: 服务器错误，提交建议失败
- * @route   POST /api/patient/prediagnosis/doctor/advice
- * @desc    提交医生对预诊断的建议
- * @access  私有/医生
+ * @route   POST /patient/prediagnosis/doctor/advice
+ * @desc    Submit doctor advice for a pre-diagnosis
+ * @access  Private/Doctor
  */
 router.post('/doctor/advice', auth, PreDiagnosisController.submitDoctorAdvice);
 
@@ -410,9 +410,9 @@ router.post('/doctor/advice', auth, PreDiagnosisController.submitDoctorAdvice);
  *         description: 未找到预诊断信息
  *       500:
  *         description: 服务器错误，获取详情失败
- * @route   GET /api/patient/prediagnosis/:id
- * @desc    获取预诊断详情
- * @access  私有/患者
+ * @route   GET /patient/prediagnosis/:id
+ * @desc    Get a pre-diagnosis by ID
+ * @access  Private
  */
 router.get('/:id', auth, PreDiagnosisController.getPrediagnosisDetails);
 

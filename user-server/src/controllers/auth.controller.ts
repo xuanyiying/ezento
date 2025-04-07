@@ -30,9 +30,6 @@ export class AuthController {
                 ResponseUtil.unauthorized(res, '用户不存在');
                 return;
             }
-
-            console.log('user password:', user.password);
-            console.log('input password:', password);
             // 检查用户是否有密码
             if (!user.password) {
                 ResponseUtil.unauthorized(res, '密码为空');
@@ -41,9 +38,7 @@ export class AuthController {
             
             try {
                 // 使用标准化的密码工具进行比较
-                const isPasswordValid = await PasswordUtil.comparePassword(password, user.password);
-                console.log('Password comparison result:', isPasswordValid);
-                
+                const isPasswordValid = await PasswordUtil.comparePassword(password, user.password);                
                 if (!isPasswordValid) {
                     ResponseUtil.unauthorized(res, '密码错误');
                     return;

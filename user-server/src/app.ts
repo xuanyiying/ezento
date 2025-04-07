@@ -1,26 +1,15 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import apiDocs from './config/swagger';
-import patientRoutes from './routes/patient.routes';
-import doctorRoutes from './routes/doctor.routes';
-import prediagnosisRoutes from './routes/prediagnosis.routes';
-import reportRoutes from './routes/report.routes';
-import prescriptionRoutes from './routes/prescription.routes';
-import departmentRoutes from './routes/department.routes';
-import authRoutes from './routes/auth.routes';
-import doctorPrediagnosisRoutes from './routes/doctor.prediagnosis.routes';
-import conversationRoutes from './routes/conversation.routes';
-import { notFound, errorHandler } from './middlewares';
-import { PrescriptionController } from './controllers';
-import { auth, tenantContext, tenantAuth } from './middlewares';
-import guideRoutes from './routes/guide.routes';
+import initializeAPIRoutes from './routes';
+import { notFound, errorHandler, tenantContext } from './middlewares';
 
-// Initialize express
+// 初始化express
 const app = express();
 
-// Apply middlewares
+// 应用中间件
 app.use(helmet());
 app.use(cors({
     origin: '*',
@@ -39,43 +28,19 @@ app.use(compression({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Health check route
-app.get('/api/health', (_req: Request, res: Response) => {
-    res.status(200).json({ status: 'OK', message: 'Server is running' });
-});
-
-// Root route - redirect to API docs
-app.get('/', (_req: Request, res: Response) => {
-    res.redirect('/api-docs');
-});
-
-// Initialize API Documentation
+// 初始化API文档
 apiDocs(app);
 
-// Public routes (no tenant context required)
-app.use('/api/auth', authRoutes);
-
-// Apply tenant context middleware to all API routes
+// 应用租户上下文中间件到所有API路由
 app.use('/api', tenantContext);
-app.use('/api/guide', guideRoutes);
-// Protected routes (require tenant context)
-app.use('/api/patients', [auth, tenantAuth], patientRoutes);
-app.use('/api/doctors', [auth, tenantAuth], doctorRoutes);
-// app.use('/api/messages', messageRoutes);
-app.use('/api/patient/prediagnosis', [auth, tenantAuth], prediagnosisRoutes);
-app.use('/api/doctor/prediagnosis', [auth, tenantAuth], doctorPrediagnosisRoutes);
-app.use('/api/patient/reports', [auth, tenantAuth], reportRoutes);
-app.use('/api/prescriptions', [auth, tenantAuth], prescriptionRoutes);
-app.use('/api/departments', [auth, tenantAuth], departmentRoutes);
-app.use('/api/conversation', [auth, tenantAuth], conversationRoutes);
 
-// Special route for getting patient prescriptions by patient ID
-app.get('/api/patients/:patientId/prescriptions', [auth, tenantAuth], PrescriptionController.getPatientPrescriptionsByPatientId());
+// 初始化所有API路由
+initializeAPIRoutes(app);
 
-// 404 Not Found Middleware
+// 404未找到中间件
 app.use(notFound);
 
-// Error Handling Middleware
+// 错误处理中间件
 app.use(errorHandler);
 
 export default app;

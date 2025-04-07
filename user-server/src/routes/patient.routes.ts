@@ -13,7 +13,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/patients:
+ * /patients:
  *   get:
  *     summary: Get all patients
  *     tags: [Patients]
@@ -32,7 +32,7 @@ const router = express.Router();
  *         description: Unauthorized
  *       403:
  *         description: Forbidden - Doctor only
- * @route   GET /api/patients
+ * @route   GET /patients
  * @desc    Get all patients
  * @access  Private/Doctor
  */
@@ -40,7 +40,7 @@ router.get('/', auth, doctorAuth, PatientController.getAllPatients);
 
 /**
  * @swagger
- * /api/patients/{id}:
+ * /patients/{id}:
  *   get:
  *     summary: Get patient by ID
  *     tags: [Patients]
@@ -64,7 +64,7 @@ router.get('/', auth, doctorAuth, PatientController.getAllPatients);
  *         description: Unauthorized
  *       404:
  *         description: Patient not found
- * @route   GET /api/patients/:id
+ * @route   GET /patients/:id
  * @desc    Get patient by ID
  * @access  Private
  */
@@ -72,7 +72,7 @@ router.get('/:id', auth, PatientController.getPatientById);
 
 /**
  * @swagger
- * /api/patients:
+ * /patients:
  *   post:
  *     summary: Create a new patient
  *     tags: [Patients]
@@ -117,7 +117,7 @@ router.get('/:id', auth, PatientController.getPatientById);
  *         description: Invalid input
  *       401:
  *         description: Unauthorized
- * @route   POST /api/patients
+ * @route   POST /patients
  * @desc    Create a new patient
  * @access  Private
  */
@@ -125,7 +125,7 @@ router.post('/', auth, PatientController.createPatient);
 
 /**
  * @swagger
- * /api/patients/{id}:
+ * /patients/{id}:
  *   put:
  *     summary: Update a patient
  *     tags: [Patients]
@@ -168,7 +168,7 @@ router.post('/', auth, PatientController.createPatient);
  *         description: Unauthorized
  *       404:
  *         description: Patient not found
- * @route   PUT /api/patients/:id
+ * @route   PUT /patients/:id
  * @desc    Update a patient
  * @access  Private
  */
@@ -176,7 +176,7 @@ router.put('/:id', auth, PatientController.updatePatient);
 
 /**
  * @swagger
- * /api/patients/{id}:
+ * /patients/{id}:
  *   delete:
  *     summary: Delete a patient
  *     tags: [Patients]
@@ -198,7 +198,7 @@ router.put('/:id', auth, PatientController.updatePatient);
  *         description: Forbidden - Admin only
  *       404:
  *         description: Patient not found
- * @route   DELETE /api/patients/:id
+ * @route   DELETE /patients/:id
  * @desc    Delete a patient
  * @access  Private/Admin
  */
@@ -206,7 +206,7 @@ router.delete('/:id', auth, adminAuth, PatientController.deletePatient);
 
 /**
  * @swagger
- * /api/patients/{id}/medical-records:
+ * /patients/{id}/medical-records:
  *   get:
  *     summary: Get patient's medical records
  *     tags: [Patients]
@@ -232,7 +232,7 @@ router.delete('/:id', auth, adminAuth, PatientController.deletePatient);
  *         description: Unauthorized
  *       404:
  *         description: Patient not found
- * @route   GET /api/patients/:id/medical-records
+ * @route   GET /patients/:id/medical-records
  * @desc    Get patient's medical records
  * @access  Private
  */
@@ -240,7 +240,7 @@ router.get('/:id/medical-records', auth, PatientController.getPatientMedicalReco
 
 /**
  * @swagger
- * /api/patients/{id}/consultations:
+ * /patients/{id}/consultations:
  *   get:
  *     summary: Get patient's consultations
  *     tags: [Patients]
@@ -266,10 +266,10 @@ router.get('/:id/medical-records', auth, PatientController.getPatientMedicalReco
  *         description: Unauthorized
  *       404:
  *         description: Patient not found
- * @route   GET /api/patients/:id/consultations
+ * @route   GET /patients/:id/consultations
  * @desc    Get patient's consultations
  * @access  Private
  */
 router.get('/:id/consultations', auth, PatientController.getPatientConsultations);
 
-export default router; 
+export default router;

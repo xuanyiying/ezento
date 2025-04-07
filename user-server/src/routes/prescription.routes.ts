@@ -13,7 +13,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/prescriptions:
+ * /prescriptions:
  *   post:
  *     summary: Create a new prescription
  *     tags: [Prescriptions]
@@ -69,7 +69,7 @@ const router = express.Router();
  *         description: Unauthorized
  *       403:
  *         description: Forbidden - Doctor only
- * @route   POST /api/prescriptions
+ * @route   POST /prescriptions
  * @desc    Create a new prescription
  * @access  Private/Doctor
  */
@@ -77,7 +77,7 @@ router.post('/', auth, doctorAuth, PrescriptionController.createPrescription());
 
 /**
  * @swagger
- * /api/prescriptions:
+ * /prescriptions:
  *   get:
  *     summary: Get all prescriptions (admin only)
  *     tags: [Prescriptions]
@@ -96,7 +96,7 @@ router.post('/', auth, doctorAuth, PrescriptionController.createPrescription());
  *         description: Unauthorized
  *       403:
  *         description: Forbidden - Admin only
- * @route   GET /api/prescriptions
+ * @route   GET /prescriptions
  * @desc    Get all prescriptions (admin only)
  * @access  Private/Admin
  */
@@ -104,7 +104,7 @@ router.get('/', auth, adminAuth, PrescriptionController.getAllPrescriptions());
 
 /**
  * @swagger
- * /api/patient/prescriptions/list:
+ * /patient/prescriptions/list:
  *   get:
  *     summary: Get all prescriptions for a patient
  *     tags: [Prescriptions]
@@ -123,7 +123,7 @@ router.get('/', auth, adminAuth, PrescriptionController.getAllPrescriptions());
  *         description: Unauthorized
  *       403:
  *         description: Forbidden - Patient only
- * @route   GET /api/patient/prescriptions/list
+ * @route   GET /patient/prescriptions/list
  * @desc    Get all prescriptions for a patient
  * @access  Private/Patient
  */
@@ -131,7 +131,7 @@ router.get('/patient/list', auth, patientAuth, PrescriptionController.getPatient
 
 /**
  * @swagger
- * /api/doctor/prescriptions/list:
+ * /doctor/prescriptions/list:
  *   get:
  *     summary: Get all prescriptions for a doctor
  *     tags: [Prescriptions]
@@ -150,7 +150,7 @@ router.get('/patient/list', auth, patientAuth, PrescriptionController.getPatient
  *         description: Unauthorized
  *       403:
  *         description: Forbidden - Doctor only
- * @route   GET /api/doctor/prescriptions/list
+ * @route   GET /doctor/prescriptions/list
  * @desc    Get all prescriptions for a doctor
  * @access  Private/Doctor
  */
@@ -158,7 +158,7 @@ router.get('/doctor/list', auth, doctorAuth, PrescriptionController.getDoctorPre
 
 /**
  * @swagger
- * /api/patients/{patientId}/prescriptions:
+ * /patients/{patientId}/prescriptions:
  *   get:
  *     summary: Get all prescriptions for a specific patient
  *     tags: [Prescriptions]
@@ -186,7 +186,7 @@ router.get('/doctor/list', auth, doctorAuth, PrescriptionController.getDoctorPre
  *         description: Forbidden - Only the patient themselves, their doctors, or admins can access
  *       404:
  *         description: Patient not found
- * @route   GET /api/patients/:patientId/prescriptions
+ * @route   GET /patients/:patientId/prescriptions
  * @desc    Get all prescriptions for a specific patient
  * @access  Private
  */
@@ -195,7 +195,7 @@ router.get('/doctor/list', auth, doctorAuth, PrescriptionController.getDoctorPre
 
 /**
  * @swagger
- * /api/prescriptions/{id}:
+ * /prescriptions/{id}:
  *   get:
  *     summary: Get a prescription by ID
  *     tags: [Prescriptions]
@@ -219,7 +219,7 @@ router.get('/doctor/list', auth, doctorAuth, PrescriptionController.getDoctorPre
  *         description: Unauthorized
  *       404:
  *         description: Prescription not found
- * @route   GET /api/prescriptions/:id
+ * @route   GET /prescriptions/:id
  * @desc    Get a prescription by ID
  * @access  Private
  */
@@ -227,7 +227,7 @@ router.get('/:id', auth, PrescriptionController.getPrescriptionById());
 
 /**
  * @swagger
- * /api/prescriptions/{id}:
+ * /prescriptions/{id}:
  *   put:
  *     summary: Update a prescription
  *     tags: [Prescriptions]
@@ -266,7 +266,7 @@ router.get('/:id', auth, PrescriptionController.getPrescriptionById());
  *         description: Forbidden - Doctor only
  *       404:
  *         description: Prescription not found
- * @route   PUT /api/prescriptions/:id
+ * @route   PUT /prescriptions/:id
  * @desc    Update a prescription
  * @access  Private/Doctor
  */
@@ -274,7 +274,7 @@ router.put('/:id', auth, doctorAuth, PrescriptionController.updatePrescription()
 
 /**
  * @swagger
- * /api/prescriptions/{id}:
+ * /prescriptions/{id}:
  *   delete:
  *     summary: Delete a prescription
  *     tags: [Prescriptions]
@@ -296,7 +296,7 @@ router.put('/:id', auth, doctorAuth, PrescriptionController.updatePrescription()
  *         description: Forbidden - Doctor only
  *       404:
  *         description: Prescription not found
- * @route   DELETE /api/prescriptions/:id
+ * @route   DELETE /prescriptions/:id
  * @desc    Delete a prescription
  * @access  Private/Doctor
  */
