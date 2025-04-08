@@ -40,7 +40,7 @@ export interface PreDiagnosisListItem {
 // 定义预诊断数据接口
 export interface PreDiagnosisData {
     patientId: string;
-    symptoms: string;
+    symptoms: string[];
     bodyParts?: string[];
     duration: string;
     existingConditions?: string[];

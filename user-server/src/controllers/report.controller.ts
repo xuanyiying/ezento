@@ -10,7 +10,7 @@ class ReportController {
         try {
             const { patientId, reportType, reportDate, hospital, reportImages, description } = req.body;
 
-            if (!patientId || !reportType || !reportDate || !hospital || !reportImages) {
+            if (!patientId || !reportImages) {
                 ResponseUtil.badRequest(res, 'Missing required fields');
                 return;
             }

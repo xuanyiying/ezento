@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import { DoctorDocument } from '../interfaces/doctor.interface';
+import { DoctorDocument, DoctorModel } from '../interfaces/doctor.interface';
 
 /**
  * 医生模型定义
@@ -20,17 +20,18 @@ const DoctorSchema = new Schema({
         type: String,
         required: true
     },
-    specialties: {
-        type: [String],
-        default: []
-    },
+    specialties: [{
+        type: String,
+        required: true
+    }],
     introduction: {
         type: String,
-        default: ''
+        required: true
     },
     consultationFee: {
         type: Number,
-        default: 0
+        required: true,
+        min: 0
     },
     isAvailable: {
         type: Boolean,
@@ -52,17 +53,26 @@ const DoctorSchema = new Schema({
         min: 0,
         max: 100
     },
-    availableTimes: {
-        type: [{
-            dayOfWeek: Number,
-            timeSlots: [String]
-        }],
-        default: []
-    },
+    availableTimes: [{
+        dayOfWeek: {
+            type: Number,
+            required: true,
+            min: 0,
+            max: 6
+        },
+        startTime: {
+            type: String,
+            required: true
+        },
+        endTime: {
+            type: String,
+            required: true
+        }
+    }],
     thirdPartyId: {
         type: String,
-        default: null,
-        index: true // 索引优化查询性能
+        sparse: true,
+        unique: true
     }
 }, { 
     timestamps: true, 
@@ -78,4 +88,6 @@ DoctorSchema.index({ consultationFee: 1 });
 // 复合索引
 DoctorSchema.index({ departmentId: 1, isAvailable: 1 });
 
-export default mongoose.model<DoctorDocument>('Doctor', DoctorSchema); 
+const Doctor = mongoose.model<DoctorDocument, DoctorModel>('Doctor', DoctorSchema);
+
+export default Doctor;

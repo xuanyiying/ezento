@@ -33,6 +33,7 @@ export interface IConversationMessage {
  * 会话接口
  */
 export interface IConversation extends Document {
+    _id: mongoose.Types.ObjectId;        // 会话ID
     conversationType: ConversationType;  // 会话类型
     referenceId: mongoose.Types.ObjectId;// 关联ID（预问诊ID、导诊ID或报告ID）
     patientId: mongoose.Types.ObjectId;  // 患者ID
@@ -76,4 +77,4 @@ export interface GetConversationHistoryRequest {
 export interface ExportConversationRequest {
     conversationId: string;
     format?: 'PDF' | 'TEXT';
-} 
+}

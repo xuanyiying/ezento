@@ -1,18 +1,7 @@
 import axios from 'axios';
-import config from '../config/config';
 import logger from '../config/logger';
-
-// Add AI configuration to config
-declare module '../config/config' {
-    interface DefaultConfig {
-        aliCloudApiKey: string;
-        aliCloudApiEndpoint: string;
-        aliCloudQwqModelName: string;
-        deepSeekApiKey: string;
-        deepSeekApiEndpoint: string;
-        deepSeekModelName: string;
-    }
-}
+import { ConversationType } from '../interfaces/conversation.interface';
+import config from '../config/config';
 
 // Extend the config object with AI-specific configuration
 const aiConfig = {
@@ -29,7 +18,7 @@ export interface GenerateTextOptions {
     patientInfo?: {
         age?: number;
         gender?: string;
-        symptoms?: string;
+        symptoms?: string[];
         medicalHistory?: string[];
     };
     maxTokens?: number;
@@ -50,13 +39,12 @@ export interface GenerateTextResponse {
 export interface PatientPreDiagnosisInfo {
     age?: number;
     gender?: string;
-    symptoms: string;
+    symptoms: string[];
     bodyParts?: string[];
     duration?: string;
     existingConditions?: string[];
     medicalHistory?: string[];
 }
-
 // Report interface for report interpretation
 export interface ReportInfo {
     patientAge?: number;
@@ -71,7 +59,139 @@ export interface ReportInfo {
 /**
  * Service to interact with Alibaba Cloud's LLM and DeepSeek API for various medical AI services
  */
+
+
 export class AiService {
+    
+    private static async getBaiduAccessToken(): Promise<string> {
+        try {
+            const apiKey = process.env.BAIDU_API_KEY;
+            const secretKey = process.env.BAIDU_SECRET_KEY;
+
+            if (!apiKey || !secretKey) {
+                throw new Error('百度API配置缺失');
+            }
+
+            const response = await axios.post(
+                `https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=${apiKey}&client_secret=${secretKey}`
+            );
+
+            return response.data.access_token;
+        } catch (error) {
+            logger.error(`获取百度访问令牌失败: ${error}`);
+            throw error;
+        }
+    }
+
+    public static async extractTextFromImage(imagePath: string): Promise<string> {
+        try {
+            const accessToken = await this.getBaiduAccessToken();
+            const image = Buffer.from(imagePath).toString('base64');
+
+            const response = await axios.post(
+                `https://aip.baidubce.com/rest/2.0/ocr/v1/accurate_basic?access_token=${accessToken}`,
+                { image },
+                {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                }
+            );
+
+            return response.data.words_result
+                .map((result: any) => result.words)
+                .join('\n');
+        } catch (error) {
+            logger.error(`OCR文字提取失败: ${error}`);
+            throw error;
+        }
+    }
+
+    static async* generateStreamingResponse(
+        userMessage: string,
+        conversationHistory: Array<{ role: string; content: string }>,
+        conversationType: ConversationType,
+        referenceId: string
+    ): AsyncGenerator<string> {
+        try {
+            let systemPrompt = '';
+            let additionalContext = '';
+
+            // 根据会话类型设置不同的系统提示和上下文
+            switch (conversationType) {
+                case ConversationType.PRE_DIAGNOSIS:
+                    systemPrompt = '你是一位经验丰富的医生助手，正在进行预问诊。请根据患者描述的症状提供专业的建议。';
+                    break;
+
+                case ConversationType.GUIDE:
+                    systemPrompt = '你是一位导诊助手，帮助患者了解就医流程和科室选择。';
+                    break;
+
+                case ConversationType.REPORT:
+                    systemPrompt = '你是一位医学报告解读专家，帮助患者理解检查报告的内容和含义。';
+                    // 如果是报告解读，获取报告文本
+                    if (referenceId.startsWith('report_')) {
+                        const reportText = await this.extractTextFromImage(referenceId);
+                        additionalContext = `报告内容：${reportText}\n`;
+                    }
+                    break;
+
+                default:
+                    systemPrompt = '你是一位医疗咨询助手。';
+            }
+
+            // 构建完整的提示
+            const fullPrompt = `${systemPrompt}\n${additionalContext}${userMessage}`;
+
+            // 调用OpenAI流式API
+            const response = await axios.post(
+                'https://api.openai.com/v1/chat/completions',
+                {
+                    model: 'gpt-4',
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        ...conversationHistory,
+                        { role: 'user', content: fullPrompt }
+                    ],
+                    stream: true
+                },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    responseType: 'stream'
+                }
+            );
+
+            // 处理流式响应
+            for await (const chunk of response.data) {
+                const lines = chunk
+                    .toString()
+                    .split('\n')
+                    .filter((line: string) => line.trim() !== '');
+
+                for (const line of lines) {
+                    if (line.includes('[DONE]')) continue;
+
+                    const message = line.replace(/^data: /, '');
+                    if (message === '') continue;
+
+                    try {
+                        const parsed = JSON.parse(message);
+                        const content = parsed.choices[0]?.delta?.content;
+                        if (content) {
+                            yield content;
+                        }
+                    } catch (error) {
+                        logger.error(`解析流式响应失败: ${error}`);
+                    }
+                }
+            }
+        } catch (error) {
+            logger.error(`生成AI响应失败: ${error}`);
+            throw error;
+        }
+    }
+
     /**
      * Core method to generate text using AI LLM models
      * @param options - Text generation options
@@ -604,4 +724,4 @@ ${patientInfo.medicalHistory && patientInfo.medicalHistory.length ?
     }
 }
 
-export default AiService; 
+export default AiService;

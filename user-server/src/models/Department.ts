@@ -26,8 +26,8 @@ const DepartmentSchema = new Schema<DepartmentBase>({
     },
     thirdPartyId: {
         type: String,
-        default: null,
-        index: true // 索引优化查询性能
+        sparse: true,
+        unique: true
     },
     parentId: {
         type: Schema.Types.ObjectId,
@@ -46,7 +46,6 @@ const DepartmentSchema = new Schema<DepartmentBase>({
 });
 
 // 索引优化查询性能
-DepartmentSchema.index({ name: 1 });
 DepartmentSchema.index({ status: 1 });
 DepartmentSchema.index({ parentId: 1 });
 DepartmentSchema.index({ order: 1 });

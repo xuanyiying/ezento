@@ -17,14 +17,14 @@ class PrediagnosisService {
             // 如果找到患者，获取AI预诊断
             if (user) {
                 const patientInfo: PatientPreDiagnosisInfo = {
-                    age: user.birthDate 
+                    age: user.birthDate
                         ? Math.floor((new Date().getTime() - new Date(user.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
                         : undefined,
                     gender: user.gender,
                     symptoms: data.symptoms,
                     bodyParts: data.bodyParts,
                     duration: data.duration,
-                    existingConditions: data.existingConditions
+                    existingConditions: data.existingConditions,
                 };
                 
                 try {
@@ -35,6 +35,7 @@ class PrediagnosisService {
                     // 如果AI建议失败，继续执行但不包含AI建议
                 }
             }
+
 
             // 创建预诊断，如果有AI建议则包含
             const prediagnosis = new PreDiagnosis({
@@ -51,7 +52,7 @@ class PrediagnosisService {
                     suggestedDepartments: aiSuggestion.suggestedDepartments,
                     createTime: new Date()
                 } : undefined,
-                status: 'SUBMITTED',
+                status: 'processing',
                 createTime: new Date()
             });
 
@@ -195,7 +196,7 @@ class PrediagnosisService {
     /**
      * 获取带分页和可选状态过滤的医生预诊断列表
      */
-    static async getDoctorPreDiagnosis(doctorId: string, status?: string, page: number = 1, limit: number = 10) {
+    static async getDoctorPreDiagnosis(status?: string, page: number = 1, limit: number = 10) {
         try {
             const skip = (page - 1) * limit;
             
@@ -204,12 +205,6 @@ class PrediagnosisService {
             if (status) {
                 query.status = status;
             }
-            
-            // 如果提供了医生 ID，按 doctorAdvice.doctorId 过滤
-            if (doctorId) {
-                query['doctorAdvice.doctorId'] = doctorId;
-            }
-            
             const total = await PreDiagnosis.countDocuments(query);
             const list = await PreDiagnosis.find(query)
                 .populate('patientId', 'name gender birthDate')
@@ -233,14 +228,13 @@ class PrediagnosisService {
      */
     static async submitDoctorAdvice(
         prediagnosisId: string, 
-        doctorId: string, 
         advice: string, 
         recommendDepartment?: string, 
         urgencyLevel?: string
     ) {
         try {
             // 使用 mongoose.Types.ObjectId 验证 ID
-            if (!mongoose.Types.ObjectId.isValid(prediagnosisId) || !mongoose.Types.ObjectId.isValid(doctorId)) {
+            if (!mongoose.Types.ObjectId.isValid(prediagnosisId)) {
                 return null;
             }
 
@@ -249,7 +243,6 @@ class PrediagnosisService {
                 prediagnosisId,
                 {
                     $set: {
-                        'doctorAdvice.doctorId': doctorId,
                         'doctorAdvice.advice': advice,
                         'doctorAdvice.recommendDepartment': recommendDepartment,
                         'doctorAdvice.urgencyLevel': urgencyLevel,

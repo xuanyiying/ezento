@@ -1,7 +1,7 @@
 import { Patient, MedicalRecord, Consultation, User } from '../models';
-import { IPatient } from '../models/Patient';
 import mongoose from 'mongoose';
 import logger from '../config/logger';
+import { IPatient } from '../models/Patient';
 
 class PatientService {
     /**

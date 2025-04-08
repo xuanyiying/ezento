@@ -1,13 +1,10 @@
-import express, { Express } from 'express';
+import express from 'express';
 import prediagnosisRoutes from './prediagnosis.routes';
 import reportRoutes from './report.routes';
 import authRoutes from './auth.routes';
 import guideRoutes from './guide.routes';
-import consultationRoutes from './consultation.routes';
-import doctorPrediagnosisRoutes from './doctor.prediagnosis.routes';
 import doctorRoutes from './doctor.routes';
 import patientRoutes from './patient.routes';
-import prescriptionRoutes from './prescription.routes';
 import departmentRoutes from './department.routes';
 import conversationRoutes from './conversation.routes';
 
@@ -17,51 +14,27 @@ const router = express.Router();
 router.use('/auth', authRoutes);
 
 // Prediagnosis routes
-router.use('/api/patient/prediagnosis', prediagnosisRoutes);
+router.use('/patient/prediagnosis', prediagnosisRoutes);
 
 // Guide routes
-router.use('/api/guide', guideRoutes);
+router.use('/guide', guideRoutes);
 
 // Report routes
-router.use('/api/patient/reports', reportRoutes);
+router.use('/patient/reports', reportRoutes);
 
-// Consultation routes
-router.use('/api/consultations', consultationRoutes);
-
-// Patient specific consultation routes
-router.use('/api/patients/:id/consultations', (req, res, next) => {
-    req.body.patientId = req.params.id;
-    next();
-}, consultationRoutes);
-
-// Doctor specific consultation routes
-router.use('/api/doctors/:id/consultations', (req, res, next) => {
-    req.body.doctorId = req.params.id;
-    next();
-}, consultationRoutes);
-
-// Doctor prediagnosis routes
-router.use('/api/doctor/prediagnosis', doctorPrediagnosisRoutes);
 
 // Doctor routes
-router.use('/api/doctors', doctorRoutes);
+router.use('/doctors', doctorRoutes);
 
 // Patient routes
-router.use('/api/patients', patientRoutes);
-
-// Prescription routes
-router.use('/api/prescriptions', prescriptionRoutes);
+router.use('/patients', patientRoutes);
 
 // Department routes
-router.use('/api/departments', departmentRoutes);
+router.use('/departments', departmentRoutes);
 
 // Conversation routes
-router.use('/api/conversation', conversationRoutes);
+router.use('/conversation', conversationRoutes);
 
-// 初始化API路由
-const initializeAPIRoutes = (app: Express) => {
-    app.use('/', router);
-    return app;
-};
+// 初始化API路
 
-export default initializeAPIRoutes;
+export default router;

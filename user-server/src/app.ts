@@ -1,46 +1,85 @@
 import express from 'express';
+import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import apiDocs from './config/swagger';
-import initializeAPIRoutes from './routes';
-import { notFound, errorHandler, tenantContext } from './middlewares';
+import { notFound, errorHandler } from './middlewares';
+import { WebSocketServer } from './config/socket';
+import { WebSocketController } from './controllers/websocket.controller';
+import { ConversationRedisService } from './services/conversation.redis.service';
+import logger from './config/logger';
+import router from './routes';
 
-// 初始化express
-const app = express();
+class App {
+    public app: express.Application;
+    private server: any;
 
-// 应用中间件
-app.use(helmet());
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
-}));
-app.use(compression({
-    level: 6,
-    threshold: 10 * 1024 * 1024,
-    filter: (req, res) => {
-        if (req.headers['x-no-compression']) return false;
-        return compression.filter(req, res);
+    constructor() {
+        this.app = express();
+        this.server = createServer(this.app);
+        this.initializeMiddlewares();
+        this.initializeRoutes();
+        this.initializeErrorHandling();
+        this.initializeWebSocket();
+        this.initializeRedis();
     }
-}));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+    initializeMiddlewares() {
+        this.app.use(express.json());
+        this.app.use(express.urlencoded({ extended: true }));
+        this.app.use(cors(
+            {
+                origin: '*',
+                methods: ['GET', 'POST', 'PUT', 'DELETE'],
+                allowedHeaders: ['Content-Type', 'Authorization'],
+                credentials: true,
+            }
+        ));
+        this.app.use(helmet());
+        this.app.use(compression(
+            {
+                threshold: 10240,
+                level: 6,
+                memLevel: 9,
+            }
+        ));
+        this.app.use('/api-docs', apiDocs);
+        this.app.use(notFound);
+        this.app.use(errorHandler);
+    }
+    initializeRoutes() {
+        this.app.use('/api', router);
+    }
+    initializeErrorHandling() {
+        this.app.use(errorHandler);
+    }
 
-// 初始化API文档
-apiDocs(app);
+    private async initializeWebSocket() {
+        try {
+            await WebSocketServer.initialize(this.server);
+            const io = WebSocketServer.getInstance();
+            io.on('connection', WebSocketController.handleConnection);
+            logger.info('WebSocket server initialized successfully');
+        } catch (error) {
+            logger.error(`WebSocket initialization failed: ${error}`);
+        }
+    }
 
-// 应用租户上下文中间件到所有API路由
-app.use('/api', tenantContext);
+    private async initializeRedis() {
+        try {
+            await ConversationRedisService.initialize();
+            logger.info('Redis service initialized successfully');
+        } catch (error) {
+            logger.error(`Redis initialization failed: ${error}`);
+        }
+    }
 
-// 初始化所有API路由
-initializeAPIRoutes(app);
+    public listen() {
+        const port = process.env.PORT || 3000;
+        this.server.listen(port, () => {
+            logger.info(`Server is running on port ${port}`);
+        });
+    }
+}
 
-// 404未找到中间件
-app.use(notFound);
-
-// 错误处理中间件
-app.use(errorHandler);
-
-export default app;
+export default new App();

@@ -41,8 +41,8 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['admin', 'doctor', 'user'],
-        default: 'user'
+        enum: ['admin', 'doctor', 'patient'],
+        default: 'patient'
     },
     openId: {
         type: String
@@ -85,7 +85,6 @@ userSchema.index({ tenantId: 1, phone: 1 }, { unique: true });
 userSchema.index({ tenantId: 1, username: 1 }, { unique: true, sparse: true });
 
 // Create single field indexes
-userSchema.index({ name: 1 });
 userSchema.index({ phone: 1 }, { sparse: true, unique: true });
 userSchema.index({ email: 1 }, { sparse: true, unique: true });
 userSchema.index({ openId: 1 }, { sparse: true, unique: true });
@@ -114,4 +113,4 @@ userSchema.methods.comparePassword = async function(password: string): Promise<b
 
 const User = mongoose.model<UserDocument>('User', userSchema);
 
-export default User; 
+export default User;

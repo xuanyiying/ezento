@@ -1,8 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { Tenant, User, Patient, Doctor, Department } from '../models';
+import { Tenant, User, Doctor, Department } from '../models';
 import logger from '../config/logger';
-import PasswordUtil from '../utils/passwordUtil';
 
 // 加载环境变量
 dotenv.config({ path: '.env' });
@@ -99,26 +98,26 @@ const createDepartment = async () => {
 };
 
 // 创建患者用户
-const createPatientUser = async (tenantId: mongoose.Types.ObjectId) => {
+const createUser = async (tenantId: mongoose.Types.ObjectId) => {
   try {
     // 检查是否已存在测试患者用户 (通过username或openId)
     const existingUser = await User.findOne({ 
       $or: [
         { username: 'testuser' },
-        { openId: 'test_patient_openid' }
+        { openId: 'test_user_openid' }
       ]
     });
     if (existingUser) {
       logger.info(`删除已存在的患者用户: ${existingUser.name}`);
       await User.deleteOne({ _id: existingUser._id });
       // 同时删除关联的患者记录
-      await Patient.deleteOne({ userId: existingUser._id });
+      await User.deleteOne({ userId: existingUser._id });
     }
     
     // 创建患者用户
     const user = new User({
       tenantId,
-      openId: 'test_patient_openid',
+      openId: 'test_user_openid',
       userType: 'user',
       username: 'testuser',
       name: '测试患者',
@@ -129,23 +128,8 @@ const createPatientUser = async (tenantId: mongoose.Types.ObjectId) => {
       birthDate: new Date('1990-01-01'),
       isWechatUser: false
     });
-
     const savedUser = await user.save();
-
-    // 创建患者记录
-    const patient = new Patient({
-      userId: savedUser._id,
-      gender: 'male',
-      age: 33,
-      height: 175,
-      weight: 70,
-      allergies: ['花粉'],
-      medicalHistory: ['高血压']
-    });
-
-    const savedPatient = await patient.save();
-    logger.info('测试患者创建成功');
-    return { user: savedUser, patient: savedPatient };
+    return { user: savedUser};
   } catch (error: any) {
     logger.error(`创建患者失败: ${error.message}`);
     throw error;
@@ -232,7 +216,7 @@ const initializeUsers = async () => {
     // 创建租户、科室和用户
     const tenant = await createTenant();
     const department = await createDepartment();
-    await createPatientUser(tenant._id as mongoose.Types.ObjectId);
+    await createUser(tenant._id as mongoose.Types.ObjectId);
     await createDoctorUser(tenant._id as mongoose.Types.ObjectId, department._id as mongoose.Types.ObjectId);
     
     logger.info('初始化完成');

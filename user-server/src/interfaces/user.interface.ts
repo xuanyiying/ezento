@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 /**
  * 用户角色类型
  */
-export type UserRole = 'admin' | 'doctor' | 'user';
+export type UserRole = 'admin' | 'doctor' | 'patient';
 
 /**
  * 用户性别类型
@@ -50,4 +50,4 @@ export type UserCreateData = {
     tenantId?: mongoose.Types.ObjectId;
 };
 
-export type UserUpdateData = Partial<UserCreateData>; 
+export type UserUpdateData = Partial<UserCreateData>;

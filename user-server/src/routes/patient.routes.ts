@@ -68,7 +68,7 @@ router.get('/', auth, doctorAuth, PatientController.getAllPatients);
  * @desc    Get patient by ID
  * @access  Private
  */
-router.get('/:id', auth, PatientController.getPatientById);
+router.get('/:id', auth, doctorAuth, PatientController.getPatientById);
 
 /**
  * @swagger

@@ -35,15 +35,15 @@ export class AuthController {
                 ResponseUtil.unauthorized(res, '密码为空');
                 return;
             }
-            
+
             try {
                 // 使用标准化的密码工具进行比较
-                const isPasswordValid = await PasswordUtil.comparePassword(password, user.password);                
+                const isPasswordValid = await PasswordUtil.comparePassword(password, user.password);
                 if (!isPasswordValid) {
                     ResponseUtil.unauthorized(res, '密码错误');
                     return;
                 }
-                
+
                 const token = jwt.sign(
                     {
                         userId: user._id,
@@ -262,7 +262,7 @@ export class AuthController {
 
             ResponseUtil.success(res, {
                 userId: user._id,
-                username : user.username,
+                username: user.username,
                 name: user.name,
                 phone: user.phone,
                 role: user.role,
@@ -284,11 +284,14 @@ export class AuthController {
      */
     static async register(req: Request, res: Response): Promise<void> {
         try {
-            const { username, password, name, phone, role } = req.body;
+            let { username, password, name, phone, role } = req.body;
 
-            if (!username || !password || !name || !phone || !role) {
+            if (!username || !password || !phone) {
                 ResponseUtil.badRequest(res, '所有字段都是必填的');
                 return;
+            }
+            if (!role) {
+                role = 'patient';
             }
 
             // 检查用户名是否已存在
@@ -317,4 +320,4 @@ export class AuthController {
     }
 }
 
-export default AuthController; 
+export default AuthController;

@@ -29,6 +29,8 @@ const PatientSchema: Schema = new Schema(
         age: {
             type: Number,
             required: true,
+            min: 0,
+            max: 150,
         },
         height: {
             type: Number, // cm
@@ -48,7 +50,4 @@ const PatientSchema: Schema = new Schema(
     { timestamps: true }
 );
 
-// Remove redundant index as it's already created by unique: true
-// PatientSchema.index({ userId: 1 });
-
-export default mongoose.model<IPatient>('Patient', PatientSchema); 
+export default mongoose.model<IPatient>('Patient', PatientSchema);

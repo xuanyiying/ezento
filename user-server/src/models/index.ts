@@ -1,4 +1,3 @@
-import Patient from './Patient';
 import Doctor from './Doctor';
 import { Consultation } from './Consultation';
 import { Message } from './Message';
@@ -10,11 +9,13 @@ import Department from './Department';
 import Tenant, { ITenant } from './Tenant';
 import { Conversation } from './Conversation';
 import User from './User';
+import Patient from './Patient';
 
 export {
+
     User,
-    Patient,
     Doctor,
+    Patient,
     Consultation,
     Message,
     MedicalRecord,

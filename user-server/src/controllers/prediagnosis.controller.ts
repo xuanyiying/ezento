@@ -129,7 +129,7 @@ export class PreDiagnosisController {
             return;
         }
 
-        PrediagnosisService.getDoctorPreDiagnosis(doctorId, status, page, limit)
+        PrediagnosisService.getDoctorPreDiagnosis(status, page, limit)
             .then(({ prediagnoses, total }) => {
                 // 格式化响应
                 const formattedPreDiagnoses = prediagnoses.map((prediagnosis: PreDiagnosisDocument) => ({
@@ -156,16 +156,14 @@ export class PreDiagnosisController {
      */
     static submitDoctorAdvice(req: Request, res: Response): void {
         const { prediagnosisId, advice, recommendDepartment, urgencyLevel } = req.body;
-        const doctorId = req.user?.userId;
 
-        if (!prediagnosisId || !advice || !doctorId) {
+        if (!prediagnosisId || !advice) {
             ResponseUtil.badRequest(res, '缺少必填字段：预诊断ID、医生建议');
             return;
         }
 
         PrediagnosisService.submitDoctorAdvice(
             prediagnosisId,
-            doctorId,
             advice,
             recommendDepartment,
             urgencyLevel

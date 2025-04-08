@@ -1,20 +1,23 @@
+// 导入所需的mongoose模块和类型
 import mongoose, { Document, Schema } from 'mongoose';
 
+// 租户接口定义
 export interface ITenant extends Document {
-    name: string;
-    code: string;
-    description?: string;
-    isActive: boolean;
-    settings?: {
-        allowPatientRegistration: boolean;
-        allowDoctorRegistration: boolean;
-        maxUsers: number;
-        features: string[];
+    name: string;                // 租户名称
+    code: string;                // 租户唯一代码
+    description?: string;        // 租户描述（可选）
+    isActive: boolean;           // 租户状态（启用/禁用）
+    settings?: {                 // 租户配置选项（可选）
+        allowPatientRegistration: boolean;  // 是否允许患者注册
+        allowDoctorRegistration: boolean;   // 是否允许医生注册
+        maxUsers: number;                   // 最大用户数量限制
+        features: string[];                 // 启用的功能特性列表
     };
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt: Date;            // 创建时间
+    updatedAt: Date;            // 更新时间
 }
 
+// 租户Schema定义
 const TenantSchema: Schema = new Schema(
     {
         name: {
@@ -56,8 +59,9 @@ const TenantSchema: Schema = new Schema(
     { timestamps: true }
 );
 
-// Create indexes for faster queries
-// TenantSchema.index({ code: 1 }); // Already defined as unique in schema
+// 创建索引以提高查询性能
+// code字段已在Schema中定义为唯一索引
+// 按租户状态创建索引，用于快速筛选活跃/非活跃租户
 TenantSchema.index({ isActive: 1 });
 
-export default mongoose.model<ITenant>('Tenant', TenantSchema); 
+export default mongoose.model<ITenant>('Tenant', TenantSchema);

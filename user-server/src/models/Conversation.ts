@@ -2,7 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 import { IConversation, IConversationMessage, ConversationType, SenderType } from '../interfaces/conversation.interface';
 
 /**
- * 会话消息Schema
+ * 会话消息Schema // 消息内容、发送者类型、发送时间、元数据信息
  */
 const ConversationMessageSchema = new Schema<IConversationMessage>({
     content: { 
@@ -25,7 +25,7 @@ const ConversationMessageSchema = new Schema<IConversationMessage>({
 }, { _id: false });
 
 /**
- * 会话Schema
+ * 会话Schema // 会话类型、关联ID、患者ID、消息列表、状态
  */
 const ConversationSchema = new Schema<IConversation>({
     conversationType: { 
