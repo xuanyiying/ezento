@@ -17,6 +17,8 @@ class ConversationController {
             const { conversationType, referenceId, initialMessage } = req.body;
             const patientId = req.user?.userId;
 
+            logger.info(`Creating conversation: type=${conversationType}, refId=${referenceId}, userId=${patientId}`);
+
             if (!patientId || !conversationType || !referenceId) {
                 ResponseUtil.badRequest(res, '缺少必要参数');
                 return;
@@ -51,6 +53,8 @@ class ConversationController {
             const { content, metadata } = req.body;
             const patientId = req.user?.userId;
 
+            logger.info(`Adding message: conversationId=${conversationId}, userId=${patientId}, content=${content?.substring(0, 30)}...`);
+
             if (!patientId || !conversationId || !content) {
                 ResponseUtil.badRequest(res, '缺少必要参数');
                 return;
@@ -77,6 +81,8 @@ class ConversationController {
         try {
             const { conversationType, referenceId } = req.params;
             const patientId = req.user?.userId;
+
+            logger.info(`Getting conversation history: type=${conversationType}, refId=${referenceId}, userId=${patientId}`);
 
             if (!patientId || !conversationType || !referenceId) {
                 ResponseUtil.badRequest(res, '缺少必要参数');
@@ -108,6 +114,8 @@ class ConversationController {
         try {
             const { conversationId } = req.params;
 
+            logger.info(`Closing conversation: conversationId=${conversationId}`);
+
             if (!conversationId) {
                 ResponseUtil.badRequest(res, '缺少会话ID');
                 return;
@@ -133,6 +141,8 @@ class ConversationController {
         try {
             const { conversationId } = req.params;
             const { format = 'PDF' } = req.query;
+
+            logger.info(`Exporting conversation: conversationId=${conversationId}, format=${format}`);
 
             if (!conversationId) {
                 ResponseUtil.badRequest(res, '缺少会话ID');
@@ -164,6 +174,8 @@ class ConversationController {
     static async downloadExportedFile(req: Request, res: Response): Promise<void> {
         try {
             const { path } = req.query;
+
+            logger.info(`Downloading file: path=${path}`);
 
             if (!path || typeof path !== 'string') {
                 ResponseUtil.badRequest(res, '缺少文件路径');

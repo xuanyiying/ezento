@@ -44,13 +44,13 @@ class App {
             }
         ));
         this.app.use('/api-docs', apiDocs);
-        this.app.use(notFound);
-        this.app.use(errorHandler);
     }
     initializeRoutes() {
         this.app.use('/api', router);
     }
     initializeErrorHandling() {
+        // These middleware should be added after routes, as they catch unmatched routes
+        this.app.use(notFound);
         this.app.use(errorHandler);
     }
 
@@ -74,10 +74,9 @@ class App {
         }
     }
 
-    public listen() {
-        const port = process.env.PORT || 3000;
-        this.server.listen(port, () => {
-            logger.info(`Server is running on port ${port}`);
+    public listen(PORT: string | number, p0: () => void) {
+        this.server.listen(PORT, () => {
+            logger.info(`Server is running on port ${PORT}`);
         });
     }
 }

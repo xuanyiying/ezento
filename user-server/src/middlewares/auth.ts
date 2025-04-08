@@ -29,6 +29,18 @@ interface JwtPayload {
  */
 export const auth = (req: Request, res: Response, next: NextFunction) => {
     try {
+        // For development environment, allow unauthenticated access temporarily
+        if (process.env.NODE_ENV === 'development') {
+            console.log('[DEV MODE] Bypassing authentication for development');
+            req.user = {
+                userId: 'dev-user-id',
+                name: 'Development User',
+                role: 'ADMIN',
+                tenantId: 'dev-tenant'
+            };
+            return next();
+        }
+        
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             res.status(401).json(Resp.fail('Authentication failed: No token provided', 401));
