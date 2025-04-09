@@ -1,37 +1,76 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import { UserDocument } from '../interfaces/user.interface';
+import { ConsultationType, ConsultationStatus, IDoctorAdvice, IAiSuggestion } from '../interfaces/consultation.interface';
 
 export interface IConsultation extends Document {
-    patientId: UserDocument['_id'] | UserDocument;
-    doctorId: UserDocument['_id'] | UserDocument;
+    userId: UserDocument['_id'] | UserDocument;
+    consultationType: ConsultationType;
     symptoms: string;
+    bodyParts?: string[];
+    duration?: string;
+    existingConditions?: string[];
+    images?: string[];
+    reportType?: string;
+    reportDate?: Date;
+    hospital?: string;
+    reportImages?: string[];
     diagnosis?: string;
     prescription?: string;
     notes?: string;
     fee: number;
-    status: 'waiting' | 'in-progress' | 'completed' | 'cancelled';
+    status: ConsultationStatus;
     startTime: Date;
     endTime?: Date;
-    aiSuggestion?: string;
+    doctorAdvice?: IDoctorAdvice;
+    aiSuggestion?: IAiSuggestion;
+    conversationId?: Schema.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
 
 const ConsultationSchema: Schema = new Schema(
     {
-        patientId: {
+        userId: {
             type: Schema.Types.ObjectId,
             ref: 'User',
             required: true,
         },
-        doctorId: {
-            type: Schema.Types.ObjectId,
-            ref: 'User',
+        consultationType: {
+            type: String,
+            enum: Object.values(ConsultationType),
             required: true,
         },
         symptoms: {
             type: String,
             required: true,
+        },
+        bodyParts: {
+            type: [String],
+            default: [],
+        },
+        duration: {
+            type: String,
+        },
+        existingConditions: {
+            type: [String],
+            default: [],
+        },
+        images: {
+            type: [String],
+            default: [],
+        },
+        reportType: {
+            type: String,
+        },
+        reportDate: {
+            type: Date,
+        },
+        hospital: {
+            type: String,
+        },
+        reportImages: {
+            type: [String],
+            default: [],
         },
         diagnosis: {
             type: String,
@@ -48,8 +87,8 @@ const ConsultationSchema: Schema = new Schema(
         },
         status: {
             type: String,
-            enum: ['waiting', 'in-progress', 'completed', 'cancelled'],
-            default: 'waiting',
+            enum: Object.values(ConsultationStatus),
+            default: ConsultationStatus.PENDING,
         },
         startTime: {
             type: Date,
@@ -58,16 +97,32 @@ const ConsultationSchema: Schema = new Schema(
         endTime: {
             type: Date,
         },
+        conversationId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Conversation',
+        },
+        doctorAdvice: {
+            doctorId: { type: Schema.Types.ObjectId, ref: 'User' },
+            advice: { type: String },
+            recommendDepartment: { type: String },
+            urgencyLevel: { type: String },
+            createTime: { type: Date, default: Date.now },
+        },
         aiSuggestion: {
-            type: String,
+            possibleConditions: { type: String },
+            recommendations: { type: String },
+            urgencyLevel: { type: String },
+            suggestedDepartments: { type: [String], default: [] },
+            createTime: { type: Date, default: Date.now },
         },
     },
     { timestamps: true }
 );
 
 // Create indexes for faster queries
-ConsultationSchema.index({ patientId: 1, createdAt: -1 });
-ConsultationSchema.index({ doctorId: 1, createdAt: -1 });
+ConsultationSchema.index({ userId: 1, createdAt: -1 });
 ConsultationSchema.index({ status: 1 });
+ConsultationSchema.index({ consultationType: 1 });
+ConsultationSchema.index({ conversationId: 1 });
 
 export const Consultation = mongoose.model<IConsultation>('Consultation', ConsultationSchema); 

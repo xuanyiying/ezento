@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import config from '../config/config';
 import { Resp } from '../utils/response';
+import { UserService } from '../services';
+import logger from '../config/logger';
 
 // Add user to request object with proper type definition
 declare global {
@@ -10,9 +12,11 @@ declare global {
             user?: {
                 userId: string;
                 name?: string;
-                role: string;
+                role?: string;
+                avatar?: string;
                 tenantId?: string;
             };
+            token?: string;
         }
     }
 }
@@ -27,20 +31,8 @@ interface JwtPayload {
 /**
  * Middleware to authenticate user based on JWT token
  */
-export const auth = (req: Request, res: Response, next: NextFunction) => {
+export const auth = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // For development environment, allow unauthenticated access temporarily
-        if (process.env.NODE_ENV === 'development') {
-            console.log('[DEV MODE] Bypassing authentication for development');
-            req.user = {
-                userId: 'dev-user-id',
-                name: 'Development User',
-                role: 'ADMIN',
-                tenantId: 'dev-tenant'
-            };
-            return next();
-        }
-        
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             res.status(401).json(Resp.fail('Authentication failed: No token provided', 401));
@@ -54,13 +46,15 @@ export const auth = (req: Request, res: Response, next: NextFunction) => {
         }
 
         const decoded = jwt.verify(token, config.jwtSecret) as JwtPayload;
-
+        const user = await UserService.findUserById(decoded.userId);
+        logger.info(`login user: ${JSON.stringify(user)}`);
         // Normalize the role to uppercase for easier comparison
         req.user = {
             userId: decoded.userId,
-            name: decoded.name,
-            role: decoded.role.toUpperCase(),
-            tenantId: decoded.tenantId
+            name: user?.name,
+            role: user?.role?.toUpperCase(),
+            avatar: user?.avatar,
+            ...(decoded.tenantId ? { tenantId: decoded.tenantId } : {})
         };
 
         next();
@@ -79,8 +73,8 @@ export const patientAuth = (req: Request, res: Response, next: NextFunction) => 
     }
 
     // Case insensitive role check
-    const role = req.user.role.toUpperCase();
-    if (role === 'PATIENT' || role === 'ADMIN') {
+    const role = req.user.role?.toUpperCase();
+    if ( !role || role === 'PATIENT' ) {
         next();
     } else {
         res.status(403).json(Resp.fail('Access denied: Patient only', 403));
@@ -97,7 +91,7 @@ export const doctorAuth = (req: Request, res: Response, next: NextFunction) => {
     }
 
     // Case insensitive role check
-    const role = req.user.role.toUpperCase();
+    const role = req.user.role?.toUpperCase();
     if (role === 'DOCTOR' || role === 'ADMIN') {
         next();
     } else {
@@ -115,7 +109,7 @@ export const adminAuth = (req: Request, res: Response, next: NextFunction) => {
     }
 
     // Case insensitive role check
-    const role = req.user.role.toUpperCase();
+    const role = req.user.role?.toUpperCase();
     if (role === 'ADMIN') {
         next();
     } else {

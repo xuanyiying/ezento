@@ -10,10 +10,6 @@ export interface DefaultConfig {
     aliCloudApiEndpoint: string;
     aliCloudQwqModelName: string;
     aliCloudVoiceWsEndpoint: string;
-    dashscopeApiKey: string;
-    deepSeekApiKey: string;
-    deepSeekApiEndpoint: string;
-    deepSeekModelName: string;
 }
 
 export default {
@@ -25,8 +21,4 @@ export default {
     aliCloudApiEndpoint: process.env.ALI_CLOUD_API_ENDPOINT || '',
     aliCloudQwqModelName: process.env.ALI_CLOUD_QWQ_MODEL_NAME || '',
     aliCloudVoiceWsEndpoint: process.env.ALIYUN_VOICE_WS_ENDPOINT || '',
-    dashscopeApiKey: process.env.DASHSCOPE_API_KEY || '',
-    deepSeekApiKey: process.env.DEEP_SEEK_API_KEY || '',
-    deepSeekApiEndpoint: process.env.DEEP_SEEK_API_ENDPOINT || '',
-    deepSeekModelName: process.env.DEEP_SEEK_MODEL_NAME || '',
 }; 

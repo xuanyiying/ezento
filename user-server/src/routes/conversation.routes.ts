@@ -1,7 +1,6 @@
 import express from 'express';
 import ConversationController from '../controllers/conversation.controller';
-import { auth } from '../middlewares';
-
+import { auth } from '../middlewares/auth';
 const router = express.Router();
 
 /**
@@ -124,7 +123,7 @@ router.post('/:conversationId/messages', auth, ConversationController.addMessage
  *       500:
  *         description: 服务器错误
  */
-router.get('/:conversationType/:referenceId/history', auth, ConversationController.getConversationHistory);
+router.get('/:conversationId', auth, ConversationController.getConversationHistory);
 
 /**
  * @swagger
@@ -215,6 +214,6 @@ router.get('/:conversationId/export', auth, ConversationController.exportConvers
  *       500:
  *         description: 服务器错误
  */
-router.get('/download', auth, ConversationController.downloadExportedFile);
+router.get('/exports/download/:filename', auth, ConversationController.downloadExportedFile);
 
 export default router;

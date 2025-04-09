@@ -1,4 +1,4 @@
-import { Patient, MedicalRecord, Consultation, User } from '../models';
+import { Patient, Consultation, User } from '../models';
 import mongoose from 'mongoose';
 import logger from '../config/logger';
 import { IPatient } from '../models/Patient';
@@ -131,28 +131,6 @@ class PatientService {
             return true;
         } catch (error) {
             logger.error(`Error in PatientService.deletePatient: ${error}`);
-            throw error;
-        }
-    }
-
-    /**
-     * Get all medical records for a patient
-     */
-    static async getPatientMedicalRecords(patientId: string) {
-        try {
-            if (!mongoose.Types.ObjectId.isValid(patientId)) {
-                return [];
-            }
-
-            const medicalRecords = await MedicalRecord.find({ patientId })
-                .populate('doctorId', 'title department hospital')
-                .populate('consultationId', 'symptoms startTime status')
-                .sort({ createdAt: -1 })
-                .exec();
-
-            return medicalRecords;
-        } catch (error) {
-            logger.error(`Error in PatientService.getPatientMedicalRecords: ${error}`);
             throw error;
         }
     }

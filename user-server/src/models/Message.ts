@@ -7,11 +7,16 @@ import { UserDocument } from '../interfaces/user.interface';
 export interface IMessage extends Document {
     consultationId: IConsultation['_id'] | IConsultation;  // 关联的问诊ID
     senderId: UserDocument['_id'] | string;               // 发送者ID
-    senderType: 'patient' | 'doctor' | 'ai';             // 发送者类型：患者/医生/AI
+    senderType: 'patient' | 'system';             // 发送者类型：患者/系统
     content: string;                                     // 消息内容
-    messageType: 'text' | 'image' | 'audio' | 'video';   // 消息类型：文本/图片/音频/视频
-    createdAt: Date;                                     // 创建时间
-    updatedAt: Date;                                     // 更新时间
+    messageType: 'text' | 'image' | 'document';   // 消息类型：文本/图片/文档
+    timestamp: Date;                                     // 创建时间
+    referenceId: string; // 关联ID（预问诊ID、导诊ID或报告ID）
+    conversationId: mongoose.Types.ObjectId;
+    sender: string;
+    createdAt: Date;
+    updatedAt: Date;
+    metadata: Record<string, any>; // 元数据（可包含图片链接等）
 }
 
 // 消息Schema定义
@@ -28,7 +33,7 @@ const MessageSchema: Schema = new Schema({
     },
     senderType: {
         type: String,
-        enum: ['patient', 'ai'],
+        enum: ['patient', 'system'],
         required: true
     },
     content: {
@@ -39,6 +44,29 @@ const MessageSchema: Schema = new Schema({
         type: String,
         enum: ['text', 'image', 'pdf'],
         default: 'text'
+    },
+    referenceId: {
+        type: String,
+        required: true
+    },
+    conversationId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Conversation',
+        required: true,
+        index: true
+    },
+    sender: {
+        type: String,
+        required: true,
+        enum: ['USER', 'AI', 'SYSTEM']
+    },
+    metadata: {
+        type: Schema.Types.Mixed,
+        default: {}
+    },
+    timestamp: {
+        type: Date,
+        default: Date.now
     }
 }, { timestamps: true });
 

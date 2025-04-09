@@ -47,7 +47,7 @@ export class AuthController {
                 const token = jwt.sign(
                     {
                         userId: user._id,
-                        role: user.role
+                        role: user.role,
                     },
                     process.env.JWT_SECRET || 'your-secret-key',
                     { expiresIn: '24h' }
@@ -55,10 +55,13 @@ export class AuthController {
 
                 ResponseUtil.success(res, {
                     token,
-                    userId: user._id,
-                    role: user.role,
-                    userName: user.name,
-                    avatar: user.avatar
+                    user : {
+                        userId: user._id,
+                        role: user.role,
+                        userName: user.name,
+                        avatar: user.avatar,
+                    },
+                    isNewUser: false
                 });
             } catch (bcryptError: any) {
                 logger.error(`密码验证错误: ${bcryptError.message}`);
@@ -141,10 +144,12 @@ export class AuthController {
 
             ResponseUtil.success(res, {
                 token,
-                userId: user?._id,
-                role: user?.role,
-                userName: user?.name,
-                avatar: user?.avatar,
+                user : {
+                    userId: user?._id,
+                    role: user?.role,
+                    userName: user?.name,
+                    avatar: user?.avatar,
+                },
                 isNewUser
             });
         } catch (error: any) {
@@ -297,7 +302,7 @@ export class AuthController {
             // 检查用户名是否已存在
             const existingUser = await UserService.findUserByUsername(username);
             if (existingUser) {
-                ResponseUtil.conflict(res, '用户名已存在');
+                ResponseUtil.badRequest(res, '用户名已存在');
                 return;
             }
             // 创建新用户

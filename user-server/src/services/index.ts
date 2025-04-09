@@ -1,19 +1,22 @@
 import AiService from './ai.service';
 import PatientService from './patient.service';
 import DoctorService from './doctor.service';
-import PreDiagnosisService from './prediagnosis.service';
-import ReportService from './report.service';
 import DepartmentService from './department.service';
 import UserService from './user.service';
 import ConversationService from './conversation.service';
-
+import ConsultationService from './consultation.service';
+import OcrService from './ocr.service';
+import MinioService from './minio.service';
+import { CacheService } from './cache/cache.service';
 export {
     AiService,
     PatientService,
     DoctorService,
-    PreDiagnosisService,
-    ReportService,
     DepartmentService,
     UserService,
-    ConversationService
+    ConversationService,
+    ConsultationService,
+    OcrService,
+    MinioService,
+    CacheService,
 };

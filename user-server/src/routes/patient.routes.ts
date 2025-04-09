@@ -36,7 +36,7 @@ const router = express.Router();
  * @desc    Get all patients
  * @access  Private/Doctor
  */
-router.get('/', auth, doctorAuth, PatientController.getAllPatients);
+router.get('/', auth, PatientController.getAllPatients);
 
 /**
  * @swagger

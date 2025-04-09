@@ -1,10 +1,11 @@
 import { Socket } from 'socket.io';
 import { WebSocketServer } from '../config/socket';
 import ConversationService from '../services/conversation.service';
-import { SenderType, ConversationType } from '../interfaces/conversation.interface';
+import { SenderType } from '../interfaces/conversation.interface';
 import logger from '../config/logger';
 import { AiService } from '../services/ai.service';
-import Report from '../models/Report';
+import mongoose from 'mongoose';
+import { Department, Doctor } from '../models';
 
 export class WebSocketController {
     static async handleConnection(socket: Socket): Promise<void> {
@@ -56,65 +57,24 @@ export class WebSocketController {
                 }
             });
 
-            // 处理新消息
+            // 使用handleMessage处理新消息事件
             socket.on('new_message', async (data: {
                 conversationId: string;
                 content: string;
                 metadata?: any;
+                conversationType: string;
             }) => {
-                try {
-                    const { conversationId, content, metadata } = data;
-                    
-                    if (!conversationId || !content) {
-                        logger.warn(`New message attempt with invalid data by user ${userId}`);
-                        socket.emit('error', { message: '消息内容不能为空' });
-                        return;
-                    }
-
-                    logger.info(`User ${userId} sent message to conversation ${conversationId}`);
-
-                    // 添加用户消息到会话
-                    const conversation = await ConversationService.addMessage({
-                        conversationId,
-                        content,
-                        senderType: SenderType.PATIENT,
-                        metadata
-                    });
-
-                    // 广播消息到会话房间
-                    await WebSocketServer.emitToRoom(
-                        `conversation_${conversationId}`,
-                        'message_received',
-                        {
-                            message: conversation.messages[conversation.messages.length - 1],
-                            conversation
-                        }
-                    );
-
-                    // 触发AI响应
-                    const aiResponse = await ConversationService.generateStreamingAiResponse(
-                        conversation,
-                        (chunk: string) => {
-                            WebSocketServer.emitToRoom(
-                                `conversation_${conversationId}`,
-                                'ai_response_chunk',
-                                { chunk }
-                            );
-                        }
-                    );
-
-                    // 发送AI响应完成事件
-                    await WebSocketServer.emitToRoom(
-                        `conversation_${conversationId}`,
-                        'ai_response_complete',
-                        { conversation: aiResponse }
-                    );
-                } catch (error: any) {
-                    logger.error(`Error handling new message: ${error.message || error}`);
-                    socket.emit('error', { message: '消息处理失败' });
-                }
+                await this.handleMessage(socket, data, userId);
             });
-
+            // 预问诊
+            socket.on('pre_diagnosis', async (data: {
+                conversationId: string;
+                content: string;
+                metadata?: any;
+                conversationType: string;
+            }) => {
+                await this.handleMessage(socket, data, userId);
+            });
             // 处理报告OCR解析
             socket.on('process_report', async (data: {
                 reportId: string;
@@ -128,16 +88,7 @@ export class WebSocketController {
                     
                     // 调用百度OCR API提取文本
                     const extractedText = await AiService.extractTextFromImage(imageBase64);
-                    
-                    // 更新报告内容
-                    const report = await Report.findById(reportId);
-                    if (!report) {
-                        throw new Error('报告不存在');
-                    }
-                    
-                    report.description = extractedText;
-                    await report.save();
-                    
+                                        
                     // 通知客户端OCR处理完成
                     socket.emit('ocr_processing', { 
                         status: 'completed',
@@ -189,6 +140,123 @@ export class WebSocketController {
         } catch (error: any) {
             logger.error(`WebSocket connection error: ${error.message || error}`);
             socket.disconnect();
+        }
+    }
+
+    static async handleMessage(socket: Socket, data: {
+        conversationId: string;
+        content: string;
+        metadata?: any;
+        conversationType: string;
+    }, userId: string): Promise<void> {
+        try {
+            const { conversationId, content, metadata, conversationType } = data;
+            
+            if (!conversationId || !content) {
+                logger.warn(`New message attempt with invalid data by user ${userId}`);
+                socket.emit('error', { message: '消息内容不能为空' });
+                return;
+            }
+
+            logger.info(`User ${userId} sent ${conversationType} message to conversation ${conversationId}`);
+            let conversation = await ConversationService.get(conversationId);
+            // 添加用户消息到会话
+            const userMessage = {
+                conversationId: new mongoose.Types.ObjectId(conversationId),
+                content,
+                senderType: SenderType.PATIENT,
+                metadata,
+                referenceId: conversation.referenceId,
+                timestamp: new Date()
+            };
+            
+             conversation = await ConversationService.addMessage(userMessage);
+
+            // 广播消息到会话房间
+            await WebSocketServer.emitToRoom(
+                `conversation_${conversationId}`,
+                'message_received',
+                {
+                    message: conversation.messages[conversation.messages.length - 1],
+                    conversation
+                }
+            );
+
+            // 根据会话类型处理不同的AI响应
+            let aiResponse: string;
+            let additionalData: any = {};
+            
+            // 准备特定类型会话所需的数据
+            if (conversationType === 'GUIDE') {
+                // 导诊需要科室和医生数据
+                const departments = await Department.find().lean();
+                const doctors = await Doctor.find()
+                    .populate('departmentId')
+                    .populate('schedules')
+                    .lean();
+                
+                additionalData = { departments, doctors };
+            } 
+            else if (conversationType === 'REPORT_INTERPRETATION' && metadata && metadata.reportId) {
+                // 报告解读需要报告数据
+                    additionalData = {
+                        reportData: {
+                            reportType: metadata.reportType,
+                            description: metadata.description,
+                            reportImages: metadata.reportImages,
+                            hospital: metadata.hospital,
+                            reportDate: metadata.reportDate
+                        }
+                    };
+                
+            }
+
+            // 统一处理AI响应
+            const streamHandler = (chunk: string) => {
+                WebSocketServer.emitToRoom(
+                    `conversation_${conversationId}`,
+                    'ai_response_chunk',
+                    { 
+                        chunk, 
+                        type: conversationType 
+                    }
+                );
+            };
+            
+            aiResponse = await AiService.processConversationMessage(
+                userId,
+                conversationId,
+                content,
+                conversationType,
+                streamHandler,
+                Object.keys(additionalData).length > 0 ? additionalData : undefined
+            );
+
+            // 为AI响应创建消息
+            const aiMessage = {
+                conversationId: new mongoose.Types.ObjectId(conversationId),
+                content: aiResponse,
+                senderType: SenderType.SYSTEM,
+                metadata: {},
+                referenceId: conversation.referenceId,
+                timestamp: new Date()
+            };
+            
+            // 更新会话
+            const updatedConversation = await ConversationService.addMessage(aiMessage);
+
+            // 发送AI响应完成事件
+            await WebSocketServer.emitToRoom(
+                `conversation_${conversationId}`,
+                'ai_response_complete',
+                { 
+                    conversation: updatedConversation,
+                    conversationType
+                }
+            );
+        } catch (error: any) {
+            logger.error(`Error handling new message: ${error.message || error}`);
+            socket.emit('error', { message: '消息处理失败' });
         }
     }
 }

@@ -8,6 +8,7 @@ interface SessionOptions {
 }
 
 class UserService {
+   
     /**
      * Find a user by username
      */

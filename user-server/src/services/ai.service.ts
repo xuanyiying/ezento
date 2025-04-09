@@ -2,6 +2,8 @@ import axios from 'axios';
 import logger from '../config/logger';
 import { ConversationType } from '../interfaces/conversation.interface';
 import config from '../config/config';
+import { Department, Doctor } from '../models';
+import OCRService from './ocr.service';
 
 // Extend the config object with AI-specific configuration
 const aiConfig = {
@@ -13,47 +15,104 @@ const aiConfig = {
 Object.assign(config, aiConfig);
 
 export interface GenerateTextOptions {
-    prompt: string;
-    systemPrompt?: string;
+    prompt: string; // 用户输入的问题
+    systemPrompt?: string; // 系统提示词
     patientInfo?: {
-        age?: number;
-        gender?: string;
-        symptoms?: string[];
-        medicalHistory?: string[];
+        age?: number; // 患者年龄
+        gender?: string; // 患者性别
+        symptoms?: string[]; // 症状描述
+        medicalHistory?: string[]; // 病史
     };
-    maxTokens?: number;
-    temperature?: number;
-    stream?: boolean;
-    reportInfo?: ReportInfo;
-    conversationHistory?: Array<{role: 'user' | 'assistant' | 'system', content: string}>;
-    useDeepSeek?: boolean;
+    maxTokens?: number; // 最大token数  
+    temperature?: number; // 温度
+    stream?: boolean; // 是否流式
+    reportInfo?: ReportInfo; // 报告信息
+    conversationHistory?: Array<{ role: 'patient' | 'admin' | 'system', content: string }>; // 会话历史
+    useDeepSeek?: boolean; // 是否使用深度求索
 }
 
 export interface GenerateTextResponse {
-    id: string;
-    text: string;
-    thinking?: string;
+    id: string; // 请求id
+    text: string; // 响应文本
+    thinking?: string; // 思考过程
 }
 
-// Patient interface for pre-diagnosis
-export interface PatientPreDiagnosisInfo {
-    age?: number;
-    gender?: string;
-    symptoms: string[];
-    bodyParts?: string[];
-    duration?: string;
-    existingConditions?: string[];
-    medicalHistory?: string[];
+/**
+ * 患者预问诊信息接口
+ */
+export interface PrediagnosisInfo {
+    age?: number; // 患者年龄
+    gender?: string; // 患者性别
+    symptoms: string[]; // 症状描述
+    bodyParts?: string[]; // 身体部位
+    duration?: string; // 持续时间
+    existingConditions?: string[]; // 现有条件
 }
-// Report interface for report interpretation
+
+/**
+ * 报告信息接口
+ */
 export interface ReportInfo {
-    patientAge?: number;
-    patientGender?: string;
-    reportType: string;
-    reportDate?: string;
-    hospital?: string;
-    description?: string;
-    reportContent: string;
+    patientAge?: number; // 患者年龄
+    patientGender?: string; // 患者性别
+    reportType: string; // 报告类型
+    reportDate?: string; // 报告日期
+    hospital?: string; // 医院名称
+    description: string; // 报告描述
+    reportContent: string; // 报告内容
+}
+
+/**
+ * 导诊信息接口
+ */
+export interface GuideInfo {
+    age?: number; // 患者年龄
+    gender?: string; // 患者性别
+    symptoms: string[]; // 症状描述
+    bodyParts?: string[]; // 身体部位
+    duration?: string; // 持续时间
+    existingConditions?: string[]; // 现有条件
+    preferredTime?: string; // 偏好时间
+    preferredGender?: string; // 偏好性别
+}
+
+/**
+ * AI建议响应接口
+ */
+export interface AiSuggestionResponse {
+    possibleConditions?: string; // 可能条件
+    recommendations?: string; // 建议
+    urgencyLevel?: string; // 紧急程度
+    suggestedDepartments?: string[]; // 推荐科室
+    createTime: Date; // 创建时间
+}
+
+/**
+ * 报告解读响应接口
+ */
+export interface ReportInterpretationResponse {
+    interpretation: string; // 解读
+    suggestions: string[]; // 建议
+    findings: {
+        normalFindings: string[]; // 正常发现
+        abnormalFindings: string[]; // 异常发现
+    };
+    urgencyLevel: string; // 紧急程度
+}
+
+/**
+ * 导诊响应接口
+ */
+export interface GuideResponse {
+    recommendedDepartments: string[];
+    recommendedDoctors: {
+        doctorId: string; // 医生ID
+        name: string; // 医生名称
+        specialty: string; // 医生特长
+        availableSlots: string[]; // 可预约时间
+    }[];
+    reasonForRecommendation: string; // 推荐理由
+    urgencyLevel: string; // 紧急程度
 }
 
 /**
@@ -62,7 +121,7 @@ export interface ReportInfo {
 
 
 export class AiService {
-    
+
     private static async getBaiduAccessToken(): Promise<string> {
         try {
             const apiKey = process.env.BAIDU_API_KEY;
@@ -128,8 +187,13 @@ export class AiService {
                 case ConversationType.REPORT:
                     systemPrompt = '你是一位医学报告解读专家，帮助患者理解检查报告的内容和含义。';
                     // 如果是报告解读，获取报告文本
-                    if (referenceId.startsWith('report_')) {
-                        const reportText = await this.extractTextFromImage(referenceId);
+                     // 判断pdf 还是多张图片
+                     const referenceIdArray = referenceId.split('_');
+                     if (referenceIdArray.length > 1) {
+                        const reportText = await OCRService.recognizePDF(referenceId);
+                        additionalContext = `报告内容：${reportText}\n`;
+                     } else {
+                        const reportText = await OCRService.recognizeImage(referenceId);
                         additionalContext = `报告内容：${reportText}\n`;
                     }
                     break;
@@ -141,50 +205,23 @@ export class AiService {
             // 构建完整的提示
             const fullPrompt = `${systemPrompt}\n${additionalContext}${userMessage}`;
 
-            // 调用OpenAI流式API
-            const response = await axios.post(
-                'https://api.openai.com/v1/chat/completions',
-                {
-                    model: 'gpt-4',
+            // 调用通用方法
+            const response = await this.callAiService<{ text: string }>('/conversation', {
                     messages: [
                         { role: 'system', content: systemPrompt },
                         ...conversationHistory,
                         { role: 'user', content: fullPrompt }
                     ],
                     stream: true
-                },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-                        'Content-Type': 'application/json'
-                    },
-                    responseType: 'stream'
-                }
-            );
+            });
 
             // 处理流式响应
-            for await (const chunk of response.data) {
-                const lines = chunk
-                    .toString()
-                    .split('\n')
-                    .filter((line: string) => line.trim() !== '');
-
-                for (const line of lines) {
-                    if (line.includes('[DONE]')) continue;
-
-                    const message = line.replace(/^data: /, '');
-                    if (message === '') continue;
-
-                    try {
-                        const parsed = JSON.parse(message);
-                        const content = parsed.choices[0]?.delta?.content;
-                        if (content) {
-                            yield content;
-                        }
-                    } catch (error) {
-                        logger.error(`解析流式响应失败: ${error}`);
-                    }
-                }
+            // 由于通用方法不直接支持流式响应，这里模拟流式输出
+            const chunks = response.text.split(' ');
+            for (const chunk of chunks) {
+                yield chunk + ' ';
+                // 添加小延迟模拟流式效果
+                await new Promise(resolve => setTimeout(resolve, 50));
             }
         } catch (error) {
             logger.error(`生成AI响应失败: ${error}`);
@@ -199,14 +236,13 @@ export class AiService {
      */
     static async generateText(options: GenerateTextOptions): Promise<GenerateTextResponse> {
         try {
-            const { 
-                prompt, 
-                systemPrompt, 
-                patientInfo, 
-                maxTokens = 2048, 
-                temperature = 0.7, 
-                stream = false, 
-                reportInfo,
+            const {
+                prompt,
+                systemPrompt,
+                patientInfo,
+                maxTokens = 2048,
+                temperature = 0.7,
+                stream = false,
                 conversationHistory = [],
                 useDeepSeek = true // Default to DeepSeek API
             } = options;
@@ -226,7 +262,7 @@ ${prompt}`;
 
             // Prepare messages array for the conversation
             const messages = [];
-            
+
             // Add system prompt if provided
             if (systemPrompt) {
                 messages.push({
@@ -234,12 +270,12 @@ ${prompt}`;
                     content: systemPrompt
                 });
             }
-            
+
             // Add conversation history if available
             if (conversationHistory && conversationHistory.length > 0) {
                 messages.push(...conversationHistory);
             }
-            
+
             // Add current user prompt
             messages.push({
                 role: "user",
@@ -270,7 +306,7 @@ ${prompt}`;
      * @returns Generated text response
      */
     private static async generateTextWithDeepSeek(
-        messages: Array<{role: string, content: string}>,
+        messages: Array<{ role: string, content: string }>,
         maxTokens: number,
         temperature: number,
         stream: boolean
@@ -331,7 +367,7 @@ ${prompt}`;
      * @returns Generated text response
      */
     private static async generateTextWithAliCloud(
-        messages: Array<{role: string, content: string}>,
+        messages: Array<{ role: string, content: string }>,
         maxTokens: number,
         temperature: number,
         stream: boolean
@@ -390,336 +426,286 @@ ${prompt}`;
     }
 
     /**
-     * Generate pre-diagnosis recommendation based on patient symptoms
-     * @param patientInfo - Patient information and symptoms
-     * @param conversationHistory - Previous messages in the conversation
-     * @returns AI-generated diagnostic suggestion and recommendations
+     * 通用方法：调用AI服务
+     * @param endpoint - API端点
+     * @param data - 请求数据
+     * @param options - 请求选项
+     * @returns AI服务响应
      */
-    static async generatePreDiagnosis(
-        patientInfo: PatientPreDiagnosisInfo,
-        conversationHistory: Array<{role: 'user' | 'assistant' | 'system', content: string}> = []
-    ): Promise<{ 
-        possibleConditions: string;
-        recommendations: string; 
-        urgencyLevel: string;
-        suggestedDepartments: string[];
-        conversationHistory: Array<{role: 'user' | 'assistant' | 'system', content: string}>;
-    }> {
-        const systemPrompt = `你是一位经验丰富的医学专家，具有丰富的初步诊断经验。你的任务是根据患者提供的症状和信息进行初步分析，提出可能的病因，并给出合理的就医建议。请保持专业、准确和谨慎。`;
-        
-        const prompt = `请根据以下患者信息进行预问诊分析：
-症状描述：${patientInfo.symptoms}
-${patientInfo.bodyParts ? `身体部位：${patientInfo.bodyParts.join('、')}` : ''}
-${patientInfo.duration ? `持续时间：${patientInfo.duration}` : ''}
-${patientInfo.existingConditions ? `已有疾病：${patientInfo.existingConditions.join('、')}` : ''}
-
-请提供以下内容：
-1. 可能的病因分析（列出2-3种可能性）
-2. 就医建议（包括是否需要就医、建议科室）
-3. 紧急程度评估（一般/较急/紧急）
-4. 推荐就诊科室（列出1-2个最合适的科室）
-
-请以JSON格式回复，包含以下字段：
-{
-  "possibleConditions": "详细的病因分析",
-  "recommendations": "就医建议和注意事项",
-  "urgencyLevel": "一般/较急/紧急",
-  "suggestedDepartments": ["科室1", "科室2"]
-}`;
-
+    private static async callAiService<T>(
+        endpoint: string,
+        data: any,
+        options: { 
+            headers?: Record<string, string>,
+            timeout?: number,
+            retryCount?: number
+        } = {}
+    ): Promise<T> {
         try {
-            const result = await this.generateText({
-                prompt,
-                systemPrompt,
-                temperature: 0.3, // Lower temperature for more consistent medical advice
-                conversationHistory,
+            const { headers = {}, timeout = 30000, retryCount = 2 } = options;
+            const defaultHeaders = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${config.aliCloudApiKey}`
+            };
+            
+            // 合并默认headers和自定义headers
+            const mergedHeaders = { ...defaultHeaders, ...headers };
+            
+            // 构建完整URL
+            const url = `${config.aliCloudApiEndpoint}${endpoint}`;
+            
+            logger.info(`调用AI服务: ${endpoint}`, { 
+                url, 
+                dataKeys: Object.keys(data),
+                hasAuth: !!mergedHeaders.Authorization
             });
-
-            // Update conversation history with the assistant's response
-            const updatedHistory = [...conversationHistory];
-            updatedHistory.push({
-                role: 'assistant',
-                content: result.text
-            });
-
-            // Parse the JSON response
-            try {
-                const jsonResponse = JSON.parse(result.text);
-                return {
-                    possibleConditions: jsonResponse.possibleConditions || '',
-                    recommendations: jsonResponse.recommendations || '',
-                    urgencyLevel: jsonResponse.urgencyLevel || '一般',
-                    suggestedDepartments: jsonResponse.suggestedDepartments || [],
-                    conversationHistory: updatedHistory
-                };
-            } catch (parseError: unknown) {
-                // If JSON parsing fails, try to extract structured information using regex
-                logger.warn(`Failed to parse JSON response from AI: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
-                
-                // Extract information using regex as fallback
-                const possibleConditions = result.text.match(/可能的病因分析[：:]\s*([\s\S]*?)(?=就医建议|紧急程度|$)/i)?.[1]?.trim() || '';
-                const recommendations = result.text.match(/就医建议[：:]\s*([\s\S]*?)(?=紧急程度|推荐就诊科室|$)/i)?.[1]?.trim() || '';
-                const urgencyLevel = result.text.match(/紧急程度[：:]\s*(\S+)/i)?.[1]?.trim() || '一般';
-                const departmentsText = result.text.match(/推荐就诊科室[：:]\s*([\s\S]*?)(?=$)/i)?.[1]?.trim() || '';
-                const suggestedDepartments = departmentsText.split(/[,，、]/g).map(d => d.trim()).filter(Boolean);
-                
-                return {
-                    possibleConditions,
-                    recommendations,
-                    urgencyLevel,
-                    suggestedDepartments,
-                    conversationHistory: updatedHistory
-                };
+            
+            // 实现重试逻辑
+            let lastError: any = null;
+            for (let attempt = 0; attempt <= retryCount; attempt++) {
+                try {
+                    const response = await axios.post(url, data, {
+                        headers: mergedHeaders,
+                        timeout
+                    });
+                    
+                    if (response.data && response.data.success) {
+                        logger.info(`AI服务调用成功: ${endpoint}`, { 
+                            attempt, 
+                            statusCode: response.status 
+                        });
+                        return response.data.data;
+                    } else {
+                        logger.warn(`AI服务返回非成功状态: ${endpoint}`, { 
+                            attempt, 
+                            response: response.data 
+                        });
+                        throw new Error(`AI服务返回非成功状态: ${response.data.message || '未知错误'}`);
+                    }
+                } catch (error: any) {
+                    lastError = error;
+                    logger.warn(`AI服务调用失败 (尝试 ${attempt + 1}/${retryCount + 1}): ${endpoint}`, { 
+                        error: error.message,
+                        statusCode: error.response?.status
+                    });
+                    
+                    // 如果是最后一次尝试，则抛出错误
+                    if (attempt === retryCount) {
+                        throw error;
+                    }
+                    
+                    // 等待一段时间后重试
+                    await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+                }
             }
+            
+            // 如果所有重试都失败，抛出最后一个错误
+            throw lastError;
         } catch (error: any) {
-            logger.error(`Pre-diagnosis generation error: ${error.message}`);
-            throw new Error(`Failed to generate pre-diagnosis: ${error.message}`);
+            logger.error(`AI服务调用失败: ${endpoint}`, { 
+                error: error.message,
+                statusCode: error.response?.status,
+                response: error.response?.data
+            });
+            throw error;
         }
     }
 
     /**
-     * Generate medical report interpretation
-     * @param reportInfo - Report information and content
-     * @param conversationHistory - Previous messages in the conversation
-     * @returns AI-generated report interpretation with findings and recommendations
+     * 生成预问诊AI建议
+     * @param patientInfo 患者信息
+     * @returns AI建议响应
      */
-    static async generateReportInterpretation(
-        reportInfo: ReportInfo,
-        conversationHistory: Array<{role: 'user' | 'assistant' | 'system', content: string}> = []
-    ): Promise<{
-        interpretation: string;
-        abnormalIndicators: Array<{name: string, value: string, referenceRange?: string, explanation: string}>;
-        suggestions: string;
-        conversationHistory: Array<{role: 'user' | 'assistant' | 'system', content: string}>;
-    }> {
-        const systemPrompt = `你是一位专业的医学影像/检验报告解读专家。你的任务是解读患者的医疗报告，找出异常指标，解释其医学意义，并提供适当的建议。请保持专业、准确和谨慎。`;
-        
-        const prompt = `请解读以下${reportInfo.reportType}报告：
-
-报告日期：${reportInfo.reportDate || '未知'}
-医院：${reportInfo.hospital || '未知'}
-报告描述：${reportInfo.description || '未提供'}
-
-报告内容：
-${reportInfo.reportContent}
-
-请提供以下内容：
-1. 报告解读（包括总体评估和关键发现）
-2. 异常指标分析（列出所有异常指标，包括指标名称、测量值、参考范围及其医学意义）
-3. 建议（后续检查或治疗建议）
-
-请以JSON格式回复，包含以下字段：
-{
-  "interpretation": "详细的报告解读",
-  "abnormalIndicators": [
-    {
-      "name": "指标名称",
-      "value": "测量值",
-      "referenceRange": "参考范围",
-      "explanation": "医学意义解释"
-    }
-  ],
-  "suggestions": "后续建议"
-}`;
-
+    static async generatePrediagnosis(patientInfo: PrediagnosisInfo): Promise<AiSuggestionResponse | null> {
         try {
-            const result = await this.generateText({
-                prompt,
-                systemPrompt,
-                patientInfo: {
-                    age: reportInfo.patientAge,
-                    gender: reportInfo.patientGender
-                },
-                temperature: 0.2, // Very low temperature for consistent medical interpretations
-                conversationHistory,
-            });
+            logger.info(`请求AI预问诊服务: ${JSON.stringify(patientInfo)}`);
 
-            // Update conversation history with the assistant's response
-            const updatedHistory = [...conversationHistory];
-            updatedHistory.push({
-                role: 'assistant',
-                content: result.text
-            });
-
-            // Parse the JSON response
-            try {
-                const jsonResponse = JSON.parse(result.text);
+            // 使用通用方法调用AI服务
+            const aiSuggestion = await this.callAiService<AiSuggestionResponse>(
+                '/prediagnosis',
+                patientInfo
+            );
+            
                 return {
-                    interpretation: jsonResponse.interpretation || '',
-                    abnormalIndicators: jsonResponse.abnormalIndicators || [],
-                    suggestions: jsonResponse.suggestions || '',
-                    conversationHistory: updatedHistory
-                };
-            } catch (parseError: unknown) {
-                // If JSON parsing fails, try to extract structured information using regex
-                logger.warn(`Failed to parse JSON response from AI: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+                ...aiSuggestion,
+                createTime: new Date()
+            };
+        } catch (error: any) {
+            logger.error(`生成AI预问诊建议时出错: ${error.message}`);
+            return null;
+        }
+    }
+
+    /**
+     * 生成报告解读AI建议
+     * @param reportInfo 报告信息
+     * @returns 报告解读响应
+     */
+    static async generateReportInterpretation(reportInfo: ReportInfo): Promise<ReportInterpretationResponse | null> {
+        try {
+            logger.info(`请求AI报告解读服务: ${JSON.stringify({
+                reportType: reportInfo.reportType,
+                patientAge: reportInfo.patientAge,
+                patientGender: reportInfo.patientGender
+            })}`);
+
+            // 使用通用方法调用AI服务
+            return await this.callAiService<ReportInterpretationResponse>(
+                '/report-interpretation',
+                reportInfo
+            );
+        } catch (error: any) {
+            logger.error(`生成AI报告解读建议时出错: ${error.message}`);
+            return null;
+        }
+    }
+
+    /**
+     * 生成导诊AI建议
+     * @param guideInfo 导诊信息
+     * @returns 导诊响应
+     */
+    static async generateGuideRecommendation(guideInfo: GuideInfo): Promise<GuideResponse | null> {
+        try {
+            logger.info(`请求AI导诊服务: ${JSON.stringify({
+                symptoms: guideInfo.symptoms,
+                patientAge: guideInfo.age,
+                patientGender: guideInfo.gender
+            })}`);
+
+            // 获取所有科室和医生信息
+            const departments = await Department.find().lean() as any[];
+            const doctors = await Doctor.find()
+                .populate('departmentId')
+                .populate('schedules')
+                .lean() as any[];
+
+            // 准备AI请求数据
+            const aiRequestData = {
+                ...guideInfo,
+                availableDepartments: departments.map((dept: any) => ({
+                    id: dept._id.toString(),
+                    name: dept.name,
+                    description: dept.description
+                })),
+                availableDoctors: doctors.map((doc: any) => ({
+                    id: doc._id.toString(),
+                    name: doc.name,
+                    departmentId: doc.departmentId._id.toString(),
+                    departmentName: doc.departmentId.name,
+                    specialty: doc.specialty,
+                    gender: doc.gender,
+                    schedules: doc.schedules
+                }))
+            };
+
+            // 使用通用方法调用AI服务
+            return await this.callAiService<GuideResponse>(
+                '/guide',
+                aiRequestData
+            );
+        } catch (error: any) {
+            logger.error(`生成AI导诊建议时出错: ${error.message}`);
+            return null;
+        }
+    }
+
+    /**
+     * 处理与AI的对话
+     * @param userId 用户ID
+     * @param conversationId 对话ID
+     * @param message 用户消息
+     * @param consultationType 会诊类型 (可选)
+     * @param chunkCallback 流式响应回调 (可选)
+     * @param additionalData 额外数据 (可选)
+     * @returns AI响应
+     */
+    static async processConversationMessage(
+        userId: string, 
+        conversationId: string, 
+        message: string,
+        consultationType?: string,
+        chunkCallback?: (chunk: string) => void,
+        additionalData?: any
+    ): Promise<string> {
+        try {
+            logger.info(`处理用户对话: userId=${userId}, conversationId=${conversationId}, type=${consultationType || 'general'}`);
+
+            // 构建不同类型会话的提示词
+            let systemPrompt = '';
+            let promptContent = '';
+            
+            if (consultationType === 'PRE_DIAGNOSIS') {
+                // 预问诊系统提示词
+                systemPrompt = `你是一位经验丰富的医学专家，具有丰富的初步诊断经验。你的任务是根据患者提供的症状和信息进行初步分析，提出可能的病因，并给出合理的就医建议。请保持专业、准确和谨慎。`;
+                promptContent = `患者描述: ${message}\n\n请提供以下内容：\n1. 可能的病因分析\n2. 就医建议\n3. 紧急程度评估\n4. 推荐就诊科室`;
+            } 
+            else if (consultationType === 'GUIDE' && additionalData) {
+                // 导诊系统提示词
+                const { departments, doctors } = additionalData;
                 
-                // Extract information using regex as fallback
-                const interpretation = result.text.match(/报告解读[：:]\s*([\s\S]*?)(?=异常指标分析|建议|$)/i)?.[1]?.trim() || '';
-                const suggestions = result.text.match(/建议[：:]\s*([\s\S]*?)(?=$)/i)?.[1]?.trim() || '';
+                systemPrompt = `你是一位医院导诊专家，熟悉各科室职能和医生专长。你的任务是根据患者描述的症状，推荐合适的科室和医生。`;
                 
-                // Simple extraction of abnormal indicators (limited functionality in regex fallback)
-                const abnormalIndicators = [];
-                const indicatorsMatch = result.text.match(/异常指标分析[：:]\s*([\s\S]*?)(?=建议|$)/i)?.[1];
-                
-                if (indicatorsMatch) {
-                    const indicatorLines = indicatorsMatch.split('\n')
-                        .map(line => line.trim())
-                        .filter(line => line && line.includes(':'));
-                        
-                    for (const line of indicatorLines) {
-                        const parts = line.split(':');
-                        if (parts.length >= 2) {
-                            abnormalIndicators.push({
-                                name: parts[0].trim(),
-                                value: parts[1].trim(),
-                                explanation: parts[2]?.trim() || '无解释'
-                            });
-                        }
-                    }
+                // 格式化科室信息
+                let deptInfo = "可用科室:\n";
+                if (departments && departments.length > 0) {
+                    departments.forEach((dept: any, index: number) => {
+                        deptInfo += `${index+1}. ${dept.name}: ${dept.description || '无描述'}\n`;
+                    });
                 }
                 
-                return {
-                    interpretation,
-                    abnormalIndicators,
-                    suggestions,
-                    conversationHistory: updatedHistory
-                };
+                // 格式化医生信息
+                let doctorInfo = "可用医生:\n";
+                if (doctors && doctors.length > 0) {
+                    doctors.forEach((doc: any, index: number) => {
+                        const deptName = doc.departmentId?.name || '未知科室';
+                        doctorInfo += `${index+1}. ${doc.name}: ${deptName}, 专长: ${doc.specialty || '一般'}\n`;
+                    });
+                }
+                
+                promptContent = `患者描述: ${message}\n\n${deptInfo}\n${doctorInfo}\n\n请根据患者症状推荐1-2个最合适的科室和相应的医生，并给出推荐理由。`;
             }
-        } catch (error: any) {
-            logger.error(`Report interpretation error: ${error.message}`);
-            throw new Error(`Failed to generate report interpretation: ${error.message}`);
-        }
-    }
+            else if (consultationType === 'REPORT_INTERPRETATION' && additionalData) {
+                // 报告解读系统提示词
+                const { reportData } = additionalData;
+                
+                systemPrompt = `你是一位专业的医学影像/检验报告解读专家。你的任务是解读患者的医疗报告，找出异常指标，解释其医学意义，并提供适当的建议。请保持专业、准确和谨慎。`;
+                
+                let reportDetails = '';
+                if (reportData) {
+                    reportDetails = `
+报告类型: ${reportData.reportType || '未知'}
+报告日期: ${reportData.reportDate ? new Date(reportData.reportDate).toLocaleDateString() : '未知'}
+医院: ${reportData.hospital || '未知'}
+报告内容:
+${reportData.description || '未提供报告内容'}`;
+                }
+                
+                promptContent = `患者问题: ${message}\n\n${reportDetails}\n\n请解读以上报告，包括:\n1. 整体分析\n2. 异常指标说明\n3. 医学建议`;
+            }
+            else {
+                // 默认对话系统提示词
+                systemPrompt = `你是E诊通的AI医疗顾问，名为"医小通"。你的任务是回答患者的医疗咨询问题，提供专业且易于理解的医疗信息。`;
+                promptContent = message;
+            }
 
-    /**
-     * Generate AI consultation response for patient questions
-     * @param question - Patient's question
-     * @param patientInfo - Additional patient information
-     * @param conversationHistory - Previous messages in the conversation
-     * @returns AI-generated consultation response and updated conversation history
-     */
-    static async generateConsultationResponse(
-        question: string,
-        patientInfo?: {
-            age?: number;
-            gender?: string;
-            symptoms?: string;
-            medicalHistory?: string[];
-        },
-        conversationHistory: Array<{role: 'user' | 'assistant' | 'system', content: string}> = []
-    ): Promise<{
-        response: string;
-        conversationHistory: Array<{role: 'user' | 'assistant' | 'system', content: string}>;
-    }> {
-        const systemPrompt = `你是E诊通的AI医疗顾问，名为"医小通"。你的任务是回答患者的医疗咨询问题，提供专业且易于理解的医疗信息。
-请遵循以下原则：
-1. 保持医学准确性和专业性，同时使用患者能理解的语言
-2. 对不确定的内容保持谨慎，不做确诊
-3. 严重症状应建议患者及时就医，不要线上诊断危急情况
-4. 回答要简洁明了，重点突出
-5. 不要提供具体药物推荐和剂量，可以提供一般用药原则
-6. 对超出医疗范围的问题，礼貌说明你只能提供医疗相关咨询
-
-请根据患者提供的信息，给出专业、负责任的回答。`;
-
-        // Format patient info for context
-        let patientContext = '';
-        if (patientInfo) {
-            patientContext = `患者信息：
-${patientInfo.age ? `- 年龄：${patientInfo.age}岁` : ''}
-${patientInfo.gender ? `- 性别：${patientInfo.gender}` : ''}
-${patientInfo.symptoms ? `- 主诉症状：${patientInfo.symptoms}` : ''}
-${patientInfo.medicalHistory && patientInfo.medicalHistory.length ? 
-  `- 病史：${patientInfo.medicalHistory.join('、')}` : ''}
-
-`;
-        }
-
-        // Create a copy of conversation history to avoid modifying the original
-        let updatedHistory = [...conversationHistory];
-        
-        // If conversation history is empty, add the system prompt
-        if (updatedHistory.length === 0 && systemPrompt) {
-            updatedHistory.push({
-                role: 'system',
-                content: systemPrompt
-            });
-        }
-
-        // Add current question
-        const currentQuestion = `${patientContext}患者问题：${question}`;
-        updatedHistory.push({
-            role: 'user',
-            content: currentQuestion
-        });
-
-        try {
-            // Use the DeepSeek API by default
-            const response = await axios.post(
-                `${config.aliCloudApiEndpoint}/chat/completions`,
+            // 使用通用方法调用AI服务
+            const response = await this.callAiService<{ response: string }>(
+                '/conversation',
                 {
-                    model: config.aliCloudQwqModelName,
-                    messages: updatedHistory,
-                    max_tokens: 1024,
-                    temperature: 0.4,
-                },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${config.aliCloudApiKey}`,
-                    },
+                    userId,
+                    conversationId,
+                    message: promptContent,
+                    systemPrompt,
+                    consultationType,
+                    streaming: !!chunkCallback
                 }
             );
 
-            let content = '';
-            
-            // Handle DeepSeek-R1 specific response format
-            if (response.data.choices && response.data.choices.length > 0) {
-                // Use content field, not reasoning_content
-                content = response.data.choices[0].message.content;
-            }
-            
-            logger.info(`AI consultation response generated successfully. Length: ${content.length} characters`);
-            
-            // Add assistant response to conversation history
-            updatedHistory.push({
-                role: 'assistant',
-                content: content
-            });
-            
-            return {
-                response: content,
-                conversationHistory: updatedHistory
-            };
+            return response.response;
         } catch (error: any) {
-            logger.error(`AI consultation response error: ${error.message}`);
-            if (error.response) {
-                logger.error(`API response: ${JSON.stringify(error.response.data)}`);
-            }
-            
-            // Try fallback to AliCloud API if DeepSeek fails
-            try {
-                const result = await this.generateTextWithAliCloud(
-                    updatedHistory,
-                    1024,
-                    0.4,
-                    false
-                );
-                
-                // Add assistant response to conversation history
-                updatedHistory.push({
-                    role: 'assistant',
-                    content: result.text
-                });
-                
-                return {
-                    response: result.text,
-                    conversationHistory: updatedHistory
-                };
-            } catch (fallbackError: any) {
-                throw new Error(`Failed to generate consultation response: ${error.message}`);
-            }
+            logger.error(`处理AI对话时出错: ${error.message}`);
+            return '服务暂时不可用，请稍后再试。';
         }
     }
 }

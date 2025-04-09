@@ -15,7 +15,6 @@ export enum ConversationType {
  */
 export enum SenderType {
     PATIENT = 'PATIENT', // 患者
-    AI = 'AI',           // AI助手
     SYSTEM = 'SYSTEM'    // 系统消息
 }
 
@@ -27,6 +26,8 @@ export interface IConversationMessage {
     senderType: SenderType;      // 发送者类型
     timestamp: Date;             // 发送时间
     metadata?: Record<string, any>; // 元数据（可包含图片链接等）
+    referenceId: string;         // 关联ID（预问诊ID、导诊ID或报告ID）
+    conversationId: mongoose.Types.ObjectId;      // 会话ID
 }
 
 /**
@@ -35,32 +36,39 @@ export interface IConversationMessage {
 export interface IConversation extends Document {
     _id: mongoose.Types.ObjectId;        // 会话ID
     conversationType: ConversationType;  // 会话类型
-    referenceId: mongoose.Types.ObjectId;// 关联ID（预问诊ID、导诊ID或报告ID）
-    patientId: mongoose.Types.ObjectId;  // 患者ID
+    referenceId: string;                 // 关联ID（预问诊ID、导诊ID或报告ID）
+    userId: mongoose.Types.ObjectId;     // 用户ID
     messages: IConversationMessage[];    // 消息记录
     createdAt: Date;                     // 创建时间
     updatedAt: Date;                     // 更新时间
     status: 'ACTIVE' | 'CLOSED';         // 会话状态
+    startTime: Date;
+    endTime?: Date;
+    isClosed: boolean;
 }
 
 /**
  * 创建会话请求接口
  */
 export interface CreateConversationRequest {
+    conversationId?: mongoose.Types.ObjectId; // 会话ID (可选)
     conversationType: ConversationType;
-    referenceId: string;
-    patientId: string;
+    referenceId?: string;
+    userId: string;  // Changed from patientId to userId
     initialMessage?: string;
+    timestamp?: Date;
 }
 
 /**
  * 添加消息请求接口
  */
 export interface AddMessageRequest {
-    conversationId: string;
-    content: string;
-    senderType: SenderType;
-    metadata?: Record<string, any>;
+    conversationId: mongoose.Types.ObjectId; // 会话ID
+    content: string; // 消息内容
+    senderType: SenderType; // 发送者类型
+    metadata?: Record<string, any>; // 元数据（可包含图片链接等）
+    referenceId: string; // 关联ID（预问诊ID、导诊ID或报告ID）
+    timestamp: Date; // 发送时间
 }
 
 /**
@@ -75,6 +83,15 @@ export interface GetConversationHistoryRequest {
  * 导出会话历史记录请求接口
  */
 export interface ExportConversationRequest {
-    conversationId: string;
+    conversationId: mongoose.Types.ObjectId;
     format?: 'PDF' | 'TEXT';
+}
+
+export interface Message {
+    _id?: string;
+    conversationId: string;
+    sender: string;
+    content: string;
+    metadata?: Record<string, any>;
+    timestamp: Date;
 }
