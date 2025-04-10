@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Express } from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -62,7 +62,7 @@ class App {
             }
         ));
         // API文档路由
-        this.app.use('/api-docs', apiDocs);
+        this.app.use('/api-docs', apiDocs());
     }
 
     /**

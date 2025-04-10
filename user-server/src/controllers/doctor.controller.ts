@@ -180,22 +180,7 @@ class DoctorController {
             errorResponse(res, '获取科室医生列表失败', 500);
         }
     }
-    
-    /**
-     * 获取医生咨询信息
-     * GET /api/doctors/:id/consultations
-     */
-    public static async getDoctorConsultations(req: Request, res: Response): Promise<void> {
-        try {
-            const doctorId = req.params.id;
-            const consultations = await DoctorService.getDoctorConsultations(doctorId);
-            
-            successResponse(res, consultations);
-        } catch (error: any) {
-            logger.error(`获取医生咨询信息失败: ${error.message}`);
-            errorResponse(res, '获取医生咨询信息失败', 500);
-        }
-    }
+
     
     /**
      * 切换医生可用状态

@@ -4,6 +4,7 @@ import DepartmentController from './department.controller';
 import AuthController from './auth.controller';
 import ConversationController from './conversation.controller';
 import ConsultationController from './consultation.controller';
+import UploadController from './upload.controller';
 export {
     PatientController,
     DoctorController,
@@ -11,4 +12,5 @@ export {
     AuthController,
     ConversationController,
     ConsultationController,
+    UploadController
 };

@@ -15,8 +15,13 @@ declare global {
                 role?: string;
                 avatar?: string;
                 tenantId?: string;
+                email?: string;
+                phone?: string;
+                gender?: string;
+                birthDate?: string;
             };
             token?: string;
+            isNewUser?: boolean;
         }
     }
 }
@@ -54,6 +59,10 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
             name: user?.name,
             role: user?.role?.toUpperCase(),
             avatar: user?.avatar,
+            email: user?.email,
+            phone: user?.phone,
+            gender: user?.gender,
+            birthDate: user?.birthDate?.toDateString(),
             ...(decoded.tenantId ? { tenantId: decoded.tenantId } : {})
         };
 

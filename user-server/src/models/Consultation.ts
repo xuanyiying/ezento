@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import { UserDocument } from '../interfaces/user.interface';
-import { ConsultationType, ConsultationStatus, IDoctorAdvice, IAiSuggestion } from '../interfaces/consultation.interface';
+import { ConsultationType, ConsultationStatus, IAiSuggestion } from '../interfaces/consultation.interface';
 
 export interface IConsultation extends Document {
     userId: UserDocument['_id'] | UserDocument;
@@ -21,7 +21,6 @@ export interface IConsultation extends Document {
     status: ConsultationStatus;
     startTime: Date;
     endTime?: Date;
-    doctorAdvice?: IDoctorAdvice;
     aiSuggestion?: IAiSuggestion;
     conversationId?: Schema.Types.ObjectId;
     createdAt: Date;
@@ -100,13 +99,6 @@ const ConsultationSchema: Schema = new Schema(
         conversationId: {
             type: Schema.Types.ObjectId,
             ref: 'Conversation',
-        },
-        doctorAdvice: {
-            doctorId: { type: Schema.Types.ObjectId, ref: 'User' },
-            advice: { type: String },
-            recommendDepartment: { type: String },
-            urgencyLevel: { type: String },
-            createTime: { type: Date, default: Date.now },
         },
         aiSuggestion: {
             possibleConditions: { type: String },

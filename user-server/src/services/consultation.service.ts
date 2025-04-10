@@ -21,14 +21,8 @@ interface PopulatedUser {
     birthDate?: Date;
 }
 
-interface PopulatedDoctor {
-    _id: mongoose.Types.ObjectId;
-    name: string;
-}
-
-interface PopulatedConsultation extends Omit<IConsultation, 'patientId' | 'doctorId'> {
-    patientId: PopulatedUser;
-    doctorId?: PopulatedDoctor;
+interface PopulatedConsultation extends Omit<IConsultation, 'userId'> {
+    userId: PopulatedUser;
 }
 
 class ConsultationService {
@@ -38,11 +32,7 @@ class ConsultationService {
     static async createConsultation(data: CreateConsultationRequest): Promise<IConsultation> {
         try {
             // Convert patientId to ObjectId if it's a string
-            const userId = typeof data.userId === 'string' 
-                ? mongoose.Types.ObjectId.isValid(data.userId) 
-                    ? new mongoose.Types.ObjectId(data.userId) 
-                    : new mongoose.Types.ObjectId() 
-                : data.userId;
+            const userId = data.userId
             
             // 获取患者信息用于AI集成
             const user = await User.findById(userId);
@@ -135,11 +125,13 @@ class ConsultationService {
                 status: ConsultationStatus.PENDING,
                 startTime: new Date(),
                 aiSuggestion: aiSuggestion,
-                conversationId: data.conversationId ? new mongoose.Types.ObjectId(data.conversationId) : undefined
             });
 
             await consultation.save();
-            return consultation;
+            return {
+                ...consultation.toObject(),
+                userId: consultation.userId.toString()
+            } as unknown as  IConsultation;
         } catch (error) {
             logger.error(`创建会诊时出错: ${error}`);
             throw error;
@@ -151,13 +143,12 @@ class ConsultationService {
      */
     static async getConsultationList(params: GetConsultationListRequest) {
         try {
-            const { patientId, doctorId, consultationType, status, page = 1, limit = 10 } = params;
+            const { userId, consultationType, status, page = 1, limit = 10 } = params;
             const skip = (page - 1) * limit;
             
             // 构建查询条件
             const query: any = {};
-            if (patientId) query.patientId = patientId;
-            if (doctorId) query.doctorId = doctorId;
+            if (userId) query.userId = userId;
             if (consultationType) query.consultationType = consultationType;
             if (status) query.status = status;
             
@@ -166,8 +157,7 @@ class ConsultationService {
             
             // 查询列表
             const consultations = await Consultation.find(query)
-                .populate('patientId', 'name gender birthDate')
-                .populate('doctorId', 'name')
+                .populate('userId', 'name gender')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
@@ -178,13 +168,12 @@ class ConsultationService {
                 // Ensure conversationId exists before converting to string
                 const listItem = {
                     consultationId: consultation._id,
-                    patientName: consultation.patientId.name,
-                    doctorName: consultation.doctorId?.name,
                     consultationType: consultation.consultationType,
                     symptoms: consultation.symptoms,
                     status: consultation.status,
                     startTime: consultation.startTime,
-                    endTime: consultation.endTime
+                    endTime: consultation.endTime,
+
                 };
 
                 // Add conversationId only if it exists
@@ -216,33 +205,15 @@ class ConsultationService {
     static async getConsultationDetails(id: string) {
         try {
             const consultation = await Consultation.findById(id)
-                .populate('patientId', 'name gender birthDate')
-                .populate('doctorId', 'name')
+                .populate('userId', 'name gender birthDate')
                 .exec() as unknown as PopulatedConsultation;
             
             if (!consultation) {
                 return null;
-            }
-            
-            // 计算患者年龄
-            const age = consultation.patientId.birthDate
-                ? Math.floor((new Date().getTime() - new Date(consultation.patientId.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-                : undefined;
-            
-            const consultationObj = consultation.toObject();
-            
+            }            
             return {
                 consultationId: consultation._id,
-                patient: {
-                    id: consultation.patientId._id,
-                    name: consultation.patientId.name,
-                    age,
-                    gender: consultation.patientId.gender
-                },
-                doctor: consultation.doctorId ? {
-                    id: consultation.doctorId._id,
-                    name: consultation.doctorId.name
-                } : undefined,
+                userId: consultation.userId,
                 consultationType: consultation.consultationType,
                 symptoms: consultation.symptoms,
                 bodyParts: consultation.bodyParts,
@@ -260,7 +231,6 @@ class ConsultationService {
                 status: consultation.status,
                 startTime: consultation.startTime,
                 endTime: consultation.endTime,
-                doctorAdvice: consultation.doctorAdvice,
                 aiSuggestion: consultation.aiSuggestion,
                 createdAt: consultation.createdAt,
                 updatedAt: consultation.updatedAt
@@ -276,7 +246,7 @@ class ConsultationService {
      */
     static async updateConsultation(data: UpdateConsultationRequest): Promise<IConsultation> {
         try {
-            const { consultationId, diagnosis, prescription, notes, status, endTime, doctorAdvice } = data;
+            const { consultationId, diagnosis, prescription, notes, status, endTime, aiSuggestion } = data;
             
             // 查找会诊
             const consultation = await Consultation.findById(consultationId);
@@ -292,18 +262,14 @@ class ConsultationService {
             if (endTime !== undefined) consultation.endTime = endTime;
             
             // 更新医生建议
-            if (doctorAdvice) {
-                consultation.doctorAdvice = {
-                    doctorId: new mongoose.Types.ObjectId(doctorAdvice.doctorId),
-                    advice: doctorAdvice.advice,
-                    recommendDepartment: doctorAdvice.recommendDepartment,
-                    urgencyLevel: doctorAdvice.urgencyLevel,
-                    createTime: new Date()
-                };
+            if (aiSuggestion) {
+                consultation.aiSuggestion = aiSuggestion
             }
-            
             await consultation.save();
-            return consultation;
+            return {
+                ...consultation.toObject(),
+                userId: consultation.userId.toString()
+            } as unknown as IConsultation;
         } catch (error) {
             logger.error(`更新会诊时出错: ${error}`);
             throw error;
@@ -313,51 +279,8 @@ class ConsultationService {
     /**
      * 获取患者的会诊列表
      */
-    static async getPatientConsultations(patientId: string, page: number = 1, limit: number = 10) {
-        return this.getConsultationList({ patientId, page, limit });
-    }
-
-    /**
-     * 获取医生的会诊列表
-     */
-    static async getDoctorConsultations(doctorId: string, status?: ConsultationStatus, page: number = 1, limit: number = 10) {
-        return this.getConsultationList({ doctorId, status, page, limit });
-    }
-
-    /**
-     * 提交医生建议
-     */
-    static async submitDoctorAdvice(
-        consultationId: string, 
-        doctorId: string,
-        advice: string, 
-        recommendDepartment?: string, 
-        urgencyLevel?: string
-    ): Promise<IConsultation | null> {
-        try {
-            const consultation = await Consultation.findById(consultationId);
-            if (!consultation) {
-                return null;
-            }
-            
-            // 更新医生建议
-            consultation.doctorAdvice = {
-                doctorId: new mongoose.Types.ObjectId(doctorId),
-                advice,
-                recommendDepartment,
-                urgencyLevel,
-                createTime: new Date()
-            };
-            
-            // 更新状态为进行中
-            consultation.status = ConsultationStatus.IN_PROGRESS;
-            
-            await consultation.save();
-            return consultation;
-        } catch (error) {
-            logger.error(`提交医生建议时出错: ${error}`);
-            throw error;
-        }
+    static async getPatientConsultations(userId: string, page: number = 1, limit: number = 10) {
+        return this.getConsultationList({ userId, page, limit });
     }
 
     /**
@@ -374,7 +297,10 @@ class ConsultationService {
             }
             consultation.aiSuggestion = aiSuggestion;
             await consultation.save();
-            return consultation;
+            return {
+                ...consultation.toObject(),
+                userId: consultation.userId.toString()
+            } as unknown as IConsultation;
         } catch (error) {
             logger.error(`提交ai建议时出错: ${error}`);
             throw error;

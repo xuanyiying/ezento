@@ -12,7 +12,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /conversation:
+ * /conversations:
  *   post:
  *     summary: 创建或获取会话
  *     description: 创建新的会话或获取已存在的会话
@@ -51,7 +51,7 @@ router.post('/', auth, ConversationController.createOrGetConversation);
 
 /**
  * @swagger
- * /conversation/{conversationId}/messages:
+ * /conversations/{conversationId}/messages:
  *   post:
  *     summary: 发送消息
  *     description: 向会话添加新消息
@@ -92,7 +92,7 @@ router.post('/:conversationId/messages', auth, ConversationController.addMessage
 
 /**
  * @swagger
- * /conversation/{conversationType}/{referenceId}/history:
+ * /conversations/{conversationType}/{referenceId}/history:
  *   get:
  *     summary: 获取会话历史
  *     description: 获取指定类型和关联ID的会话历史记录
@@ -127,7 +127,7 @@ router.get('/:conversationId', auth, ConversationController.getConversationHisto
 
 /**
  * @swagger
- * /conversation/{conversationId}/close:
+ * /conversations/{conversationId}/close:
  *   put:
  *     summary: 关闭会话
  *     description: 关闭指定的会话
@@ -155,7 +155,7 @@ router.put('/:conversationId/close', auth, ConversationController.closeConversat
 
 /**
  * @swagger
- * /conversation/{conversationId}/export:
+ * /conversations/{conversationId}/export:
  *   get:
  *     summary: 导出会话历史
  *     description: 导出会话历史记录为PDF或文本文件
@@ -187,33 +187,5 @@ router.put('/:conversationId/close', auth, ConversationController.closeConversat
  *         description: 服务器错误
  */
 router.get('/:conversationId/export', auth, ConversationController.exportConversation);
-
-/**
- * @swagger
- * /conversation/download:
- *   get:
- *     summary: 下载导出文件
- *     description: 下载已导出的会话历史文件
- *     tags: [Conversation]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: path
- *         required: true
- *         schema:
- *           type: string
- *         description: 文件路径
- *     responses:
- *       200:
- *         description: 文件下载成功
- *       400:
- *         description: 请求参数错误
- *       404:
- *         description: 文件不存在
- *       500:
- *         description: 服务器错误
- */
-router.get('/exports/download/:filename', auth, ConversationController.downloadExportedFile);
 
 export default router;

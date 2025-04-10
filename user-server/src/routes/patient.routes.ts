@@ -1,6 +1,6 @@
 import express from 'express';
 import { PatientController } from '../controllers';
-import { auth, adminAuth, doctorAuth } from '../middlewares/auth';
+import { auth, doctorAuth } from '../middlewares/auth';
 
 /**
  * @swagger
@@ -202,41 +202,7 @@ router.put('/:id', auth, PatientController.updatePatient);
  * @desc    Delete a patient
  * @access  Private/Admin
  */
-router.delete('/:id', auth, adminAuth, PatientController.deletePatient);
-
-/**
- * @swagger
- * /patients/{id}/medical-records:
- *   get:
- *     summary: Get patient's medical records
- *     tags: [Patients]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Patient ID
- *     responses:
- *       200:
- *         description: Patient's medical records
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *       401:
- *         description: Unauthorized
- *       404:
- *         description: Patient not found
- * @route   GET /patients/:id/medical-records
- * @desc    Get patient's medical records
- * @access  Private
- */
-router.get('/:id/medical-records', auth, PatientController.getPatientMedicalRecords);
+router.delete('/:id', auth, PatientController.deletePatient);
 
 /**
  * @swagger

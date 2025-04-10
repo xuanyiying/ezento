@@ -40,20 +40,6 @@ export class PatientController {
                 return;
             }
 
-            // Check if user is authorized to view this patient
-            const userRole = req.user?.role.toUpperCase();
-            const isDoctor = userRole === 'DOCTOR' || userRole === 'ADMIN';
-            const isPatient = userRole === 'PATIENT';
-            const isOwnData = isPatient && patient.userId.toString() === req.user?.userId;
-
-            if (!isDoctor && !isOwnData) {
-                res.status(403).json({
-                    code: 403,
-                    msg: 'Access denied: You can only view your own data'
-                });
-                return;
-            }
-
             res.status(200).json({ code: 200, msg: 'success', data: patient });
         } catch (error: any) {
             logger.error(`Error getting patient: ${error.message}`);
@@ -106,21 +92,6 @@ export class PatientController {
                 });
                 return;
             }
-
-            // Check if user is authorized to update this patient
-            const userRole = req.user?.role.toUpperCase();
-            const isDoctor = userRole === 'DOCTOR' || userRole === 'ADMIN';
-            const isPatient = userRole === 'PATIENT';
-            const isOwnData = isPatient && patient.userId.toString() === req.user?.userId;
-
-            if (!isDoctor && !isOwnData) {
-                res.status(403).json({
-                    code: 403,
-                    msg: 'Access denied: You can only update your own data'
-                });
-                return;
-            }
-
             const updatedPatient = await PatientService.updatePatient(id, patientData);
             res.status(200).json({ code: 200, msg: 'success', data: updatedPatient });
         } catch (error: any) {
@@ -169,47 +140,7 @@ export class PatientController {
         }
     }
 
-    /**
-     * Get patient's medical history
-     * @route GET /api/patients/:id/medical-records
-     */
-    static async getPatientMedicalRecords(req: Request, res: Response) {
-        try {
-            const { id } = req.params;
-            const patient = await PatientService.getPatientById(id);
-
-            if (!patient) {
-                res.status(404).json({
-                    code: 404,
-                    msg: 'Patient not found'
-                });
-                return;
-            }
-
-            // Check if user is authorized to view this patient's records
-            const userRole = req.user?.role.toUpperCase();
-            const isDoctor = userRole === 'DOCTOR' || userRole === 'ADMIN';
-            const isPatient = userRole === 'PATIENT';
-            const isOwnData = isPatient && patient.userId.toString() === req.user?.userId;
-
-            if (!isDoctor && !isOwnData) {
-                res.status(403).json({
-                    code: 403,
-                    msg: 'Access denied: You can only view your own medical records'
-                });
-                return;
-            }
-
-            const medicalRecords = await PatientService.getPatientMedicalRecords(id);
-            res.status(200).json({ code: 200, msg: 'success', data: medicalRecords });
-        } catch (error: any) {
-            logger.error(`Error getting patient medical records: ${error.message}`);
-            res.status(500).json({
-                code: 500,
-                msg: 'Failed to retrieve medical records'
-            });
-        }
-    }
+  
 
     /**
      * Get patient's consultations
@@ -227,21 +158,6 @@ export class PatientController {
                 });
                 return;
             }
-
-            // Check if user is authorized to view this patient's consultations
-            const userRole = req.user?.role.toUpperCase();
-            const isDoctor = userRole === 'DOCTOR' || userRole === 'ADMIN';
-            const isPatient = userRole === 'PATIENT';
-            const isOwnData = isPatient && patient.userId.toString() === req.user?.userId;
-
-            if (!isDoctor && !isOwnData) {
-                res.status(403).json({
-                    code: 403,
-                    msg: 'Access denied: You can only view your own consultations'
-                });
-                return;
-            }
-
             const consultations = await PatientService.getPatientConsultations(id);
             res.status(200).json({ code: 200, msg: 'success', data: consultations });
         } catch (error: any) {

@@ -19,7 +19,9 @@ export class WebSocketServer {
                 pingTimeout: 60000,
                 pingInterval: 25000,
                 connectTimeout: 10000,
-                transports: ['websocket', 'polling']
+                transports: ['websocket'],
+                allowEIO3: true,
+                path: '/ws'
             });
 
             // 创建Redis客户端
@@ -36,7 +38,8 @@ export class WebSocketServer {
 
             // 设置连接事件处理
             this.io.on('connection', (socket) => {
-                logger.info(`Client connected: ${socket.id}`);
+                const conversationId = socket.handshake.query.conversationId as string;
+                logger.info(`Client connected: ${socket.id}, conversationId: ${conversationId}`);
                 
                 // 验证用户身份
                 const userId = socket.handshake.auth.userId;
@@ -48,8 +51,14 @@ export class WebSocketServer {
                 
                 logger.info(`User ${userId} connected with socket ${socket.id}`);
 
-                socket.on('disconnect', () => {
-                    logger.info(`Client disconnected: ${socket.id}`);
+                // 加入会话房间
+                if (conversationId) {
+                    socket.join(`conversation_${conversationId}`);
+                    logger.info(`Socket ${socket.id} joined conversation room: ${conversationId}`);
+                }
+
+                socket.on('disconnect', (reason) => {
+                    logger.info(`Client disconnected: ${socket.id}, reason: ${reason}`);
                 });
 
                 socket.on('error', (error) => {

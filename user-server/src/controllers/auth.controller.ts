@@ -53,16 +53,22 @@ export class AuthController {
                     { expiresIn: '24h' }
                 );
 
-                ResponseUtil.success(res, {
+                const responseData = {
                     token,
                     user : {
                         userId: user._id,
                         role: user.role,
-                        userName: user.name,
+                        name: user.name,
                         avatar: user.avatar,
+                        email: user.email,
+                        phone: user.phone,
+                        gender: user.gender,
+                        birthDate: user.birthDate,
                     },
                     isNewUser: false
-                });
+                };
+                ResponseUtil.success(res, responseData);
+                logger.info(`--用户 ${user.username} 登录成功`, JSON.stringify(responseData) );
             } catch (bcryptError: any) {
                 logger.error(`密码验证错误: ${bcryptError.message}`);
                 ResponseUtil.unauthorized(res, '用户名或密码错误');

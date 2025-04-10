@@ -1,12 +1,11 @@
 import { Request, Response } from 'express';
-import { Message, Conversation } from '../models';
-import { AiService } from '../services/ai.service';
+import { Message } from '../models';
 import ConsultationService from '../services/consultation.service';
 import ConversationService from '../services/conversation.service';
 import { ResponseUtil } from '../utils/responseUtil';
 import { logger } from '../utils/logger';
 import mongoose from 'mongoose';
-import { ConversationType, SenderType } from '../interfaces/conversation.interface';
+import { SenderType } from '../interfaces/conversation.interface';
 import { IConsultation } from '../interfaces/consultation.interface';
 import path from 'path';
 import fs from 'fs';
@@ -23,7 +22,7 @@ class ConversationController {
      * @param req - 请求对象，包含conversationType、referenceId和initialMessage参数
      * @param res - 响应对象
      */
-    static async createOrGetConversation(req: Request, res: Response): Promise<Response> {
+    static async createOrGetConversation(req: Request, res: Response): Promise<void> {
         try {
             // 从请求体中获取参数
             const { conversationType, referenceId: referenceId, initialMessage } = req.body;
@@ -31,11 +30,13 @@ class ConversationController {
             
             // 验证权限和必要参数
             if (!userId) {
-                return ResponseUtil.unauthorized(res, '未授权，请先登录');
+                 ResponseUtil.unauthorized(res, '未授权，请先登录');
+                 return;
             }
             
             if (!conversationType) {
-                return ResponseUtil.error(res, 400, '会话类型不能为空');
+                 ResponseUtil.error(res, 400, '会话类型不能为空');
+                 return;
             }
             
             // 处理referenceId，如果为空则创建一个新的会诊
@@ -64,10 +65,11 @@ class ConversationController {
             
             const conversation = await ConversationService.createOrGetConversation(conversationData);
             
-            return ResponseUtil.success(res, conversation);
+             ResponseUtil.success(res, conversation);
+             return ;
         } catch (error) {
             logger.error('创建或获取会话失败', error);
-            return ResponseUtil.serverError(res, '创建或获取会话失败');
+             ResponseUtil.serverError(res, '创建或获取会话失败');
         }
     }
     
@@ -78,18 +80,20 @@ class ConversationController {
      * @param req - 请求对象，包含conversationId和消息内容
      * @param res - 响应对象
      */
-    static async addMessage(req: Request, res: Response): Promise<Response> {
+    static async addMessage(req: Request, res: Response): Promise<void> {
         try {
             const { conversationId } = req.params;
             const { content, metadata } = req.body;
             const userId = req.user?.userId;
             
             if (!userId) {
-                return ResponseUtil.unauthorized(res, '未授权，请先登录');
+                 ResponseUtil.unauthorized(res, '未授权，请先登录');
+                 return;
             }
             
             if (!content) {
-                return ResponseUtil.error(res, 400, '消息内容不能为空');
+                 ResponseUtil.error(res, 400, '消息内容不能为空');
+                 return;
             }
             
             // 创建添加消息的请求对象
@@ -104,10 +108,10 @@ class ConversationController {
             
             const conversation = await ConversationService.addMessage(addMessageRequest);
             
-            return ResponseUtil.success(res, conversation);
+             ResponseUtil.success(res, conversation);
         } catch (error) {
             logger.error('添加消息失败', error);
-            return ResponseUtil.serverError(res, '添加消息失败');
+             ResponseUtil.serverError(res, '添加消息失败');
         }
     }
     
@@ -118,19 +122,21 @@ class ConversationController {
      * @param req - 请求对象，包含conversationId参数
      * @param res - 响应对象
      */
-    static async getConversationHistory(req: Request, res: Response): Promise<Response> {
+    static async getConversationHistory(req: Request, res: Response): Promise<void> {
         try {
             const { conversationId } = req.params;
             const userId = req.user?.userId;
             
             if (!userId) {
-                return ResponseUtil.unauthorized(res, '未授权，请先登录');
+                 ResponseUtil.unauthorized(res, '未授权，请先登录');
+                 return;
             }
             
             const conversation = await ConversationService.get(conversationId);
             
             if (!conversation) {
-                return ResponseUtil.notFound(res, '未找到会话');
+                 ResponseUtil.notFound(res, '未找到会话');
+                 return;
             }
             
             // 获取会话消息
@@ -138,13 +144,13 @@ class ConversationController {
                 conversationId: conversation._id
             }).sort({ timestamp: 1 });
             
-            return ResponseUtil.success(res, {
+             ResponseUtil.success(res, {
                 conversation,
                 messages
             });
         } catch (error) {
             logger.error('获取会话历史失败', error);
-            return ResponseUtil.serverError(res, '获取会话历史失败');
+             ResponseUtil.serverError(res, '获取会话历史失败');
         }
     }
     
@@ -155,25 +161,28 @@ class ConversationController {
      * @param req - 请求对象，包含conversationId参数
      * @param res - 响应对象
      */
-    static async closeConversation(req: Request, res: Response): Promise<Response> {
+    static async closeConversation(req: Request, res: Response): Promise<void> {
         try {
             const { conversationId } = req.params;
             const userId = req.user?.userId;
             
             if (!userId) {
-                return ResponseUtil.unauthorized(res, '未授权，请先登录');
+                 ResponseUtil.unauthorized(res, '未授权，请先登录');
+                 return;
             }
             
             const success = await ConversationService.closeConversation(conversationId);
             
             if (!success) {
-                return ResponseUtil.notFound(res, '未找到会话');
+                 ResponseUtil.notFound(res, '未找到会话');
+                 return;
             }
             
-            return ResponseUtil.success(res, { message: '会话已关闭' });
+             ResponseUtil.success(res, { message: '会话已关闭' });
         } catch (error) {
             logger.error('关闭会话失败', error);
-            return ResponseUtil.serverError(res, '关闭会话失败');
+             ResponseUtil.serverError(res, '关闭会话失败');
+        
         }
     }
     
@@ -184,14 +193,15 @@ class ConversationController {
      * @param req - 请求对象，包含conversationId和format参数
      * @param res - 响应对象
      */
-    static async exportConversation(req: Request, res: Response): Promise<Response> {
+    static async exportConversation(req: Request, res: Response): Promise<void> {
         try {
             const { conversationId } = req.params;
             const format = (req.query.format as 'PDF' | 'TEXT') || 'PDF';
             const userId = req.user?.userId;
             
             if (!userId) {
-                return ResponseUtil.unauthorized(res, '未授权，请先登录');
+                 ResponseUtil.unauthorized(res, '未授权，请先登录');
+                 return;
             }
             
             // 转换会话ID为ObjectId
@@ -202,13 +212,13 @@ class ConversationController {
             
             const filePath = await ConversationService.exportConversationHistory(exportRequest);
             
-            return ResponseUtil.success(res, {
+             ResponseUtil.success(res, {
                 filePath,
                 downloadUrl: `/api/conversations/exports/download/${path.basename(filePath)}`
             });
         } catch (error) {
             logger.error('导出会话失败', error);
-            return ResponseUtil.serverError(res, '导出会话失败');
+             ResponseUtil.serverError(res, '导出会话失败');
         }
     }
     

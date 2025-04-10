@@ -1,4 +1,4 @@
-import { Document, Schema } from 'mongoose';
+import { Document, Schema, Types } from 'mongoose';
 import { UserDocument } from './user.interface';
 
 /**
@@ -81,8 +81,7 @@ export interface UpdateConsultationRequest {
  * 获取会诊列表请求接口
  */
 export interface GetConsultationListRequest {
-    patientId?: string;                   // 患者ID
-    doctorId?: string;                    // 医生ID
+    userId?: string;                   // 患者ID
     consultationType?: ConsultationType;  // 会诊类型
     status?: ConsultationStatus;          // 状态
     page?: number;                        // 页码
@@ -95,8 +94,7 @@ export interface GetConsultationListRequest {
 export interface ConsultationListItem {
     consultationId: Schema.Types.ObjectId;  // 会诊ID
     conversationId?: Schema.Types.ObjectId;  // 会话ID
-    patientName?: string;                 // 患者姓名
-    doctorName?: string;                  // 医生姓名
+    userName?: string;                 // 患者姓名
     consultationType: ConsultationType;   // 会诊类型
     symptoms: string;                     // 症状描述
     status: ConsultationStatus;           // 状态
@@ -108,7 +106,7 @@ export interface ConsultationListItem {
  * 会诊接口（数据库模型）
  */
 export interface IConsultation extends Document {
-    userId: UserDocument['_id'] | UserDocument;  // 患者ID
+    userId: string | Types.ObjectId;  // 患者ID
     conversationId?: Schema.Types.ObjectId;  // 会话ID
     consultationType: ConsultationType;             // 会诊类型
     symptoms: string;                               // 症状描述

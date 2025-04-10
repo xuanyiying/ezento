@@ -229,40 +229,6 @@ router.get('/department/:department', DoctorController.getDoctorsByDepartment);
 
 /**
  * @swagger
- * /api/doctors/{id}/consultations:
- *   get:
- *     summary: Get a doctor's consultations
- *     tags: [Doctors]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Doctor ID
- *     responses:
- *       200:
- *         description: List of doctor's consultations
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *       401:
- *         description: Unauthorized
- *       404:
- *         description: Doctor not found
- * @route   GET /api/doctors/:id/consultations
- * @desc    Get a doctor's consultations
- * @access  Private
- */
-router.get('/:id/consultations', auth, DoctorController.getDoctorConsultations);
-
-/**
- * @swagger
  * /api/doctors/{id}/toggle-availability:
  *   put:
  *     summary: Toggle a doctor's availability

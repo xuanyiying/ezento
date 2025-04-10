@@ -1,6 +1,6 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import { Express } from 'express';
+import express from 'express';
 
 const options: swaggerJsdoc.Options = {
     definition: {
@@ -45,21 +45,11 @@ const options: swaggerJsdoc.Options = {
 
 const swaggerSpec = swaggerJsdoc(options);
 
-const apiDocs = (app: Express) => {
-    // Swagger API文档路由
-    // 添加Swagger文档
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-        explorer: true,
-        customCss: '.swagger-ui .topbar { display: none }',
-        customSiteTitle: 'Ezento Admin API文档'
-    }));
+const specs = swaggerJsdoc(options);
 
-    // 提供Swagger规范的JSON端点
-    app.get('/api-docs.json', (req, res) => {
-        res.setHeader('Content-Type', 'application/json');
-        res.send(swaggerSpec);
-    });
-
-};
-
-export default apiDocs; 
+export default function apiDocs() {
+  const router = express.Router();
+  router.use('/', swaggerUi.serve);
+  router.get('/', swaggerUi.setup(specs));
+  return router;
+}
