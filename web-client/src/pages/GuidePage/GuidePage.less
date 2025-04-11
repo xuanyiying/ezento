@@ -1,0 +1,221 @@
+.guide-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.guide-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  background-color: #fff;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.guide-header h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.guide-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.placeholder-content {
+  text-align: center;
+  padding: 32px;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 500px;
+}
+
+.placeholder-content h2 {
+  margin-top: 0;
+  color: #1677ff;
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+
+.placeholder-content p {
+  color: #666;
+  font-size: 16px;
+  margin-bottom: 0;
+}
+
+.guide-page {
+  min-height: 100vh;
+  background-color: #f5f9ff;
+}
+
+.guide-content {
+  padding: 15px;
+  padding-bottom: 70px;
+}
+
+.timestamp {
+  text-align: center;
+  padding: 10px;
+  color: #999;
+  font-size: 14px;
+}
+
+.identity-card {
+  margin-bottom: 20px;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  
+  .icon {
+    margin-right: 10px;
+    color: #1e88e5;
+  }
+}
+
+.card-content {
+  margin-top: 15px;
+}
+
+.info-row {
+  margin-bottom: 10px;
+  display: flex;
+  
+  .label {
+    width: 80px;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+}
+
+.btn-outline {
+  border-radius: 20px;
+  border-color: #1e88e5;
+  color: #1e88e5;
+}
+
+.btn-primary {
+  border-radius: 20px;
+}
+
+.privacy-notice {
+  background-color: #fff9e6;
+  padding: 8px 15px;
+  border-radius: 5px;
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  
+  .icon {
+    margin-right: 8px;
+    color: #e6a23c;
+  }
+}
+
+.message-container {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.message {
+  margin-bottom: 20px;
+  display: flex;
+  
+  &.left {
+    justify-content: flex-start;
+  }
+  
+  &.right {
+    justify-content: flex-end;
+  }
+}
+
+.avatar {
+  flex-shrink: 0;
+}
+
+.message-content {
+  max-width: 70%;
+  padding: 10px 15px;
+  border-radius: 10px;
+  margin: 0 10px;
+  
+  .left & {
+    background-color: white;
+    border: 1px solid #e0e0e0;
+  }
+  
+  .right & {
+    background-color: #1e88e5;
+    color: white;
+  }
+}
+
+.blue-link {
+  color: #1e88e5;
+  cursor: pointer;
+}
+
+.doctors-container {
+  margin-bottom: 20px;
+}
+
+.doctor-card {
+  margin-bottom: 15px;
+  border-radius: 10px;
+  
+  .doctor-info {
+    display: flex;
+  }
+  
+  .doctor-details {
+    margin-left: 15px;
+    flex: 1;
+  }
+  
+  .doctor-name {
+    font-size: 16px;
+    display: block;
+  }
+  
+  .doctor-title {
+    display: block;
+    margin: 5px 0;
+  }
+  
+  .doctor-hospital {
+    display: block;
+    font-size: 14px;
+  }
+  
+  .schedule {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    
+    .label {
+      margin-right: 10px;
+    }
+    
+    .date {
+      margin-right: 15px;
+      color: #1e88e5;
+    }
+  }
+} 

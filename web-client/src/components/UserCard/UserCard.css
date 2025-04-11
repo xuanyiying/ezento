@@ -1,0 +1,53 @@
+.user-card {
+  background-color: #FFFFFF;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.user-info-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.user-basic-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.user-details {
+  font-size: 0.9em;
+  color: #666;
+}
+
+.user-contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+}
+
+.info-label {
+  color: #666;
+  font-size: 0.9em;
+  width: 60px;
+}
+
+.info-value {
+  color: #333;
+  font-size: 0.9em;
+  flex: 1;
+}
