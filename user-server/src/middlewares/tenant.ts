@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { Tenant, ITenant } from '../models';
+import { Tenant  } from '../models';
 import { Resp } from '../utils/response';
 import mongoose from 'mongoose';
+import {ITenant} from "../models/Tenant";
 
 // Add tenant to request object with proper type definition
 declare global {
