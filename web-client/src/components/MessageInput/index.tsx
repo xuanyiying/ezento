@@ -1,6 +1,6 @@
 import React, { useState, KeyboardEvent } from 'react';
-import { Button, Input, Form } from 'antd';
-import { SendOutlined } from '@ant-design/icons';
+import { Input } from 'antd';
+import { CameraOutlined } from '@ant-design/icons';
 import './styles.less';
 
 interface MessageInputProps {
@@ -14,7 +14,7 @@ const { TextArea } = Input;
 const MessageInput: React.FC<MessageInputProps> = ({ 
   onSend, 
   disabled = false, 
-  placeholder = '请输入消息...' 
+  placeholder = '请输入症状/药品名称/疾病...' 
 }) => {
   const [value, setValue] = useState('');
 
@@ -32,26 +32,25 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
+  const handleUpload = () => {
+    console.log('Upload functionality to be implemented');
+  };
+
   return (
     <div className="message-input-container">
-      <Form.Item style={{ marginBottom: 0 }}>
-        <TextArea
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          disabled={disabled}
-          autoSize={{ minRows: 1, maxRows: 4 }}
-        />
-        <div className="send-button-container">
-          <Button
-            type="primary"
-            icon={<SendOutlined />}
-            onClick={handleSend}
-            disabled={!value.trim() || disabled}
-          />
-        </div>
-      </Form.Item>
+      <TextArea
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        disabled={disabled}
+        autoSize={false}
+        className="input-field"
+        style={{ height: '40px', overflow: 'hidden' }}
+      />
+      <div className="upload-btn" onClick={handleUpload}>
+        <CameraOutlined />
+      </div>
     </div>
   );
 };

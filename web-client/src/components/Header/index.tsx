@@ -13,14 +13,9 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
   
   return (
     <AntHeader className="app-header">
-      <div className="header-content">
-        <div className="time">9:41</div>
-        <div className="status-icons">
-          <span className="signal-icon">📶</span>
-          <span className="wifi-icon">📶</span>
-          <span className="battery-icon">🔋</span>
-        </div>
-      </div>
+      {title && (
+        <div className="header-title">{title}</div>
+      )}
     </AntHeader>
   );
 };

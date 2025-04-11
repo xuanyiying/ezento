@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { User } from '@/types';
-import { setUser } from '..';
+import { setUser, setToken } from '..';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -48,6 +48,7 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = null;
       setUser(state.user);
+      setToken(action.payload.token);
     },
     loginFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;

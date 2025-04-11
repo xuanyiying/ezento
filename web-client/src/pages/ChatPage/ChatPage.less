@@ -1,39 +1,62 @@
 .chat-page {
-  background-color: #f5f7fa;
-  min-height: 100vh;
+  background-color: #f5f9ff;
+  height: 100vh; /* 固定高度为视口高度 */
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 768px; /* 增加最大宽度 */
+  margin: 0 auto;
+  padding-bottom: 70px; /* Space for the fixed input bar */
+  position: relative;
+  overflow: hidden; /* 防止页面整体滚动 */
 }
 
 .chat-content {
   flex: 1;
-  padding: 16px;
-  max-width: 800px;
-  margin: 0 auto;
   width: 100%;
-  overflow-y: auto;
+  overflow-y: auto; /* 允许内容区域滚动 */
+  padding: 16px;
+  padding-bottom: 80px; /* 为底部输入框留出空间 */
+  /* 添加自定义滚动条 */
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 transparent;
+  
+  /* 确保滚动区域可见 */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: #c1c1c1;
+    border-radius: 10px;
+  }
 }
 
 .timestamp {
   text-align: center;
   color: #999;
-  font-size: 12px;
+  font-size: 14px;
+  padding: 10px;
   margin: 16px 0;
 }
 
 .identity-card {
   margin-bottom: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   
   .card-title {
     display: flex;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 10px;
     
     .icon {
-      color: #1890ff;
-      margin-right: 8px;
+      color: #4285f4;
+      margin-right: 10px;
       font-size: 18px;
     }
   }
@@ -43,27 +66,33 @@
     
     .info-row {
       display: flex;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       
       .label {
-        width: 60px;
+        width: 80px;
         flex-shrink: 0;
+        color: #666;
       }
     }
     
     .action-buttons {
       display: flex;
-      justify-content: flex-end;
-      margin-top: 16px;
-      gap: 12px;
+      justify-content: space-between;
+      margin-top: 15px;
       
       .btn-outline {
-        border: 1px solid #1890ff;
-        color: #1890ff;
+        border: 1px solid #4285f4;
+        color: #4285f4;
+        border-radius: 20px;
+        padding: 8px 20px;
+        font-size: 14px;
       }
       
       .btn-primary {
-        background-color: #1890ff;
+        background-color: #4285f4;
+        border-radius: 20px;
+        padding: 8px 20px;
+        font-size: 14px;
       }
     }
   }
@@ -71,32 +100,42 @@
   .privacy-notice {
     display: flex;
     align-items: center;
-    margin-top: 16px;
+    background-color: #fff9e6;
+    padding: 8px 15px;
+    border-radius: 5px;
+    color: #e6a23c;
     font-size: 12px;
+    margin: 10px 0;
     
     .icon {
-      color: #faad14;
       margin-right: 8px;
     }
   }
 }
 
 .message-container {
-  margin: 24px 0;
+  margin: 10px 0;
+  padding: 0 15px;
   
   .message {
     display: flex;
     align-items: flex-start;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     
     &.left {
       justify-content: flex-start;
       
       .message-content {
-        margin-left: 12px;
+        margin-left: 10px;
         margin-right: 48px;
-        background-color: #fff;
+        background-color: white;
+        border: 1px solid #e0e0e0;
         color: #333;
+        max-width: 80%; /* 增加最大宽度 */
+        
+        @media (max-width: 480px) {
+          max-width: 85%; /* 在小屏幕上增加消息宽度 */
+        }
       }
     }
     
@@ -104,27 +143,42 @@
       justify-content: flex-end;
       
       .message-content {
-        margin-right: 12px;
+        margin-right: 10px;
         margin-left: 48px;
-        background-color: #e6f7ff;
-        color: #0050b3;
+        background-color: #4285f4;
+        color: white;
+        max-width: 80%; /* 增加最大宽度 */
+        
+        @media (max-width: 480px) {
+          max-width: 85%; /* 在小屏幕上增加消息宽度 */
+        }
       }
     }
     
     .avatar {
-      background-color: #1890ff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0; /* 防止avatar被压缩 */
+      
+      @media (max-width: 480px) {
+        width: 36px; /* 在小屏幕上稍微缩小头像 */
+        height: 36px;
+      }
     }
     
     .message-content {
-      padding: 12px 16px;
-      border-radius: 16px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      padding: 10px 15px;
+      border-radius: 10px;
       word-break: break-word;
       line-height: 1.6;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
       
       .blue-link {
-        color: #1890ff;
+        color: #4285f4;
         cursor: pointer;
+        text-decoration: none;
         
         &:hover {
           text-decoration: underline;
@@ -148,6 +202,12 @@
   justify-content: center;
   align-items: center;
   height: 300px;
+  
+  .spin-content {
+    margin-top: 16px;
+    color: #4285f4;
+    font-size: 14px;
+  }
 }
 
 .error-alert {
@@ -155,24 +215,76 @@
 }
 
 .confirm-card {
-  margin-top: 20px;
-  border-radius: 12px;
-  background-color: #f0f9ff;
-  border: 1px solid #91d5ff;
+  margin: 10px 15px;
+  border-radius: 10px;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 15px;
   
   .action-buttons {
     display: flex;
-    justify-content: flex-end;
-    margin-top: 16px;
-    gap: 12px;
+    justify-content: space-between;
+    margin-top: 15px;
     
     .btn-outline {
-      border: 1px solid #1890ff;
-      color: #1890ff;
+      background-color: white;
+      color: #4285f4;
+      border: 1px solid #4285f4;
+      border-radius: 20px;
+      padding: 8px 20px;
+      font-size: 14px;
     }
     
     .btn-primary {
-      background-color: #1890ff;
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 20px;
+      font-size: 14px;
     }
+  }
+}
+
+/* 添加响应式媒体查询 */
+@media (max-width: 480px) {
+  .chat-page {
+    padding-bottom: 60px; /* 减小底部间距 */
+  }
+  
+  .chat-content {
+    padding: 12px;
+    padding-bottom: 70px;
+  }
+  
+  .identity-card, .confirm-card {
+    margin-bottom: 15px;
+    
+    .card-content {
+      .info-row {
+        flex-direction: column;
+        
+        .label {
+          width: 100%;
+          margin-bottom: 4px;
+        }
+      }
+    }
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .chat-page {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 769px) {
+  .chat-page {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    margin-bottom: 20px;
+    height: calc(100vh - 40px);
   }
 } 

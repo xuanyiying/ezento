@@ -17,8 +17,22 @@ const getUser = (): User | null => {
   return null;
 };
 
+// 从localStorage获取token
+const getToken = (): string | null => {
+  try {
+    return localStorage.getItem('token');
+  } catch (error) {
+    console.error('Failed to get token from localStorage:', error);
+  }
+  return null;
+};
+
 interface UserState {
   user: User | null;
+}
+
+interface AuthState {
+  token: string | null;
 }
 
 const userSlice = createSlice({
@@ -40,13 +54,34 @@ const userSlice = createSlice({
   }
 });
 
+const tokenSlice = createSlice({
+  name: 'token',
+  initialState: {
+    token: getToken()
+  } as AuthState,
+  reducers: {
+    setToken: (state, action) => {
+      const token = action.payload;
+      state.token = token;
+      // 保存到localStorage
+      console.log('Saving token to localStorage:', token);
+      localStorage.setItem('token', token);
+    },
+    clearToken: () => {
+      localStorage.removeItem('token');
+    }
+  }
+});
+
 export const { setUser, clearUser } = userSlice.actions;
+export const { setToken, clearToken } = tokenSlice.actions;
 
 export const store = configureStore({
   reducer: {
     conversation: conversationReducer,
     authUser: userSlice.reducer,
-    auth: authReducer
+    auth: authReducer,
+    authToken: tokenSlice.reducer
   }
 });
 

@@ -7,10 +7,14 @@ import OCRService from './ocr.service';
 
 // Extend the config object with AI-specific configuration
 const aiConfig = {
-    aliCloudApiKey: process.env.ALI_CLOUD_API_KEY || '',
-    aliCloudApiEndpoint: process.env.ALI_CLOUD_API_ENDPOINT || 'https://dashscope.aliyuncs.com/api/v1',
-    aliCloudQwqModelName: process.env.ALI_CLOUD_QWQ_MODEL_NAME || 'qwen-plus',
+    // 主要使用新的环境变量
+    aliCloudApiKey: process.env.DASHSCOPE_API_KEY || '',
+    aliCloudApiEndpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    aliCloudQwqModelName: process.env.DASHSCOPE_MODEL_NAME || 'qwen-plus',
 };
+
+// 记录配置信息，便于调试
+logger.info(`AI配置信息: API密钥=${aiConfig.aliCloudApiKey ? '已设置' : '未设置'}, 端点=${aiConfig.aliCloudApiEndpoint}, 模型=${aiConfig.aliCloudQwqModelName}`);
 
 Object.assign(config, aiConfig);
 
@@ -115,6 +119,54 @@ export interface GuideResponse {
     urgencyLevel: string; // 紧急程度
 }
 
+// 添加OpenAI流式响应处理
+interface StreamingResponseChunk {
+    id: string;
+    object: string;
+    created: number;
+    model: string;
+    choices: {
+        delta: {
+            content?: string;
+            role?: string;
+        };
+        index: number;
+        finish_reason: string | null;
+    }[];
+}
+
+/**
+ * 辅助函数：分离可能连接在一起的多个JSON对象
+ * @param input 输入的字符串，可能包含多个JSON对象
+ * @returns 分离后的JSON对象数组
+ */
+function splitJsonObjects(input: string): string[] {
+    const result: string[] = [];
+    let depth = 0;
+    let startIndex = 0;
+    
+    // 查找JSON对象边界
+    for (let i = 0; i < input.length; i++) {
+        const char = input[i];
+        
+        if (char === '{') {
+            if (depth === 0) {
+                startIndex = i;
+            }
+            depth++;
+        } else if (char === '}') {
+            depth--;
+            
+            // 当深度回到0时，表示找到了一个完整的JSON对象
+            if (depth === 0) {
+                result.push(input.substring(startIndex, i + 1));
+            }
+        }
+    }
+    
+    return result.length > 0 ? result : [input]; // 如果无法分离，则返回原输入作为单个元素
+}
+
 /**
  * Service to interact with Alibaba Cloud's LLM and DeepSeek API for various medical AI services
  */
@@ -136,7 +188,7 @@ export class AiService {
             );
 
             return response.data.access_token;
-        } catch (error) {
+        } catch (error: any) {
             logger.error(`获取百度访问令牌失败: ${error}`);
             throw error;
         }
@@ -158,7 +210,7 @@ export class AiService {
             return response.data.words_result
                 .map((result: any) => result.words)
                 .join('\n');
-        } catch (error) {
+        } catch (error: any) {
             logger.error(`OCR文字提取失败: ${error}`);
             throw error;
         }
@@ -203,29 +255,132 @@ export class AiService {
             }
 
             // 构建完整的提示
-            const fullPrompt = `${systemPrompt}\n${additionalContext}${userMessage}`;
+            const fullPrompt = `${additionalContext}${userMessage}`;
+            
+            logger.info('准备流式调用AI服务');
 
-            // 调用通用方法
-            const response = await this.callAiService<{ text: string }>('/conversation', {
+            try {
+                // 处理历史消息
+                const formattedHistory = conversationHistory.map(msg => {
+                    if (msg.role === 'system') return { role: 'system', content: msg.content };
+                    if (msg.role === 'patient') return { role: 'user', content: msg.content };
+                    return { role: 'assistant', content: msg.content };
+                });
+                
+                // 使用阿里云百炼API兼容OpenAI的endpoint
+                const url = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+                
+                // 准备请求数据
+                const requestData = {
+                    model: config.aliCloudQwqModelName,
                     messages: [
                         { role: 'system', content: systemPrompt },
-                        ...conversationHistory,
+                        ...formattedHistory,
                         { role: 'user', content: fullPrompt }
                     ],
-                    stream: true
+                    stream: true,
+                };
+                
+                logger.info(`流式请求参数: ${JSON.stringify(requestData)}`);
+                
+                // 发送流式请求
+                const response = await axios.post(url, requestData, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${config.aliCloudApiKey}`,
+                        'Accept': 'text/event-stream'
+                    },
+                    responseType: 'stream'
             });
 
             // 处理流式响应
-            // 由于通用方法不直接支持流式响应，这里模拟流式输出
-            const chunks = response.text.split(' ');
-            for (const chunk of chunks) {
-                yield chunk + ' ';
-                // 添加小延迟模拟流式效果
-                await new Promise(resolve => setTimeout(resolve, 50));
+                for await (const chunk of response.data) {
+                    const chunkString = chunk.toString().trim();
+                    logger.debug(`收到原始数据块: ${chunkString.substring(0, 50)}...`);
+                    
+                    try {
+                        // 如果数据以data:开头，提取JSON部分
+                        if (chunkString.startsWith('data:')) {
+                            const jsonPart = chunkString.slice(5).trim();
+                            
+                            // 处理结束标记
+                            if (jsonPart === '[DONE]') {
+                                logger.info('收到流式响应结束标记');
+                                break;
+                            }
+                            
+                            // 尝试解析JSON
+                            try {
+                                const parsed = JSON.parse(jsonPart);
+                                
+                                // 提取内容
+                                if (parsed.choices && parsed.choices[0]?.delta?.content) {
+                                    const content = parsed.choices[0].delta.content;
+                                    yield content;
+                                }
+                            } catch (parseError) {
+                                logger.warn(`JSON解析失败: ${parseError}, 尝试修复格式...`);
+                                // 尝试分离可能连接在一起的多个JSON对象
+                                const jsonObjects = splitJsonObjects(jsonPart);
+                                for (const jsonObj of jsonObjects) {
+                                    try {
+                                        const parsed = JSON.parse(jsonObj);
+                                        if (parsed.choices && parsed.choices[0]?.delta?.content) {
+                                            const content = parsed.choices[0].delta.content;
+                                            yield content;
+                                        }
+                                    } catch (e) {
+                                        logger.error(`修复后仍解析失败: ${e}`);
+                                    }
+                                }
+                            }
+                        } else if (chunkString.includes('data:')) {
+                            // 处理可能在一行中包含多个data:前缀的情况
+                            const parts = chunkString.split('data:');
+                            for (const part of parts) {
+                                if (!part.trim()) continue;
+                                
+                                const jsonPart = part.trim();
+                                if (jsonPart === '[DONE]') {
+                                    logger.info('收到流式响应结束标记');
+                                    break;
+                                }
+                                
+                                try {
+                                    const parsed = JSON.parse(jsonPart);
+                                    if (parsed.choices && parsed.choices[0]?.delta?.content) {
+                                        const content = parsed.choices[0].delta.content;
+                                        yield content;
+                                    }
+                                } catch (e) {
+                                    logger.debug(`跳过无效JSON部分: ${jsonPart.substring(0, 30)}...`);
+                                }
+                            }
+                        } else {
+                            // 尝试直接作为JSON解析
+                            try {
+                                const parsed = JSON.parse(chunkString);
+                                if (parsed.choices && parsed.choices[0]?.delta?.content) {
+                                    const content = parsed.choices[0].delta.content;
+                                    yield content;
+                                }
+                            } catch (e) {
+                                // 忽略非JSON格式数据
+                                logger.debug(`跳过非JSON数据: ${chunkString.substring(0, 30)}...`);
+                            }
+                        }
+                    } catch (error: any) {
+                        logger.warn(`处理数据块错误: ${error.message}`);
+                    }
+                }
+                
+            } catch (error: any) {
+                logger.error(`流式AI响应生成失败: ${error.message}`);
+                yield `生成回答时出错: ${error.message}`;
             }
-        } catch (error) {
-            logger.error(`生成AI响应失败: ${error}`);
-            throw error;
+        } catch (error: any) {
+            logger.error(`生成AI响应失败: ${error.message}`);
+            yield '抱歉，在处理您的请求时发生了错误，请稍后再试。';
         }
     }
 
@@ -427,13 +582,11 @@ ${prompt}`;
 
     /**
      * 通用方法：调用AI服务
-     * @param endpoint - API端点
      * @param data - 请求数据
      * @param options - 请求选项
      * @returns AI服务响应
      */
     private static async callAiService<T>(
-        endpoint: string,
         data: any,
         options: { 
             headers?: Record<string, string>,
@@ -451,42 +604,64 @@ ${prompt}`;
             // 合并默认headers和自定义headers
             const mergedHeaders = { ...defaultHeaders, ...headers };
             
-            // 构建完整URL
-            const url = `${config.aliCloudApiEndpoint}${endpoint}`;
+            // 使用阿里云百炼API兼容OpenAI的endpoint
+            const url = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
             
-            logger.info(`调用AI服务: ${endpoint}`, { 
-                url, 
+            logger.info(`调用AI服务: ${url}`, { 
                 dataKeys: Object.keys(data),
                 hasAuth: !!mergedHeaders.Authorization
             });
+            
+            // 转换为阿里云百炼API所需的请求格式
+            const requestData = {
+                model: config.aliCloudQwqModelName || 'qwen-plus',
+                messages: [
+                    {role: "system", content: data.systemPrompt || "You are a helpful assistant."},
+                    {role: "user", content: data.message}
+                ],
+                stream: data.streaming || false
+            };
+            
+            logger.info(`AI请求数据: ${JSON.stringify(requestData, null, 2)}`);
             
             // 实现重试逻辑
             let lastError: any = null;
             for (let attempt = 0; attempt <= retryCount; attempt++) {
                 try {
-                    const response = await axios.post(url, data, {
+                    const response = await axios.post(url, requestData, {
                         headers: mergedHeaders,
                         timeout
                     });
                     
-                    if (response.data && response.data.success) {
-                        logger.info(`AI服务调用成功: ${endpoint}`, { 
+                    logger.info(`AI服务调用成功: ${url}`, { 
                             attempt, 
                             statusCode: response.status 
                         });
-                        return response.data.data;
+                    
+                    // 处理响应
+                    if (response.data) {
+                        // 针对百炼API的响应格式进行处理
+                        if (response.data.choices && response.data.choices.length > 0) {
+                            const content = response.data.choices[0].message.content;
+                            logger.info(`AI响应内容长度: ${content.length}`);
+                            
+                            return {
+                                response: content
+                            } as unknown as T;
                     } else {
-                        logger.warn(`AI服务返回非成功状态: ${endpoint}`, { 
-                            attempt, 
-                            response: response.data 
-                        });
-                        throw new Error(`AI服务返回非成功状态: ${response.data.message || '未知错误'}`);
+                            logger.warn(`AI服务返回格式异常: ${JSON.stringify(response.data)}`);
+                            throw new Error('AI服务返回格式异常');
+                        }
+                    } else {
+                        logger.warn(`AI服务返回空响应`);
+                        throw new Error('AI服务返回空响应');
                     }
                 } catch (error: any) {
                     lastError = error;
-                    logger.warn(`AI服务调用失败 (尝试 ${attempt + 1}/${retryCount + 1}): ${endpoint}`, { 
+                    logger.warn(`AI服务调用失败 (尝试 ${attempt + 1}/${retryCount + 1}): ${url}`, { 
                         error: error.message,
-                        statusCode: error.response?.status
+                        statusCode: error.response?.status,
+                        data: error.response?.data
                     });
                     
                     // 如果是最后一次尝试，则抛出错误
@@ -502,7 +677,7 @@ ${prompt}`;
             // 如果所有重试都失败，抛出最后一个错误
             throw lastError;
         } catch (error: any) {
-            logger.error(`AI服务调用失败: ${endpoint}`, { 
+            logger.error('AI服务调用失败:', { 
                 error: error.message,
                 statusCode: error.response?.status,
                 response: error.response?.data
@@ -522,7 +697,6 @@ ${prompt}`;
 
             // 使用通用方法调用AI服务
             const aiSuggestion = await this.callAiService<AiSuggestionResponse>(
-                '/prediagnosis',
                 patientInfo
             );
             
@@ -551,7 +725,6 @@ ${prompt}`;
 
             // 使用通用方法调用AI服务
             return await this.callAiService<ReportInterpretationResponse>(
-                '/report-interpretation',
                 reportInfo
             );
         } catch (error: any) {
@@ -601,7 +774,6 @@ ${prompt}`;
 
             // 使用通用方法调用AI服务
             return await this.callAiService<GuideResponse>(
-                '/guide',
                 aiRequestData
             );
         } catch (error: any) {
@@ -635,6 +807,7 @@ ${prompt}`;
             let systemPrompt = '';
             let promptContent = '';
             
+            try {
             if (consultationType === 'PRE_DIAGNOSIS') {
                 // 预问诊系统提示词
                 systemPrompt = `你是一位经验丰富的医学专家，具有丰富的初步诊断经验。你的任务是根据患者提供的症状和信息进行初步分析，提出可能的病因，并给出合理的就医建议。请保持专业、准确和谨慎。`;
@@ -652,6 +825,8 @@ ${prompt}`;
                     departments.forEach((dept: any, index: number) => {
                         deptInfo += `${index+1}. ${dept.name}: ${dept.description || '无描述'}\n`;
                     });
+                    } else {
+                        deptInfo += "暂无科室信息\n";
                 }
                 
                 // 格式化医生信息
@@ -661,6 +836,8 @@ ${prompt}`;
                         const deptName = doc.departmentId?.name || '未知科室';
                         doctorInfo += `${index+1}. ${doc.name}: ${deptName}, 专长: ${doc.specialty || '一般'}\n`;
                     });
+                    } else {
+                        doctorInfo += "暂无医生信息\n";
                 }
                 
                 promptContent = `患者描述: ${message}\n\n${deptInfo}\n${doctorInfo}\n\n请根据患者症状推荐1-2个最合适的科室和相应的医生，并给出推荐理由。`;
@@ -679,6 +856,8 @@ ${prompt}`;
 医院: ${reportData.hospital || '未知'}
 报告内容:
 ${reportData.description || '未提供报告内容'}`;
+                    } else {
+                        reportDetails = "未提供报告详情";
                 }
                 
                 promptContent = `患者问题: ${message}\n\n${reportDetails}\n\n请解读以上报告，包括:\n1. 整体分析\n2. 异常指标说明\n3. 医学建议`;
@@ -689,23 +868,180 @@ ${reportData.description || '未提供报告内容'}`;
                 promptContent = message;
             }
 
-            // 使用通用方法调用AI服务
-            const response = await this.callAiService<{ response: string }>(
-                '/conversation',
-                {
-                    userId,
-                    conversationId,
-                    message: promptContent,
-                    systemPrompt,
-                    consultationType,
-                    streaming: !!chunkCallback
-                }
-            );
+                logger.info(`已构建提示词，长度: ${promptContent.length}`);
+            } catch (promptError: any) {
+                logger.error(`构建提示词时出错: ${promptError.message}`);
+                systemPrompt = `你是E诊通的AI医疗顾问。`;
+                promptContent = `患者问题: ${message}`;
+            }
 
-            return response.response;
+            // 判断是否使用流式响应
+            if (chunkCallback) {
+                logger.info(`使用流式响应模式`);
+                let fullResponse = '';
+                
+                // 使用阿里云百炼API兼容OpenAI的endpoint
+                const url = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+                
+                try {
+                    // 准备请求数据
+                    const requestData = {
+                        model: config.aliCloudQwqModelName,
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: promptContent }
+                        ],
+                        stream: true
+                    };
+                    
+                    // 发送流式请求
+                    const response = await axios.post(url, requestData, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${config.aliCloudApiKey}`,
+                            'Accept': 'text/event-stream'
+                        },
+                        responseType: 'stream'
+                    });
+                    logger.info(`流式响应: ${response}`);
+                    
+                    // 处理流式响应
+                    for await (const chunk of response.data) {
+                        const chunkString = chunk.toString().trim();
+                        logger.debug(`收到原始数据块: ${chunkString.substring(0, 50)}...`);
+                        
+                        try {
+                            // 如果数据以data:开头，提取JSON部分
+                            if (chunkString.startsWith('data:')) {
+                                const jsonPart = chunkString.slice(5).trim();
+                                
+                                // 处理结束标记
+                                if (jsonPart === '[DONE]') {
+                                    logger.info('收到流式响应结束标记');
+                                    break;
+                                }
+                                
+                                // 尝试解析JSON
+                                try {
+                                    const parsed = JSON.parse(jsonPart);
+                                    
+                                    // 提取内容
+                                    if (parsed.choices && parsed.choices[0]?.delta?.content) {
+                                        const content = parsed.choices[0].delta.content;
+                                        fullResponse += content;
+                                        chunkCallback(content);
+                                    }
+                                } catch (parseError) {
+                                    logger.warn(`JSON解析失败: ${parseError}, 尝试修复格式...`);
+                                    // 尝试分离可能连接在一起的多个JSON对象
+                                    const jsonObjects = splitJsonObjects(jsonPart);
+                                    for (const jsonObj of jsonObjects) {
+                                        try {
+                                            const parsed = JSON.parse(jsonObj);
+                                            if (parsed.choices && parsed.choices[0]?.delta?.content) {
+                                                const content = parsed.choices[0].delta.content;
+                                                fullResponse += content;
+                                                chunkCallback(content);
+                                            }
+                                        } catch (e) {
+                                            logger.error(`修复后仍解析失败: ${e}`);
+                                        }
+                                    }
+                                }
+                            } else if (chunkString.includes('data:')) {
+                                // 处理可能在一行中包含多个data:前缀的情况
+                                const parts = chunkString.split('data:');
+                                for (const part of parts) {
+                                    if (!part.trim()) continue;
+                                    
+                                    const jsonPart = part.trim();
+                                    if (jsonPart === '[DONE]') {
+                                        logger.info('收到流式响应结束标记');
+                                        break;
+                                    }
+                                    
+                                    try {
+                                        const parsed = JSON.parse(jsonPart);
+                                        if (parsed.choices && parsed.choices[0]?.delta?.content) {
+                                            const content = parsed.choices[0].delta.content;
+                                            fullResponse += content;
+                                            chunkCallback(content);
+                                        }
+                                    } catch (e) {
+                                        logger.debug(`跳过无效JSON部分: ${jsonPart.substring(0, 30)}...`);
+                                    }
+                                }
+                            } else {
+                                // 尝试直接作为JSON解析
+                                try {
+                                    const parsed = JSON.parse(chunkString);
+                                    if (parsed.choices && parsed.choices[0]?.delta?.content) {
+                                        const content = parsed.choices[0].delta.content;
+                                        fullResponse += content;
+                                        chunkCallback(content);
+                                    }
+                                } catch (e) {
+                                    // 忽略非JSON格式数据
+                                    logger.debug(`跳过非JSON数据: ${chunkString.substring(0, 30)}...`);
+                                }
+                            }
         } catch (error: any) {
-            logger.error(`处理AI对话时出错: ${error.message}`);
-            return '服务暂时不可用，请稍后再试。';
+                            logger.warn(`处理数据块错误: ${error.message}`);
+                        }
+                    }
+                    
+                    logger.info(`流式响应完成，总长度: ${fullResponse.length}`);
+                    return fullResponse;
+                    
+                } catch (streamError: any) {
+                    logger.error(`流式响应失败: ${streamError.message}`);
+                    const errorMessage = '抱歉，在处理您的请求时发生了错误，请稍后再试。';
+                    chunkCallback(errorMessage);
+                    return errorMessage;
+                }
+                
+            } else {
+                // 非流式响应模式
+                logger.info(`使用非流式响应模式`);
+                
+                try {
+                    // 使用阿里云百炼API兼容OpenAI的endpoint
+                    const url = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+                    
+                    // 准备请求数据
+                    const requestData = {
+                        model: config.aliCloudQwqModelName,
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: promptContent }
+                        ],
+                        stream: false
+                    };
+                    
+                    const response = await axios.post(url, requestData, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${config.aliCloudApiKey}`
+                        }
+                    });
+                    
+                    if (response.data && response.data.choices && response.data.choices.length > 0) {
+                        const content = response.data.choices[0].message.content;
+                        logger.info(`非流式响应完成，长度: ${content.length}`);
+                        return content;
+                    } else {
+                        logger.warn(`AI服务返回格式异常: ${JSON.stringify(response.data)}`);
+                        return '抱歉，AI服务返回格式异常，请稍后再试。';
+                    }
+                } catch (error: any) {
+                    logger.error(`非流式响应失败: ${error.message}`);
+                    return '抱歉，在处理您的请求时发生了错误，请稍后再试。';
+                }
+            }
+        } catch (error: any) {
+            logger.error(`处理AI对话时出错: ${error.message}, 堆栈: ${error.stack}`);
+            // 返回一个友好的错误消息
+            return '非常抱歉，我现在遇到了一些技术问题，无法正常回答您的问题。请稍后再试或联系客服获取帮助。';
         }
     }
 }

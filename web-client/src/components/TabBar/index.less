@@ -5,6 +5,9 @@
   border-bottom: 1px solid #eee;
   background-color: #f5f9ff;
   margin-top: 64px; // 为header留出空间
+  position: sticky;
+  top: 64px;
+  z-index: 10;
 }
 
 .tab {
@@ -16,7 +19,7 @@
 }
 
 .tab.active {
-  color: #1e88e5;
+  color: #4285f4;
   font-weight: bold;
 }
 
@@ -24,4 +27,6 @@
   margin-left: auto;
   font-size: 20px;
   cursor: pointer;
+  text-align: right;
+  flex-grow: 1;
 }

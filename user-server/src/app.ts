@@ -88,12 +88,29 @@ class App {
      */
     private async initializeWebSocket() {
         try {
+            logger.info('开始初始化WebSocket服务...');
             await WebSocketServer.initialize(this.server);
             const io = WebSocketServer.getInstance();
-            io.on('connection', WebSocketController.handleConnection);
+            
+            // 通过包装错误处理，防止单个连接错误导致整个服务崩溃
+            io.on('connection', (socket) => {
+                try {
+                    WebSocketController.handleConnection(socket);
+                } catch (connError) {
+                    logger.error(`处理WebSocket连接时出错: ${connError}`);
+                    // 不要让错误传播到Socket.IO库
+                }
+            });
+            
+            // 添加错误处理
+            io.on('error', (err) => {
+                logger.error(`WebSocket服务错误: ${err}`);
+            });
+            
             logger.info('WebSocket服务器初始化成功');
         } catch (error) {
             logger.error(`WebSocket初始化失败: ${error}`);
+            // 失败不会导致整个应用崩溃
         }
     }
 
@@ -113,11 +130,12 @@ class App {
     /**
      * 启动HTTP服务器
      * @param PORT 服务器端口
-     * @param p0 服务器启动回调函数
+     * @param callback 服务器启动回调函数
      */
-    public listen(PORT: string | number, p0: () => void) {
-        this.server.listen(PORT, () => {
-            logger.info(`服务器运行在端口 ${PORT}`);
+    public listen(PORT: string | number, callback?: () => void) {
+        return this.server.listen(PORT, () => {
+            logger.info(`HTTP服务器运行在端口 ${PORT}`);
+            if (callback) callback();
         });
     }
 }

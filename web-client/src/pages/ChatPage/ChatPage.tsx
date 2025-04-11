@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  Alert, Avatar, Button, Card, Spin, Typography, message
+  Alert, Avatar, Button, Card, Spin, Typography, message as antdMessage
 } from 'antd';
 import {
   CheckOutlined, LockOutlined, UserOutlined
@@ -29,120 +29,176 @@ export const ChatPage: React.FC = () => {
   const messages = currentConversation?.messages || [];
   const [isWsConnected, setIsWsConnected] = useState(false);
 
-// 2. 修改WebSocket连接逻辑，添加条件判断并防止过早断开
-useEffect(() => {
-  let isComponentMounted = true; // 跟踪组件是否仍然挂载
-  
-  // 仅当会话ID存在且组件挂载时才连接
-  if (currentConversation?._id && isComponentMounted) {
-    console.log('开始连接WebSocket...');
-    wsService.connect(currentConversation._id);
+  // 改进WebSocket连接逻辑，在页面刷新时自动重连
+  useEffect(() => {
+    let isComponentMounted = true; // 跟踪组件是否仍然挂载
     
-    // 创建轮询检查连接状态
-    const checkConnection = setInterval(() => {
-      if (wsService.isConnected() && isComponentMounted) {
-        setIsWsConnected(true);
-        clearInterval(checkConnection);
-      }
-    }, 5000);
-    
-    // 清理函数
-    return () => {
-      isComponentMounted = false; // 标记组件已卸载
-      clearInterval(checkConnection);
+    // 仅当会话ID存在且组件挂载时才连接
+    if (currentConversation?._id && isComponentMounted) {
+      console.log('开始连接WebSocket...');
+      wsService.connect(currentConversation._id);
       
-      // 仅在之前已连接时才断开
-      if (isWsConnected) {
-        console.log('组件卸载，断开WebSocket连接');
-        wsService.disconnect();
+      // 创建轮询检查连接状态
+      const checkConnection = setInterval(() => {
+        if (wsService.isConnected() && isComponentMounted) {
+          setIsWsConnected(true);
+          clearInterval(checkConnection);
+        }
+      }, 2000); // 减少检查间隔
+      
+      // 监听socket事件
+      const handleReconnect = () => {
+        console.log('WebSocket 重新连接成功');
+        setIsWsConnected(true);
+      };
+      
+      const handleDisconnect = () => {
+        console.log('WebSocket 连接断开');
+        setIsWsConnected(false);
+      };
+      
+      wsService.onReconnect(handleReconnect);
+      wsService.onDisconnect(handleDisconnect);
+      
+      // 清理函数
+      return () => {
+        isComponentMounted = false; // 标记组件已卸载
+        clearInterval(checkConnection);
+        
+        // 移除事件监听
+        wsService.offReconnect(handleReconnect);
+        wsService.offDisconnect(handleDisconnect);
+        
+        // 仅在之前已连接时才断开
+        if (isWsConnected) {
+          console.log('组件卸载，断开WebSocket连接');
+          wsService.disconnect();
+        }
+      };
+    }
+  }, [currentConversation?._id, wsService, isWsConnected]);
+
+  // 修改初始化会话的代码
+  useEffect(() => {
+    // 如果用户已登录但没有当前会话，自动创建一个会话
+    if (currentUser && !currentConversation) {
+      console.log('Attempting to create/get conversation...');
+      // Log the currentUser object to see its structure
+      console.log('Current User:', JSON.stringify(currentUser, null, 2)); 
+
+      dispatch(setLoading(true));
+      
+      // 确保currentUser不为null并且有有效的ID
+      if (!currentUser) {
+        console.error('无法创建会话：currentUser为null');
+        antdMessage.error('无法启动对话，请先登录');
+        dispatch(setLoading(false));
+        return;
       }
-    };
-  }
-}, [currentConversation?._id]);
-
-    // 修改初始化会话的代码
-    useEffect(() => {
-      // 如果用户已登录但没有当前会话，自动创建一个会话
-      if (currentUser && !currentConversation) {
-        console.log('Attempting to create/get conversation...');
-        // Log the currentUser object to see its structure
-        console.log('Current User:', JSON.stringify(currentUser, null, 2)); 
-
-        dispatch(setLoading(true));
-        
-        // 确保currentUser不为null并且有有效的ID
-        if (!currentUser) {
-          console.error('无法创建会话：currentUser为null');
-          message.error('无法启动对话，请先登录');
-          dispatch(setLoading(false));
-          return;
-        }
-        const userId = currentUser.userId 
-        console.log('Using User ID:', userId);
-        
-        // 只有当userId有值时才创建会话
-        if (userId) {
-          ConversationAPI.createOrGetConversation({
-            conversationType: ConversationType.PRE_DIAGNOSIS, 
-            referenceId: userId,
-            userId: userId, // Assuming patientId is the same as userId for this context
-            initialMessage: '您好，有什么可以帮您的吗？', // Simplified initial message
-            messages: [] // Ensure messages array is passed if required by backend
-           })
-            .then((conversation) => {
-              console.log('Conversation created/retrieved successfully:', conversation);
-              if (conversation && conversation._id) {
-                dispatch(setCurrentConversation(conversation));
-              } else {
-                // Handle case where backend returns unexpected data
-                console.error('Received invalid conversation object:', conversation);
-                message.error('无法处理会话数据，请稍后再试');
-              }
-            })
-            .catch((error) => {
-              console.error('Conversation initialization failed:', error);
-              // Log the full error object if available
-              if (error.response) {
-                console.error('Error Response Data:', error.response.data);
-                console.error('Error Response Status:', error.response.status);
-              }
-              message.error('无法启动对话，请检查网络或联系管理员');
-            })
-            .finally(() => {
-              dispatch(setLoading(false));
-              console.log('Finished conversation initialization attempt.');
-            });
-        } else {
-          console.error('无法创建会话：用户ID不存在');
-          message.error('无法启动对话，用户信息不完整');
-          dispatch(setLoading(false));
-        }
+      const userId = currentUser.userId 
+      console.log('Using User ID:', userId);
+      
+      // 只有当userId有值时才创建会话
+      if (userId) {
+        ConversationAPI.createOrGetConversation({
+          conversationType: ConversationType.PRE_DIAGNOSIS, 
+          referenceId: userId,
+          userId: userId, // Assuming patientId is the same as userId for this context
+          initialMessage: '您好，有什么可以帮您的吗？', // Simplified initial message
+          messages: [] // Ensure messages array is passed if required by backend
+         })
+          .then((conversation) => {
+            console.log('Conversation created/retrieved successfully:', conversation);
+            if (conversation && conversation._id) {
+              dispatch(setCurrentConversation(conversation));
+            } else {
+              // Handle case where backend returns unexpected data
+              console.error('Received invalid conversation object:', conversation);
+              antdMessage.error('无法处理会话数据，请稍后再试');
+            }
+          })
+          .catch((error) => {
+            console.error('Conversation initialization failed:', error);
+            // Log the full error object if available
+            if (error.response) {
+              console.error('Error Response Data:', error.response.data);
+              console.error('Error Response Status:', error.response.status);
+            }
+            antdMessage.error('无法启动对话，请检查网络或联系管理员');
+          })
+          .finally(() => {
+            dispatch(setLoading(false));
+            console.log('Finished conversation initialization attempt.');
+          });
       } else {
          // Log why the effect didn't run
          if (!currentUser) console.log('Conversation init skipped: currentUser is null.');
          if (currentConversation) console.log('Conversation init skipped: currentConversation already exists.');
       }
-    }, [currentUser, currentConversation, dispatch]); // Keep dependencies as is for now
+    } else {
+       // Log why the effect didn't run
+       if (!currentUser) console.log('Conversation init skipped: currentUser is null.');
+       if (currentConversation) console.log('Conversation init skipped: currentConversation already exists.');
+    }
+  }, [currentUser, currentConversation, dispatch]); // Keep dependencies as is for now
 
-  // Auto scroll to bottom when messages change
+  // 改进滚动到底部功能
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  };
+
+  // 在消息变化和组件挂载时自动滚动到底部
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  // 在组件挂载和会话切换时也滚动到底部
+  useEffect(() => {
+    if (currentConversation) {
+      setTimeout(scrollToBottom, 100); // 短暂延迟以确保DOM更新
+    }
+  }, [currentConversation?._id]);
 
   const handleConfirmIdentity = () => {
     setIsIdentityConfirmed(true);
+    
+    // 构建用户确认信息消息
+    if (currentUser) {
+      const gender = currentUser.gender === 'MALE' ? '男' : 
+                    currentUser.gender === 'FEMALE' ? '女' : '未设置';
+      
+      const userInfoMessage = `我已确认以下信息：
+姓名: ${currentUser.name || '未设置'}
+手机号: ${currentUser.phone || '未设置'}
+性别: ${gender}`;
+      
+      // 发送用户确认信息作为消息
+      handleSendMessage(userInfoMessage);
+    }
   };
 
-  const handleSendMessage = () => {
-    if (!userInput.trim()) return;
+  const handleSendMessage = (message?: string) => {
+    const messageToSend = message || userInput.trim();
+    if (!messageToSend) return;
+
+    console.log('用户发送消息:', messageToSend, '当前会话ID:', currentConversation?._id);
+    
+    // 检查WebSocket连接状态
+    const connected = wsService.isConnected();
+    console.log('WebSocket连接状态:', connected ? '已连接' : '未连接');
+    
+    if (!connected) {
+      console.log('尝试重新连接WebSocket...');
+      wsService.connect(currentConversation?._id || '');
+      antdMessage.warning('正在重新连接服务器，请稍后再试');
+      return;
+    }
 
     const newMessage: Message = {
       _id: Date.now().toString(),
-      content: userInput.trim(),
+      content: messageToSend,
       senderType: SenderType.PATIENT,
       conversationId: currentConversation?._id || '',
       createdAt: new Date().toISOString(),
@@ -150,10 +206,13 @@ useEffect(() => {
       metadata: {}
     };
 
+    console.log('添加本地消息:', newMessage);
     dispatch(addMessage(newMessage));
     
     // Send message via WebSocket
-    wsService.sendMessage(userInput.trim());
+    console.log('发送WebSocket消息...');
+    wsService.sendMessage(messageToSend);
+    console.log('WebSocket消息已发送');
     
     setUserInput('');
     scrollToBottom();
@@ -198,13 +257,13 @@ useEffect(() => {
     ));
   };
 
-
-
   if (loading) {
     return (
       <div className="chat-page">
         <div className="loading-container">
-          <Spin size="large" tip="正在加载..." />
+          <Spin size="large">
+            <div className="spin-content">正在加载...</div>
+          </Spin>
         </div>
       </div>
     );
@@ -234,7 +293,7 @@ useEffect(() => {
                       currentUser.gender === 'FEMALE' ? '女' : '未设置'}</Text>
               </div>
               <div className="action-buttons">
-                <Button className="btn-outline" onClick={() => message.info('即将支持身份编辑功能')}>
+                <Button className="btn-outline" onClick={() => antdMessage.info('即将支持身份编辑功能')}>
                   修改信息
                 </Button>
                 <Button type="primary" className="btn-primary" onClick={handleConfirmIdentity}>
@@ -265,22 +324,20 @@ useEffect(() => {
               ) : (
                 renderMessageGroups()
               )}
-              <div ref={messagesEndRef} />
+              <div ref={messagesEndRef} style={{ height: 1, clear: 'both' }} />
             </div>
-            
-            <Card>
-              <MessageInput 
-                onSend={(message) => {
-                  setUserInput(message);
-                  handleSendMessage();
-                }}
-                disabled={!currentConversation?._id}
-                placeholder="输入您的问题..."
-              />
-            </Card>
           </>
         )}
       </div>
+
+      {/* 统一显示消息输入框，避免重复 */}
+      {(isIdentityConfirmed || currentConversation?._id) && (
+        <MessageInput
+          onSend={handleSendMessage}
+          disabled={loading || !currentConversation?._id}
+          placeholder="请输入症状/药品名称/疾病..."
+        />
+      )}
     </div>
   );
 };

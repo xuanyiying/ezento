@@ -14,23 +14,34 @@ const startServer = async () => {
   try {
     // 先连接到数据库
     await connectDB();
+    logger.info('数据库连接成功', { service: 'ezento-api' });
     
-    // 数据库连接成功后，再启动服务器
-    app.listen(PORT, () => {
+    // 启动服务器
+    const server = app.listen(PORT, () => {
       logger.info(`服务器已启动，运行在端口 ${PORT}`, { service: 'ezento-api' });
       logger.info(`API文档可在 http://localhost:${PORT}/api-docs 访问`, { service: 'ezento-api' });
+      logger.info(`WebSocket服务可在 ws://localhost:${PORT}/ws 访问`, { service: 'ezento-api' });
+    });
+    
+    // 确保服务器正确监听后再初始化其他服务
+    server.on('error', (error: Error) => {
+      logger.error(`HTTP服务器错误: ${error.message}`, { service: 'ezento-api', stack: error.stack });
+      process.exit(1);
     });
     
     // 初始化缓存
     try {
       await initializeCache();
       logger.info('Redis缓存连接成功', { service: 'ezento-api' });
-    } catch (cacheError) {
-      logger.error(`Redis缓存连接失败: ${cacheError}`, { service: 'ezento-api' });
+    } catch (cacheError: any) {
+      const stack = cacheError instanceof Error ? cacheError.stack : '';
+      logger.error(`Redis缓存连接失败: ${cacheError}`, { service: 'ezento-api', stack });
       // 缓存失败不影响主程序运行
+      logger.warn('系统将在没有缓存的情况下继续运行', { service: 'ezento-api' });
     }
-  } catch (error) {
-    logger.error(`服务器启动失败: ${error}`, { service: 'ezento-api' });
+  } catch (error: any) {
+    const stack = error instanceof Error ? error.stack : '';
+    logger.error(`服务器启动失败: ${error}`, { service: 'ezento-api', stack });
     process.exit(1);
   }
 };
