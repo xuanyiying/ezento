@@ -1,8 +1,24 @@
-import { Request, Response, NextFunction } from '../types';
 import { ApiError } from './errorHandler';
 import jwt from 'jsonwebtoken';
 import { DIContainer } from '../di/container';
-
+import { Request, Response, NextFunction } from 'express';
+declare global {
+    namespace Express {
+        interface Request {
+            user?: {
+                id: string;
+                email: string;
+                name: string;
+                password?: string;
+                role: 'ADMIN' | 'TENANT_ADMIN' | 'USER';
+                tenantId: string;
+                createdAt: Date;
+                updatedAt: Date;
+            };
+            tenantId?: string;
+        }
+    }
+}
 export const authMiddleware = async (
     req: Request,
     res: Response,

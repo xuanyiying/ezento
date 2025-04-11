@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from '../types';
+import { Request, Response, NextFunction } from 'express';
 import { TenantService } from '../services/tenant.service';
 import { ApiError } from '../middlewares/errorHandler';
 

@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { TemplateService } from '../services/template.service';
 import { ApiError } from '../middlewares/errorHandler';
-import { Template, TemplateSection, FormElement, ValidationRule } from '../domains/template/template.entity';
 
 export class TemplateController {
     constructor(private templateService: TemplateService) { }
