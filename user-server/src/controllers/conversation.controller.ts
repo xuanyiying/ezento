@@ -5,7 +5,6 @@ import ConversationService from '../services/conversation.service';
 import { ResponseUtil } from '../utils/responseUtil';
 import { logger } from '../utils/logger';
 import mongoose from 'mongoose';
-import { SenderType } from '../interfaces/conversation.interface';
 import { IConsultation } from '../interfaces/consultation.interface';
 import path from 'path';
 import fs from 'fs';
@@ -100,7 +99,7 @@ class ConversationController {
             const addMessageRequest = {
                 conversationId: new mongoose.Types.ObjectId(conversationId),
                 content,
-                senderType: SenderType.PATIENT,
+                role: 'user' as const,
                 metadata,
                 referenceId: '',
                 timestamp: new Date()

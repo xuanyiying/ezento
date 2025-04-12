@@ -1,29 +1,26 @@
 import React, { useState } from 'react';
-import { Layout, Typography, Button, Avatar, Space, Upload, message } from 'antd';
+import { Layout, Typography, Button, Avatar, Upload, message } from 'antd';
 import { UserOutlined, UploadOutlined, RobotOutlined, MessageOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import Header from '@/components/Header';
 import TabBar from '@/components/TabBar';
 import MessageInput from '@/components/MessageInput';
 import './ReportsPage.less';
+import { Message } from '@/types/conversation';
 
 const { Content } = Layout;
 const { Text, Title } = Typography;
 
-interface Message {
-  id: string;
-  content: string;
-  sender: 'USER' | 'SYSTEM' | 'AI';
-  timestamp: Date;
-}
-
 const ReportsPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: '1',
+      _id: 'initial-0',
       content: '您可以上传检验单报告，我将为您解读相关检验指标',
-      sender: 'AI',
-      timestamp: new Date()
+      role: 'system',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      metadata: {},
+      conversationId: 'guide-placeholder'
     }
   ]);
   
@@ -57,10 +54,13 @@ const ReportsPage: React.FC = () => {
           setMessages([
             ...messages,
             {
-              id: Date.now().toString(),
+              _id: 'analyzing-0',
               content: '正解读中，请耐心等待...',
-              sender: 'AI',
-              timestamp: new Date()
+              role: 'system',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              metadata: {},
+              conversationId : 'guide-placeholder'
             }
           ]);
           
@@ -75,10 +75,13 @@ const ReportsPage: React.FC = () => {
   
   const handleSendMessage = (content: string) => {
     const newMessage: Message = {
-      id: Date.now().toString(),
+      _id: Date.now().toString(),
       content,
-      sender: 'USER',
-      timestamp: new Date()
+      role: 'user',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      metadata: {},
+      conversationId: 'guide-placeholder'
     };
     
     setMessages([...messages, newMessage]);
@@ -107,10 +110,10 @@ const ReportsPage: React.FC = () => {
         <div className="message-container">
           {messages.map(message => (
             <div 
-              key={message.id} 
-              className={`message ${message.sender === 'USER' ? 'right' : 'left'}`}
+              key={message._id}
+              className={`message ${message.role === 'user' ? 'right' : 'left'}`}
             >
-              {message.sender !== 'USER' && (
+              {message.role !== 'user' && (
                 <Avatar icon={<MessageOutlined />} className="avatar" />
               )}
               
@@ -118,7 +121,7 @@ const ReportsPage: React.FC = () => {
                 {message.content}
               </div>
               
-              {message.sender === 'USER' && (
+              {message.role === 'user' && (
                 <Avatar icon={<UserOutlined />} className="avatar" />
               )}
             </div>

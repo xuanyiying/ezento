@@ -1,17 +1,14 @@
 import logger from '../config/logger';
 import mongoose from 'mongoose';
 import { Consultation, User } from '../models';
-import { AiService } from './ai.service';
 import { 
     IConsultation, 
     CreateConsultationRequest, 
     UpdateConsultationRequest, 
     GetConsultationListRequest,
-    ConsultationType,
     ConsultationStatus,
     IAiSuggestion
 } from '../interfaces/consultation.interface';
-import { PrediagnosisInfo, ReportInfo } from './ai.service';
 
 // Define interfaces for populated fields
 interface PopulatedUser {
@@ -31,82 +28,7 @@ class ConsultationService {
      */
     static async createConsultation(data: CreateConsultationRequest): Promise<IConsultation> {
         try {
-            // Convert patientId to ObjectId if it's a string
             const userId = data.userId
-            
-            // 获取患者信息用于AI集成
-            const user = await User.findById(userId);
-            let aiSuggestion = null;
-            
-            // 如果找到患者，根据会诊类型获取AI建议
-            if (user) {
-                try {
-                    if (data.consultationType === ConsultationType.PRE_DIAGNOSIS) {
-                        // 预问诊AI建议
-                        const patientInfo: PrediagnosisInfo = {
-                            age: user.birthDate
-                                ? Math.floor((new Date().getTime() - new Date(user.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-                                : undefined,
-                            gender: user.gender,
-                            symptoms: [data.symptoms], // 转换为字符串数组
-                            bodyParts: data.bodyParts,
-                            duration: data.duration,
-                            existingConditions: data.existingConditions,
-                        };
-                        
-                        aiSuggestion = await AiService.generatePrediagnosis(patientInfo);
-                    } else if (data.consultationType === ConsultationType.REPORT_INTERPRETATION && data.reportType && data.description) {
-                        // 报告解读AI建议
-                        const reportInfo: ReportInfo = {
-                            patientAge: user.birthDate 
-                                ? Math.floor((new Date().getTime() - new Date(user.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-                                : undefined,
-                            patientGender: user.gender,
-                            reportType: data.reportType,
-                            reportDate: data.reportDate?.toISOString().split('T')[0],
-                            hospital: data.hospital,
-                            description: data.description,
-                            reportContent: data.description
-                        };
-                        
-                        const aiInterpretation = await AiService.generateReportInterpretation(reportInfo);
-                        
-                        if (aiInterpretation) {
-                            aiSuggestion = {
-                                possibleConditions: aiInterpretation.interpretation,
-                                recommendations: aiInterpretation.suggestions ? aiInterpretation.suggestions.join(', ') : '',
-                                urgencyLevel: 'medium',
-                                suggestedDepartments: [],
-                                createTime: new Date()
-                            };
-                        }
-                    } else if (data.consultationType === ConsultationType.GUIDE) {
-                        // 导诊AI建议 - 可以添加特定的导诊AI逻辑
-                        const patientInfo: PrediagnosisInfo = {
-                            age: user.birthDate
-                                ? Math.floor((new Date().getTime() - new Date(user.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-                                : undefined,
-                            gender: user.gender,
-                            symptoms: [data.symptoms], // 转换为字符串数组
-                            bodyParts: data.bodyParts,
-                            duration: data.duration,
-                            existingConditions: data.existingConditions,
-                        };
-                        
-                        // 使用预问诊逻辑作为基础，特别关注科室推荐
-                        const guideAiSuggestion = await AiService.generatePrediagnosis(patientInfo);
-                        if (guideAiSuggestion) {
-                            aiSuggestion = {
-                                ...guideAiSuggestion,
-                                // 可以在这里添加导诊特定的逻辑
-                            };
-                        }
-                    }
-                } catch (error: any) {
-                    logger.error(`生成AI建议时出错: ${error.message}`);
-                    // 如果AI建议失败，继续执行但不包含AI建议
-                }
-            }
 
             // 创建会诊，如果有AI建议则包含
             const consultation = new Consultation({
@@ -124,7 +46,6 @@ class ConsultationService {
                 fee: data.fee,
                 status: ConsultationStatus.PENDING,
                 startTime: new Date(),
-                aiSuggestion: aiSuggestion,
             });
 
             await consultation.save();

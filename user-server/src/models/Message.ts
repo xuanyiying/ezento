@@ -7,7 +7,7 @@ import { UserDocument } from '../interfaces/user.interface';
 export interface IMessage extends Document {
     consultationId: IConsultation['_id'] | IConsultation;  // 关联的问诊ID
     senderId: UserDocument['_id'] | string;               // 发送者ID
-    senderType: 'patient' | 'system';             // 发送者类型：患者/系统
+    role: 'user' | 'system';             // 发送者类型：患者/系统
     content: string;                                     // 消息内容
     messageType: 'text' | 'image' | 'document';   // 消息类型：文本/图片/文档
     timestamp: Date;                                     // 创建时间
@@ -31,9 +31,9 @@ const MessageSchema: Schema = new Schema({
         ref: 'User',
         required: true
     },
-    senderType: {
+    role: {
         type: String,
-        enum: ['patient', 'system'],
+        enum: ['user', 'system'],
         required: true
     },
     content: {

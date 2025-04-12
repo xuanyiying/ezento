@@ -4,17 +4,10 @@ export enum ConversationType {
   REPORT = 'REPORT'
 }
 
-  
-export enum SenderType {
-  PATIENT = 'PATIENT',
-  SYSTEM = 'SYSTEM',
-}
-
-
 export interface Message {
   _id: string;
   content: string;
-  senderType: 'PATIENT' | 'SYSTEM';
+  role: 'user' | 'system';
   metadata?: any;
   createdAt: string;
   updatedAt: string;

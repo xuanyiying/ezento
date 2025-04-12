@@ -11,19 +11,11 @@ export enum ConversationType {
 }
 
 /**
- * 消息发送者类型枚举
- */
-export enum SenderType {
-    PATIENT = 'PATIENT', // 患者
-    SYSTEM = 'SYSTEM'    // 系统消息
-}
-
-/**
  * 会话消息接口
  */
 export interface IConversationMessage {
     content: string;             // 消息内容
-    senderType: SenderType;      // 发送者类型
+    role: 'user' | 'system';      // 发送者类型
     timestamp: Date;             // 发送时间
     metadata?: Record<string, any>; // 元数据（可包含图片链接等）
     referenceId: string;         // 关联ID（预问诊ID、导诊ID或报告ID）
@@ -65,7 +57,7 @@ export interface CreateConversationRequest {
 export interface AddMessageRequest {
     conversationId: mongoose.Types.ObjectId; // 会话ID
     content: string; // 消息内容
-    senderType: SenderType; // 发送者类型
+    role: 'user' | 'system'; // 发送者类型
     metadata?: Record<string, any>; // 元数据（可包含图片链接等）
     referenceId: string; // 关联ID（预问诊ID、导诊ID或报告ID）
     timestamp: Date; // 发送时间

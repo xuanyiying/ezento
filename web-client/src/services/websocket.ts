@@ -150,6 +150,9 @@ class WebSocketService {
         }
       });
 
+      let currentChunk = '';
+      let isProcessingAiResponse = false;
+      
       // 处理AI响应流
       this.socket.on('ai_response_chunk', (data: any) => {
         try {
@@ -157,13 +160,12 @@ class WebSocketService {
           const { chunk, type } = data;
           
           if (chunk) {
-            console.log('添加AI响应片段到消息列表:', chunk.substring(0, 50) + (chunk.length > 50 ? '...' : ''));
-            store.dispatch(addMessage({
-              content: chunk,
-              senderType: 'SYSTEM',
-              metadata: { type },
-              conversationId: conversationId,
-            } as Partial<Message>));
+            if (!isProcessingAiResponse) {
+              isProcessingAiResponse = true;
+              currentChunk = '';
+            }
+            console.log('累积AI响应片段:', chunk.substring(0, 50) + (chunk.length > 50 ? '...' : ''));
+            currentChunk += chunk;
           }
         } catch (error) {
           console.error('处理ai_response_chunk事件时出错:', error);
@@ -178,6 +180,19 @@ class WebSocketService {
           
           if (conversation) {
             console.log('更新完整会话:', conversation._id);
+            if (currentChunk && isProcessingAiResponse) {
+              // 添加累积的响应作为一条完整消息
+              store.dispatch(addMessage({
+                content: currentChunk,
+                senderType: 'SYSTEM',
+                metadata: { type: conversationType },
+                conversationId: conversation._id,
+                timestamp: new Date().toISOString()
+              } as Partial<Message>));
+              currentChunk = '';
+              isProcessingAiResponse = false;
+            }
+            // 更新会话状态
             store.dispatch(setCurrentConversation(conversation));
           }
         } catch (error) {
@@ -194,43 +209,20 @@ class WebSocketService {
         console.error('WebSocket服务器错误:', error);
       });
 
+      // 移除通用消息处理，因为它可能导致重复
       this.socket.on('message', (data: any) => {
         try {
           console.log('收到通用消息:', data);
+          // 只处理特殊类型的消息，如OCR结果
           const { type, data: messageData } = data;
-          const { chunk, status, text, error, conversation } = messageData || {};
-
-          if (type === 'stream') {
-            console.log('收到流式响应:', chunk);
-            store.dispatch(addMessage({
-              content: chunk,
-              senderType: 'SYSTEM',
-              metadata: {},
-              conversationId: conversationId,
-            } as Partial<Message>));
-          }
-
-          if (type === 'conversation_update') {
-            console.log('收到会话更新:', conversation?._id);
-            store.dispatch(setCurrentConversation(conversation));
-          }
-
           if (type === 'ocr') {
-            if (status === 'success') {
-              console.log('OCR识别成功:', text);
+            const { status, text, error } = messageData || {};
+            if (status === 'success' && text) {
               store.dispatch(addMessage({
                 content: `OCR识别结果：${text}`,
                 senderType: 'SYSTEM',
-                metadata: {},
-                conversationId: conversationId,
-              } as Partial<Message>));
-            } else if (status === 'failed') {
-              console.log('OCR识别失败:', error);
-              store.dispatch(addMessage({
-                content: `OCR识别失败：${error}`,
-                senderType: 'SYSTEM',
-                metadata: {},
-                conversationId: conversationId,
+                metadata: { type: 'ocr' },
+                timestamp: new Date().toISOString()
               } as Partial<Message>));
             }
           }
@@ -314,18 +306,9 @@ class WebSocketService {
     
     // 发送消息
     try {
-      console.log('尝试使用不同的事件名称发送消息');
-      
-      // 尝试不同的事件名称
+      // 只发送一个事件
       this.socket.emit('new_message', messageData);
-      console.log('new_message事件已发送');
-      
-      this.socket.emit('message', messageData);
-      console.log('message事件已发送');
-      
-      this.socket.emit('pre_diagnosis', messageData);
-      console.log('pre_diagnosis事件已发送');
-      
+      console.log('消息已发送');
     } catch (error) {
       console.error('消息发送失败:', error);
     }

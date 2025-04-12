@@ -12,7 +12,7 @@ export class WebSocketServer {
             // 创建Socket.io服务器
             this.io = new Server(httpServer, {
                 cors: {
-                    origin: process.env.CLIENT_URL || '*',
+                    origin: process.env.CLIENT_URL,
                     methods: ['GET', 'POST'],
                     credentials: true
                 },
@@ -23,8 +23,6 @@ export class WebSocketServer {
                 allowEIO3: true,
                 path: '/ws'
             });
-
-            logger.info('WebSocket服务器配置完成');
 
             // 创建Redis客户端
             const pubClient = createClient({
@@ -39,22 +37,16 @@ export class WebSocketServer {
             
             subClient.on('error', (err) => {
                 logger.error(`Redis订阅客户端错误: ${err}`);
-            });
-
-            // 连接Redis
-            logger.info('正在连接到Redis...');
+            });   
             try {
                 await Promise.all([pubClient.connect(), subClient.connect()]);
-                logger.info('Redis连接成功');
             } catch (redisError) {
                 logger.error(`Redis连接失败: ${redisError}`);
-                logger.warn('WebSocket服务器将在没有Redis的情况下运行，多实例部署可能出现问题');
             }
 
             // 如果Redis连接成功，设置适配器
             if (pubClient.isOpen && subClient.isOpen) {
                 this.io.adapter(createAdapter(pubClient, subClient));
-                logger.info('Redis适配器设置成功');
             }
 
             // 添加服务器错误监听
@@ -86,14 +78,11 @@ export class WebSocketServer {
                     // 先加入用户的私人房间
                     const userRoom = `user_${userId}`;
                     socket.join(userRoom);
-                    logger.info(`Socket ${socket.id} 已加入用户房间: ${userRoom}`);
     
                     // 如果提供了会话ID，加入会话房间
                     if (conversationId) {
                         const conversationRoom = `conversation_${conversationId}`;
-                        socket.join(conversationRoom);
-                        logger.info(`Socket ${socket.id} 已加入会话房间: ${conversationRoom}`);
-                        
+                        socket.join(conversationRoom);                        
                         // 发送连接成功消息
                         socket.emit('joined_conversation', { 
                             conversationId,
@@ -149,9 +138,7 @@ export class WebSocketServer {
 
     // 发送消息到指定房间
     static async emitToRoom(room: string, event: string, data: any): Promise<void> {
-        try {
-            logger.info(`准备向房间 ${room} 发送事件: ${event}`);
-            
+        try {            
             // 检查房间是否存在，获取房间里的socket数量
             const sockets = await this.io.in(room).fetchSockets();
             logger.info(`房间 ${room} 中共有 ${sockets.length} 个客户端连接`);
@@ -162,7 +149,6 @@ export class WebSocketServer {
             
             // 发送消息到房间
             this.io.to(room).emit(event, data);
-            logger.info(`已向房间 ${room} 发送事件: ${event}`);
             
             // 如果是重要事件，记录详细信息
             if (event === 'message_received' || event === 'ai_response_complete') {
@@ -198,7 +184,6 @@ export class WebSocketServer {
                     logger.warn(`Socket ${socketId} 可能未成功加入房间 ${room}`);
                     // 再次尝试加入房间
                     await socket.join(room);
-                    logger.info(`已再次尝试将 Socket ${socketId} 加入房间 ${room}`);
                 }
             } else {
                 logger.error(`无法找到 Socket ${socketId}`);
@@ -215,7 +200,6 @@ export class WebSocketServer {
             const socket = this.io.sockets.sockets.get(socketId);
             if (socket) {
                 await socket.leave(room);
-                logger.info(`Socket ${socketId} left room ${room}`);
             }
         } catch (error) {
             logger.error(`Error leaving room ${room}: ${error}`);

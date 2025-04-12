@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import TabBar from '@/components/TabBar';
 import MessageInput from '@/components/MessageInput';
 import './GuidePage.less';
+import { Message } from '@/types/conversation';
 
 const { Content } = Layout;
 const { Text } = Typography;
@@ -18,33 +19,17 @@ interface Doctor {
   availableDates: string[];
 }
 
-interface Message {
-  id: string;
-  content: string;
-  sender: 'USER' | 'SYSTEM' | 'AI';
-  timestamp: Date;
-}
-
 const GuidePage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: '1',
+      _id: 'guide-initial-0',
       content: '你好，我是XX医院的XXX医生，请问您哪里不舒服?',
-      sender: 'AI',
-      timestamp: new Date()
+      role: 'system',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      conversationId: 'guide-placeholder',
+      metadata: {}
     },
-    {
-      id: '2',
-      content: '你好，我头晕',
-      sender: 'USER',
-      timestamp: new Date()
-    },
-    {
-      id: '3',
-      content: '为您推荐以下医生和排班',
-      sender: 'AI',
-      timestamp: new Date()
-    }
   ]);
   
   const [doctors, setDoctors] = useState<Doctor[]>([
@@ -68,10 +53,13 @@ const GuidePage: React.FC = () => {
   
   const handleSendMessage = (content: string) => {
     const newMessage: Message = {
-      id: Date.now().toString(),
+      _id: Date.now().toString(),
       content,
-      sender: 'USER',
-      timestamp: new Date()
+      role: 'user',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      conversationId: 'guide-placeholder',
+      metadata: {}
     };
     
     setMessages([...messages, newMessage]);
@@ -116,10 +104,10 @@ const GuidePage: React.FC = () => {
         <div className="message-container">
           {messages.map(message => (
             <div 
-              key={message.id} 
-              className={`message ${message.sender === 'USER' ? 'right' : 'left'}`}
+              key={message._id}
+              className={`message ${message.role === 'user' ? 'right' : 'left'}`}
             >
-              {message.sender !== 'USER' && (
+              {message.role !== 'user' && (
                 <Avatar icon={<MessageOutlined />} className="avatar" />
               )}
               
@@ -130,7 +118,7 @@ const GuidePage: React.FC = () => {
                 )}
               </div>
               
-              {message.sender === 'USER' && (
+              {message.role === 'user' && (
                 <Avatar icon={<UserOutlined />} className="avatar" />
               )}
             </div>

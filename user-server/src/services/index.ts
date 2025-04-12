@@ -1,4 +1,4 @@
-import AiService from './ai.service';
+import AiService from './ai/ai.service';
 import PatientService from './patient.service';
 import DoctorService from './doctor.service';
 import DepartmentService from './department.service';

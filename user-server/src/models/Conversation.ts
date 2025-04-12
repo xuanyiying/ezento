@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import { IConversation, IConversationMessage, ConversationType, SenderType } from '../interfaces/conversation.interface';
+import { IConversation, IConversationMessage, ConversationType } from '../interfaces/conversation.interface';
 
 /**
  * 会话消息Schema // 消息内容、发送者类型、发送时间、元数据信息
@@ -9,9 +9,9 @@ const ConversationMessageSchema = new Schema<IConversationMessage>({
         type: String, 
         required: true 
     },
-    senderType: { 
+    role: { 
         type: String, 
-        enum: Object.values(SenderType),
+        enum: ['user', 'system'],
         required: true 
     },
     timestamp: { 

@@ -1,6 +1,10 @@
 import mongoose from 'mongoose';
 import config from './config';
 import winston from 'winston';
+import dotenv from 'dotenv';
+
+// 确保环境变量已加载
+dotenv.config();
 
 /**
  * 数据库日志记录器
@@ -20,6 +24,17 @@ const logger = winston.createLogger({
         new winston.transports.File({ filename: 'logs/combined.log' }),
     ],
 });
+
+// 获取安全的配置对象
+function getConfig() {
+  if (!config) {
+    logger.error("Configuration object is undefined, using environment variables directly");
+    return {
+      mongoURI: process.env.MONGODB_URI || 'mongodb://localhost:27017/ezento',
+    };
+  }
+  return config;
+}
 
 /**
  * 数据库连接重试配置
@@ -42,6 +57,9 @@ let isConnected = false;
  * @throws 如果达到最大重试次数后仍无法连接
  */
 const connectDB = async (retryCount = 0) => {
+    // 获取安全的配置
+    const config = getConfig();
+
     // 如果已连接，直接返回
     if (isConnected) {
         logger.info('MongoDB已连接');
@@ -69,7 +87,8 @@ const connectDB = async (retryCount = 0) => {
         };
         
         // 获取连接URI
-        const connectionUri = `${config.mongoURI}`;
+        const connectionUri = config.mongoURI;
+        logger.info(`正在连接到 MongoDB: ${connectionUri}`);
         
         // 连接前设置Mongoose选项
         mongoose.set('strictQuery', false);    // 禁用严格查询模式

@@ -1,5 +1,5 @@
 import { get, post, put } from '@/utils/http';
-import { ConversationType, Message, Conversation, SenderType } from '@/types/conversation';
+import { ConversationType, Message, Conversation } from '@/types/conversation';
 
 const API_URL = '/conversations';
 
@@ -50,7 +50,7 @@ export interface CreateConversationRequest {
 
 export interface AddMessageRequest {
   content: string;
-  senderType: SenderType;
+  role: 'user' | 'system';
   conversationId: string;
   userId: string;
   metadata?: any;

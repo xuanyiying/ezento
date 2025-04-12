@@ -6,12 +6,14 @@ import {
 import {
   CheckOutlined, LockOutlined, UserOutlined
 } from '@ant-design/icons';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { RootState } from '../../store';
 import {
   addMessage, setLoading, setCurrentConversation
 } from '../../store/slices/conversationSlice';
 import { ConversationAPI } from '../../services/conversation';
-import { Message, SenderType, ConversationType } from '../../types/conversation';
+import { Message, ConversationType } from '../../types/conversation';
 import WebSocketService from '../../services/websocket';
 import MessageInput from '../../components/MessageInput';
 import './ChatPage.less';
@@ -199,7 +201,7 @@ export const ChatPage: React.FC = () => {
     const newMessage: Message = {
       _id: Date.now().toString(),
       content: messageToSend,
-      senderType: SenderType.PATIENT,
+      role: 'user' as const,
       conversationId: currentConversation?._id || '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -241,15 +243,25 @@ export const ChatPage: React.FC = () => {
         <div className="timestamp">{date}</div>
         {msgs.map((msg, index) => (
           <div 
-            className={`message ${msg.senderType === SenderType.PATIENT ? 'right' : 'left'}`} 
+            className={`message ${msg.role === 'user' ? 'right' : 'left'}`}
             key={msg._id || index}
           >
             <Avatar 
               className="avatar" 
-              icon={msg.senderType === SenderType.PATIENT ? <UserOutlined /> : <CheckOutlined />}
+              icon={msg.role === 'user' ? <UserOutlined /> : <CheckOutlined />}
             />
             <div className="message-content">
-              {msg.content}
+              {msg.role === 'user' ? (
+                // 用户消息用纯文本显示
+                msg.content
+              ) : (
+                // AI回复使用Markdown渲染
+                <div className="markdown-content">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {msg.content}
+                  </ReactMarkdown>
+                </div>
+              )}
             </div>
           </div>
         ))}
