@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { CircuitBreakerService } from '../services/circuit-breaker.service';
 
 export class CircuitBreakerController {
-    constructor(private circuitBreakerService: CircuitBreakerService) { }
+    constructor(private circuitBreakerService: CircuitBreakerService) {}
 
     // 熔断器管理
     getCircuitBreakerById = async (req: Request, res: Response, next: NextFunction) => {
@@ -20,7 +20,11 @@ export class CircuitBreakerController {
             const { tenantId } = req.params;
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
-            const result = await this.circuitBreakerService.getCircuitBreakersByTenant(tenantId, page, limit);
+            const result = await this.circuitBreakerService.getCircuitBreakersByTenant(
+                tenantId,
+                page,
+                limit
+            );
             res.json(result);
         } catch (error) {
             next(error);
@@ -124,7 +128,11 @@ export class CircuitBreakerController {
             const { breakerId } = req.params;
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
-            const result = await this.circuitBreakerService.getCircuitBreakerEvents(breakerId, page, limit);
+            const result = await this.circuitBreakerService.getCircuitBreakerEvents(
+                breakerId,
+                page,
+                limit
+            );
             res.json(result);
         } catch (error) {
             next(error);
@@ -139,4 +147,4 @@ export class CircuitBreakerController {
             next(error);
         }
     };
-} 
+}

@@ -6,7 +6,7 @@ import { Rate, OverageSettings } from '../domains/billing/rate.entity';
 import { ApiError } from '../middlewares/errorHandler';
 
 export class BillingService {
-    constructor(private billingRepository: IBillingRepository) { }
+    constructor(private billingRepository: IBillingRepository) {}
 
     // 使用量统计
     async getAllUsage(): Promise<{ usages: Usage[]; total: number }> {
@@ -17,7 +17,11 @@ export class BillingService {
         return this.billingRepository.findUsageByTenant(tenantId);
     }
 
-    async getTenantDailyUsage(tenantId: string, startDate: Date, endDate: Date): Promise<DailyUsage[]> {
+    async getTenantDailyUsage(
+        tenantId: string,
+        startDate: Date,
+        endDate: Date
+    ): Promise<DailyUsage[]> {
         return this.billingRepository.findDailyUsageByTenant(tenantId, startDate, endDate);
     }
 
@@ -160,7 +164,10 @@ export class BillingService {
         return this.billingRepository.createInvoice(invoice);
     }
 
-    async updateInvoiceStatus(id: string, status: 'DRAFT' | 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED'): Promise<Invoice> {
+    async updateInvoiceStatus(
+        id: string,
+        status: 'DRAFT' | 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED'
+    ): Promise<Invoice> {
         await this.getInvoiceById(id);
         return this.billingRepository.updateInvoiceStatus(id, status);
     }
@@ -183,7 +190,9 @@ export class BillingService {
             throw new ApiError(400, '通知阈值不能为空');
         }
 
-        const existingSettings = await this.billingRepository.findOverageSettings(settings.tenantId);
+        const existingSettings = await this.billingRepository.findOverageSettings(
+            settings.tenantId
+        );
         if (existingSettings) {
             throw new ApiError(400, '超额设置已存在');
         }
@@ -191,7 +200,10 @@ export class BillingService {
         return this.billingRepository.createOverageSettings(settings);
     }
 
-    async updateOverageSettings(id: string, settings: Partial<OverageSettings>): Promise<OverageSettings> {
+    async updateOverageSettings(
+        id: string,
+        settings: Partial<OverageSettings>
+    ): Promise<OverageSettings> {
         const existingSettings = await this.billingRepository.findOverageSettings();
         if (!existingSettings || existingSettings.id !== id) {
             throw new ApiError(404, '超额设置不存在');
@@ -213,4 +225,4 @@ export class BillingService {
         // 实现发送邮件的逻辑，此处略
         console.log(`发送超额使用通知到 ${settings.notificationEmail}`);
     }
-} 
+}

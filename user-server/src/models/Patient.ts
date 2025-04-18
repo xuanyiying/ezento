@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IPatient extends Document {
-    userId: mongoose.Types.ObjectId;
+    userId: string;
     gender: string;
     age: number;
     height?: number;
@@ -15,9 +15,12 @@ export interface IPatient extends Document {
 
 const PatientSchema: Schema = new Schema(
     {
+        id: {
+            type: String,
+            required: true,
+        },
         userId: {
-            type: Schema.Types.ObjectId,
-            ref: 'User',
+            type: String,
             required: true,
             unique: true,
         },

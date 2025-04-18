@@ -30,7 +30,16 @@ export interface TemplateSection {
 export interface FormElement {
     id: string;
     sectionId: string;
-    type: 'TEXT' | 'NUMBER' | 'DATE' | 'SELECT' | 'MULTI_SELECT' | 'CHECKBOX' | 'RADIO' | 'TEXTAREA' | 'FILE';
+    type:
+        | 'TEXT'
+        | 'NUMBER'
+        | 'DATE'
+        | 'SELECT'
+        | 'MULTI_SELECT'
+        | 'CHECKBOX'
+        | 'RADIO'
+        | 'TEXTAREA'
+        | 'FILE';
     name: string;
     code: string;
     label: string;
@@ -67,4 +76,4 @@ export interface TemplateVersion {
     createdBy: string;
     createdAt: Date;
     publishedAt?: Date;
-} 
+}

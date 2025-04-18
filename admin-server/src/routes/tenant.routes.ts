@@ -28,4 +28,4 @@ router.get('/plans', tenantController.getTenantPlans.bind(tenantController));
 // 租户统计
 router.get('/:id/stats', tenantController.getTenantStats.bind(tenantController));
 
-export default router; 
+export default router;

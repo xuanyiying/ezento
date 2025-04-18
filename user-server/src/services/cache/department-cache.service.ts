@@ -20,7 +20,10 @@ export class DepartmentCacheService {
      * 获取所有科室缓存
      * @returns 科室列表和总数，如果缓存不存在则返回null
      */
-    public async getDepartments(): Promise<{ total: number, departments: DepartmentDocument[] } | null> {
+    public async getDepartments(): Promise<{
+        total: number;
+        departments: DepartmentDocument[];
+    } | null> {
         try {
             const cachedData = await this.cacheService.get(this.DEPARTMENTS_CACHE_KEY);
             if (!cachedData) {
@@ -37,7 +40,10 @@ export class DepartmentCacheService {
      * 设置所有科室缓存
      * @param data 科室列表和总数
      */
-    public async setDepartments(data: { total: number, departments: DepartmentDocument[] }): Promise<void> {
+    public async setDepartments(data: {
+        total: number;
+        departments: DepartmentDocument[];
+    }): Promise<void> {
         try {
             await this.cacheService.set(
                 this.DEPARTMENTS_CACHE_KEY,
@@ -76,11 +82,7 @@ export class DepartmentCacheService {
     public async setDepartmentById(id: string, department: DepartmentDocument): Promise<void> {
         try {
             const cacheKey = `${this.DEPARTMENT_CACHE_PREFIX}${id}`;
-            await this.cacheService.set(
-                cacheKey,
-                JSON.stringify(department),
-                this.CACHE_TTL
-            );
+            await this.cacheService.set(cacheKey, JSON.stringify(department), this.CACHE_TTL);
         } catch (error: any) {
             logger.error(`设置科室(ID: ${id})缓存失败: ${error.message}`);
         }
@@ -109,4 +111,4 @@ export class DepartmentCacheService {
             logger.error(`使科室(ID: ${id})缓存失效失败: ${error.message}`);
         }
     }
-} 
+}

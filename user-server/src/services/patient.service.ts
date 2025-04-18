@@ -9,9 +9,7 @@ class PatientService {
      */
     static async getAllPatients() {
         try {
-            const patients = await Patient.find()
-                .populate('userId', 'name avatar phone')
-                .exec();
+            const patients = await Patient.find().populate('userId', 'name avatar phone').exec();
             return patients;
         } catch (error) {
             logger.error(`Error in PatientService.getAllPatients: ${error}`);
@@ -51,7 +49,7 @@ class PatientService {
 
                 const userData = {
                     ...patientData.userData,
-                    userType: 'patient'
+                    userType: 'patient',
                 };
 
                 const user = new User(userData);
@@ -85,20 +83,16 @@ class PatientService {
             if (patientData.userData) {
                 const patient = await Patient.findById(id);
                 if (patient) {
-                    await User.findByIdAndUpdate(
-                        patient.userId,
-                        patientData.userData,
-                        { new: true }
-                    );
+                    await User.findByIdAndUpdate(patient.userId, patientData.userData, {
+                        new: true,
+                    });
                 }
                 delete patientData.userData;
             }
 
-            const updatedPatient = await Patient.findByIdAndUpdate(
-                id,
-                patientData,
-                { new: true }
-            ).populate('userId', 'name avatar phone');
+            const updatedPatient = await Patient.findByIdAndUpdate(id, patientData, {
+                new: true,
+            }).populate('userId', 'name avatar phone');
 
             return updatedPatient;
         } catch (error) {
@@ -150,8 +144,8 @@ class PatientService {
                     path: 'doctorId',
                     populate: {
                         path: 'userId',
-                        select: 'name avatar phone'
-                    }
+                        select: 'name avatar phone',
+                    },
                 })
                 .sort({ startTime: -1 })
                 .exec();
@@ -164,4 +158,4 @@ class PatientService {
     }
 }
 
-export default PatientService; 
+export default PatientService;

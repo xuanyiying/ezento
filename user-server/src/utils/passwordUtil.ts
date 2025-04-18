@@ -36,4 +36,4 @@ export class PasswordUtil {
     }
 }
 
-export default PasswordUtil; 
+export default PasswordUtil;

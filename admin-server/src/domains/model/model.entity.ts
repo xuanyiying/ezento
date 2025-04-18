@@ -197,4 +197,4 @@ export interface TenantModelConfig {
     };
     createdAt: Date;
     updatedAt: Date;
-} 
+}

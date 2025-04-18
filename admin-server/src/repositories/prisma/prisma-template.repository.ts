@@ -1,24 +1,32 @@
 import { PrismaClient } from '@prisma/client';
 import { ITemplateRepository } from '../template.repository';
-import { Template, TemplateSection, FormElement, ValidationRule } from '../../domains/template/template.entity';
+import {
+    Template,
+    TemplateSection,
+    FormElement,
+    ValidationRule,
+} from '../../domains/template/template.entity';
 
 export class PrismaTemplateRepository implements ITemplateRepository {
-    constructor(private prisma: PrismaClient) { }
+    constructor(private prisma: PrismaClient) {}
 
     // 模板管理
-    async findAllTemplates(page: number, limit: number): Promise<{ templates: Template[]; total: number }> {
+    async findAllTemplates(
+        page: number,
+        limit: number
+    ): Promise<{ templates: Template[]; total: number }> {
         const [templates, total] = await Promise.all([
             this.prisma.template.findMany({
                 skip: (page - 1) * limit,
                 take: limit,
-                orderBy: { createdAt: 'desc' }
+                orderBy: { createdAt: 'desc' },
             }),
-            this.prisma.template.count()
+            this.prisma.template.count(),
         ]);
 
         return {
             templates: templates.map((template: any) => this.mapTemplateToEntity(template)),
-            total
+            total,
         };
     }
 
@@ -26,35 +34,35 @@ export class PrismaTemplateRepository implements ITemplateRepository {
         const template = await this.prisma.template.findUnique({
             where: { id },
             include: {
-                sections: true
-            }
+                sections: true,
+            },
         });
 
         if (!template) return null;
 
         // 手动获取sections的elements和validationRules
         const sections = await Promise.all(
-            template.sections.map(async (section) => {
+            template.sections.map(async section => {
                 const elements = await this.prisma.formElement.findMany({
                     where: { sectionId: section.id },
-                    include: { validationRules: true }
+                    include: { validationRules: true },
                 });
 
                 const sectionValidationRules = await this.prisma.validationRule.findMany({
-                    where: { sectionId: section.id }
+                    where: { sectionId: section.id },
                 });
 
                 return {
                     ...section,
                     elements,
-                    validationRules: sectionValidationRules
+                    validationRules: sectionValidationRules,
                 };
             })
         );
 
         return this.mapTemplateToEntity({
             ...template,
-            sections
+            sections,
         });
     }
 
@@ -68,8 +76,8 @@ export class PrismaTemplateRepository implements ITemplateRepository {
                 version: template.version!,
                 status: template.status || 'DRAFT',
                 metadata: template.metadata || {},
-                tenantId: template.tenantId!
-            }
+                tenantId: template.tenantId!,
+            },
         });
 
         return this.mapTemplateToEntity(newTemplate);
@@ -83,8 +91,8 @@ export class PrismaTemplateRepository implements ITemplateRepository {
                 description: template.description,
                 category: template.category,
                 version: template.version,
-                metadata: template.metadata
-            } as any
+                metadata: template.metadata,
+            } as any,
         });
 
         return this.mapTemplateToEntity(updatedTemplate);
@@ -92,29 +100,33 @@ export class PrismaTemplateRepository implements ITemplateRepository {
 
     async deleteTemplate(id: string): Promise<void> {
         await this.prisma.template.delete({
-            where: { id }
+            where: { id },
         });
     }
 
-    async findTenantTemplates(tenantId: string, page: number, limit: number): Promise<{ templates: Template[]; total: number }> {
-        // Since there's no tenantId field in the Template model, 
+    async findTenantTemplates(
+        tenantId: string,
+        page: number,
+        limit: number
+    ): Promise<{ templates: Template[]; total: number }> {
+        // Since there's no tenantId field in the Template model,
         // we need to find templates that may be associated with the tenant in another way
         // For now, let's just return all templates with pagination
         const [templates, total] = await Promise.all([
             this.prisma.template.findMany({
                 where: {
-                    tenantId: tenantId
+                    tenantId: tenantId,
                 },
                 skip: (page - 1) * limit,
                 take: limit,
-                orderBy: { createdAt: 'desc' }
+                orderBy: { createdAt: 'desc' },
             }),
-            this.prisma.template.count()
+            this.prisma.template.count(),
         ]);
 
         return {
             templates: templates.map((template: any) => this.mapTemplateToEntity(template)),
-            total
+            total,
         };
     }
 
@@ -122,7 +134,7 @@ export class PrismaTemplateRepository implements ITemplateRepository {
     async findTemplateVersions(templateId: string): Promise<Template[]> {
         const versions = await this.prisma.template.findMany({
             where: { id: templateId },
-            orderBy: { version: 'desc' }
+            orderBy: { version: 'desc' },
         });
 
         return versions.map((version: any) => this.mapTemplateToEntity(version));
@@ -138,8 +150,8 @@ export class PrismaTemplateRepository implements ITemplateRepository {
                 description: version.description || '',
                 category: version.category || 'default',
                 version: version.version || '1.0',
-                tenantId: version.tenantId!
-            }
+                tenantId: version.tenantId!,
+            },
         });
 
         return this.mapTemplateToEntity(newVersion);
@@ -149,8 +161,8 @@ export class PrismaTemplateRepository implements ITemplateRepository {
         const templateVersion = await this.prisma.template.findFirst({
             where: {
                 id: templateId,
-                version
-            } as any
+                version,
+            } as any,
         });
 
         return templateVersion ? this.mapTemplateToEntity(templateVersion) : null;
@@ -159,20 +171,23 @@ export class PrismaTemplateRepository implements ITemplateRepository {
     async publishTemplateVersion(templateId: string, version: string): Promise<void> {
         await this.prisma.template.update({
             where: { id: templateId },
-            data: { status: 'PUBLISHED' }
+            data: { status: 'PUBLISHED' },
         });
     }
 
     // 动态表单配置
     async findAllFormElements(): Promise<FormElement[]> {
         const elements = await this.prisma.formElement.findMany({
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
 
         return elements.map((element: any) => this.mapFormElementToEntity(element));
     }
 
-    async addTemplateSection(templateId: string, section: Partial<TemplateSection>): Promise<TemplateSection> {
+    async addTemplateSection(
+        templateId: string,
+        section: Partial<TemplateSection>
+    ): Promise<TemplateSection> {
         const newSection = await this.prisma.templateSection.create({
             data: {
                 templateId,
@@ -180,14 +195,17 @@ export class PrismaTemplateRepository implements ITemplateRepository {
                 code: section.code!,
                 description: section.description!,
                 order: section.order || 0,
-                metadata: section.metadata || {}
-            }
+                metadata: section.metadata || {},
+            },
         });
 
         return this.mapTemplateSectionToEntity(newSection);
     }
 
-    async updateTemplateSection(sectionId: string, section: Partial<TemplateSection>): Promise<TemplateSection> {
+    async updateTemplateSection(
+        sectionId: string,
+        section: Partial<TemplateSection>
+    ): Promise<TemplateSection> {
         const updatedSection = await this.prisma.templateSection.update({
             where: { id: sectionId },
             data: {
@@ -195,8 +213,8 @@ export class PrismaTemplateRepository implements ITemplateRepository {
                 code: section.code,
                 description: section.description,
                 order: section.order,
-                metadata: section.metadata
-            }
+                metadata: section.metadata,
+            },
         });
 
         return this.mapTemplateSectionToEntity(updatedSection);
@@ -204,7 +222,7 @@ export class PrismaTemplateRepository implements ITemplateRepository {
 
     async deleteTemplateSection(sectionId: string): Promise<void> {
         await this.prisma.templateSection.delete({
-            where: { id: sectionId }
+            where: { id: sectionId },
         });
     }
 
@@ -213,7 +231,7 @@ export class PrismaTemplateRepository implements ITemplateRepository {
             sectionIds.map((id, index) =>
                 this.prisma.templateSection.update({
                     where: { id },
-                    data: { order: index }
+                    data: { order: index },
                 })
             )
         );
@@ -222,7 +240,7 @@ export class PrismaTemplateRepository implements ITemplateRepository {
     // 验证规则
     async findAllValidationRules(): Promise<ValidationRule[]> {
         const rules = await this.prisma.validationRule.findMany({
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
 
         return rules.map((rule: any) => this.mapValidationRuleToEntity(rule));
@@ -237,8 +255,8 @@ export class PrismaTemplateRepository implements ITemplateRepository {
                 message: rule.message!,
                 value: rule.value || '',
                 parameters: rule.parameters || {},
-                metadata: rule.metadata || {}
-            }
+                metadata: rule.metadata || {},
+            },
         });
 
         return this.mapValidationRuleToEntity(newRule);
@@ -253,14 +271,17 @@ export class PrismaTemplateRepository implements ITemplateRepository {
                 type: rule.type,
                 message: rule.message,
                 parameters: rule.parameters,
-                metadata: rule.metadata
-            }
+                metadata: rule.metadata,
+            },
         });
 
         return this.mapValidationRuleToEntity(updatedRule);
     }
 
-    async validateTemplateData(template: Template, data: any): Promise<{ isValid: boolean; errors: string[] }> {
+    async validateTemplateData(
+        template: Template,
+        data: any
+    ): Promise<{ isValid: boolean; errors: string[] }> {
         const errors: string[] = [];
 
         // 验证模板数据
@@ -291,7 +312,7 @@ export class PrismaTemplateRepository implements ITemplateRepository {
 
         return {
             isValid: errors.length === 0,
-            errors
+            errors,
         };
     }
 
@@ -305,11 +326,14 @@ export class PrismaTemplateRepository implements ITemplateRepository {
             category: template.category,
             version: template.version,
             status: template.status,
-            sections: template.sections?.map((section: any) => this.mapTemplateSectionToEntity(section)) || [],
+            sections:
+                template.sections?.map((section: any) =>
+                    this.mapTemplateSectionToEntity(section)
+                ) || [],
             metadata: template.metadata,
             createdAt: template.createdAt,
             updatedAt: template.updatedAt,
-            tenantId: template.tenantId
+            tenantId: template.tenantId,
         };
     }
 
@@ -321,11 +345,14 @@ export class PrismaTemplateRepository implements ITemplateRepository {
             code: section.code,
             description: section.description,
             order: section.order,
-            elements: section.elements?.map((element: any) => this.mapFormElementToEntity(element)) || [],
-            validationRules: section.validationRules?.map((rule: any) => this.mapValidationRuleToEntity(rule)) || [],
+            elements:
+                section.elements?.map((element: any) => this.mapFormElementToEntity(element)) || [],
+            validationRules:
+                section.validationRules?.map((rule: any) => this.mapValidationRuleToEntity(rule)) ||
+                [],
             metadata: section.metadata,
             createdAt: section.createdAt,
-            updatedAt: section.updatedAt
+            updatedAt: section.updatedAt,
         };
     }
 
@@ -341,10 +368,12 @@ export class PrismaTemplateRepository implements ITemplateRepository {
             required: element.required,
             defaultValue: element.defaultValue,
             options: element.options,
-            validationRules: element.validationRules?.map((rule: any) => this.mapValidationRuleToEntity(rule)) || [],
+            validationRules:
+                element.validationRules?.map((rule: any) => this.mapValidationRuleToEntity(rule)) ||
+                [],
             metadata: element.metadata,
             createdAt: element.createdAt,
-            updatedAt: element.updatedAt
+            updatedAt: element.updatedAt,
         };
     }
 
@@ -360,7 +389,7 @@ export class PrismaTemplateRepository implements ITemplateRepository {
             createdAt: rule.createdAt,
             updatedAt: rule.updatedAt,
             value: rule.value,
-            customValidator: rule.customValidator
+            customValidator: rule.customValidator,
         };
     }
 
@@ -381,4 +410,4 @@ export class PrismaTemplateRepository implements ITemplateRepository {
                 return true;
         }
     }
-} 
+}

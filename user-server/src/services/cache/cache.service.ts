@@ -46,7 +46,7 @@ export class CacheService {
             }
             const client = getRedisClient();
             if (!client) return null;
-            
+
             return await client.get(key);
         } catch (error: any) {
             logger.error(`获取缓存值错误(${key}): ${error.message}`);
@@ -66,16 +66,16 @@ export class CacheService {
             if (!this.checkReady()) {
                 return false;
             }
-            
+
             const client = getRedisClient();
             if (!client) return false;
-            
+
             if (ttl) {
                 await client.set(key, value, 'EX', ttl);
             } else {
                 await client.set(key, value);
             }
-            
+
             return true;
         } catch (error: any) {
             logger.error(`设置缓存值错误(${key}): ${error.message}`);
@@ -93,10 +93,10 @@ export class CacheService {
             if (!this.checkReady()) {
                 return false;
             }
-            
+
             const client = getRedisClient();
             if (!client) return false;
-            
+
             await client.del(key);
             return true;
         } catch (error: any) {
@@ -115,15 +115,15 @@ export class CacheService {
             if (!this.checkReady()) {
                 return false;
             }
-            
+
             const client = getRedisClient();
             if (!client) return false;
-            
+
             const keys = await client.keys(pattern);
             if (keys.length > 0) {
                 await client.del(...keys);
             }
-            
+
             return true;
         } catch (error: any) {
             logger.error(`批量删除缓存值错误(${pattern}): ${error.message}`);
@@ -141,10 +141,10 @@ export class CacheService {
             if (!this.checkReady()) {
                 return false;
             }
-            
+
             const client = getRedisClient();
             if (!client) return false;
-            
+
             const result = await client.exists(key);
             return result === 1;
         } catch (error: any) {
@@ -164,10 +164,10 @@ export class CacheService {
             if (!this.checkReady()) {
                 return false;
             }
-            
+
             const client = getRedisClient();
             if (!client) return false;
-            
+
             await client.expire(key, ttl);
             return true;
         } catch (error: any) {
@@ -185,10 +185,10 @@ export class CacheService {
             if (!this.checkReady()) {
                 return false;
             }
-            
+
             const client = getRedisClient();
             if (!client) return false;
-            
+
             await client.flushall();
             return true;
         } catch (error: any) {
@@ -196,4 +196,4 @@ export class CacheService {
             return false;
         }
     }
-} 
+}

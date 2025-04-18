@@ -56,4 +56,4 @@ export interface TenantStats {
         daily: Record<string, number>;
         endpoints: Record<string, number>;
     };
-} 
+}

@@ -17,17 +17,20 @@ export class Resp {
         return {
             code: 200,
             msg,
-            data
+            data,
         };
     }
 
     // 分页响应
-    static pagination<T>(data: T, pagination: { total: number; page: number; limit: number }): R<T> {
+    static pagination<T>(
+        data: T,
+        pagination: { total: number; page: number; limit: number }
+    ): R<T> {
         return {
             code: 200,
             msg: 'success',
             data,
-            pagination
+            pagination,
         };
     }
 
@@ -36,7 +39,7 @@ export class Resp {
         return {
             code,
             msg,
-            data: null
+            data: null,
         };
     }
 
@@ -45,7 +48,7 @@ export class Resp {
         return {
             code: 500,
             msg,
-            data: data ?? null
+            data: data ?? null,
         };
     }
 
@@ -54,7 +57,7 @@ export class Resp {
         return {
             code: 401,
             msg,
-            data: null
+            data: null,
         };
     }
 
@@ -63,7 +66,7 @@ export class Resp {
         return {
             code: 400,
             msg,
-            data: null
+            data: null,
         };
     }
 
@@ -72,7 +75,7 @@ export class Resp {
         return {
             code: 404,
             msg,
-            data: null
+            data: null,
         };
     }
 }
@@ -87,7 +90,7 @@ export const successResponse = (res: Response, data: any, statusCode: number = 2
     res.status(statusCode).json({
         success: true,
         data,
-        error: null
+        error: null,
     });
 };
 
@@ -98,14 +101,19 @@ export const successResponse = (res: Response, data: any, statusCode: number = 2
  * @param statusCode HTTP状态码，默认400
  * @param details 错误详情（可选）
  */
-export const errorResponse = (res: Response, message: string, statusCode: number = 400, details?: any): void => {
+export const errorResponse = (
+    res: Response,
+    message: string,
+    statusCode: number = 400,
+    details?: any
+): void => {
     res.status(statusCode).json({
         success: false,
         data: null,
         error: {
             message,
-            details: details || null
-        }
+            details: details || null,
+        },
     });
 };
 
@@ -170,4 +178,4 @@ export const timeoutResponse = (res: Response, message: string = '请求超时')
  */
 export const badRequestResponse = (res: Response, message: string = '请求格式无效'): void => {
     errorResponse(res, message, 400);
-}; 
+};

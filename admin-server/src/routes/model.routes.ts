@@ -34,4 +34,4 @@ router.get('/tenant/:tenantId/api-keys', modelController.getTenantApiKeys);
 // 推理调用
 router.post('/tenant/:tenantId/inference', modelController.inference);
 
-export default router; 
+export default router;

@@ -7,4 +7,4 @@ export interface User {
     tenantId: string;
     createdAt: Date;
     updatedAt: Date;
-} 
+}

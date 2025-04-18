@@ -4,19 +4,18 @@ import { Tenant } from '../../domains/tenant/tenant.entity';
 import { TenantPlan } from '../../domains/tenant-plan/tenant-plan.entity';
 
 export class PrismaTenantRepository implements ITenantRepository {
-    constructor(private prisma: PrismaClient) { }
-
+    constructor(private prisma: PrismaClient) {}
 
     async findById(id: string): Promise<Tenant | null> {
         const tenant = await this.prisma.tenant.findUnique({
-            where: { id }
+            where: { id },
         });
         return tenant ? this.mapToEntity(tenant) : null;
     }
 
     async findByCode(code: string): Promise<Tenant | null> {
         const tenant = await this.prisma.tenant.findUnique({
-            where: { code }
+            where: { code },
         });
         return tenant ? this.mapToEntity(tenant) : null;
     }
@@ -25,9 +24,9 @@ export class PrismaTenantRepository implements ITenantRepository {
         const tenant = await this.prisma.tenant.findFirst({
             where: {
                 domains: {
-                    array_contains: domain
-                }
-            }
+                    array_contains: domain,
+                },
+            },
         });
         return tenant ? this.mapToEntity(tenant) : null;
     }
@@ -35,17 +34,17 @@ export class PrismaTenantRepository implements ITenantRepository {
     async findAll(): Promise<{ tenants: Tenant[]; total: number }> {
         const [tenants, total] = await Promise.all([
             this.prisma.tenant.findMany(),
-            this.prisma.tenant.count()
+            this.prisma.tenant.count(),
         ]);
         return {
             tenants: tenants.map((tenant: any) => this.mapToEntity(tenant)),
-            total
+            total,
         };
     }
 
     async create(data: Partial<Tenant>): Promise<Tenant> {
         const tenant = await this.prisma.tenant.create({
-            data: this.mapToPrisma(data)
+            data: this.mapToPrisma(data),
         });
         return this.mapToEntity(tenant);
     }
@@ -53,21 +52,21 @@ export class PrismaTenantRepository implements ITenantRepository {
     async update(id: string, data: Partial<Tenant>): Promise<Tenant> {
         const tenant = await this.prisma.tenant.update({
             where: { id },
-            data: this.mapToPrisma(data)
+            data: this.mapToPrisma(data),
         });
         return this.mapToEntity(tenant);
     }
 
     async delete(id: string): Promise<void> {
         await this.prisma.tenant.delete({
-            where: { id }
+            where: { id },
         });
     }
 
     async changeStatus(id: string, status: 'ACTIVE' | 'SUSPENDED' | 'TERMINATED'): Promise<Tenant> {
         const tenant = await this.prisma.tenant.update({
             where: { id },
-            data: { status }
+            data: { status },
         });
         return this.mapToEntity(tenant);
     }
@@ -75,14 +74,14 @@ export class PrismaTenantRepository implements ITenantRepository {
     async changePlan(id: string, plan: string): Promise<Tenant> {
         const tenant = await this.prisma.tenant.update({
             where: { id },
-            data: { plan }
+            data: { plan },
         });
         return this.mapToEntity(tenant);
     }
 
     async getUserCount(id: string): Promise<number> {
         return this.prisma.user.count({
-            where: { tenantId: id }
+            where: { tenantId: id },
         });
     }
 
@@ -96,7 +95,7 @@ export class PrismaTenantRepository implements ITenantRepository {
             features: plan.features as string[],
             limits: plan.limits as Record<string, any>,
             createdAt: plan.createdAt,
-            updatedAt: plan.updatedAt
+            updatedAt: plan.updatedAt,
         }));
     }
 
@@ -111,7 +110,7 @@ export class PrismaTenantRepository implements ITenantRepository {
             theme: prismaTenant.theme,
             apiCallLimits: prismaTenant.apiCallLimits,
             createdAt: prismaTenant.createdAt,
-            updatedAt: prismaTenant.updatedAt
+            updatedAt: prismaTenant.updatedAt,
         };
     }
 
@@ -123,7 +122,7 @@ export class PrismaTenantRepository implements ITenantRepository {
             plan: tenant.plan,
             settings: tenant.settings,
             theme: tenant.theme,
-            apiCallLimits: tenant.apiCallLimits
+            apiCallLimits: tenant.apiCallLimits,
         };
     }
-} 
+}

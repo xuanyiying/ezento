@@ -3,7 +3,7 @@ import { TenantService } from '../services/tenant.service';
 import { ApiError } from '../middlewares/errorHandler';
 
 export class TenantController {
-    constructor(private tenantService: TenantService) { }
+    constructor(private tenantService: TenantService) {}
 
     /**
      * @swagger
@@ -49,7 +49,7 @@ export class TenantController {
             const result = await this.tenantService.findAll();
             res.json({
                 status: 'success',
-                data: result
+                data: result,
             });
         } catch (error) {
             next(error);
@@ -97,8 +97,10 @@ export class TenantController {
             const { id } = req.params;
 
             // 验证权限 - 只有管理员或租户自身的管理员可以查看
-            if (req.user?.role !== 'ADMIN' &&
-                (req.tenantId !== id || req.user?.role !== 'TENANT_ADMIN')) {
+            if (
+                req.user?.role !== 'ADMIN' &&
+                (req.tenantId !== id || req.user?.role !== 'TENANT_ADMIN')
+            ) {
                 throw new ApiError(403, '无权执行此操作');
             }
 
@@ -109,7 +111,7 @@ export class TenantController {
 
             res.json({
                 status: 'success',
-                data: tenant
+                data: tenant,
             });
         } catch (error) {
             next(error);
@@ -181,7 +183,7 @@ export class TenantController {
             const tenant = await this.tenantService.create(req.body);
             res.status(201).json({
                 status: 'success',
-                data: tenant
+                data: tenant,
             });
         } catch (error) {
             next(error);
@@ -246,15 +248,17 @@ export class TenantController {
             const { id } = req.params;
 
             // 验证权限 - 只有管理员或租户自身的管理员可以更新
-            if (req.user?.role !== 'ADMIN' &&
-                (req.tenantId !== id || req.user?.role !== 'TENANT_ADMIN')) {
+            if (
+                req.user?.role !== 'ADMIN' &&
+                (req.tenantId !== id || req.user?.role !== 'TENANT_ADMIN')
+            ) {
                 throw new ApiError(403, '无权执行此操作');
             }
 
             const tenant = await this.tenantService.update(id, req.body);
             res.json({
                 status: 'success',
-                data: tenant
+                data: tenant,
             });
         } catch (error) {
             next(error);
@@ -309,7 +313,7 @@ export class TenantController {
             await this.tenantService.delete(id);
             res.json({
                 status: 'success',
-                data: null
+                data: null,
             });
         } catch (error) {
             next(error);
@@ -385,7 +389,7 @@ export class TenantController {
             const tenant = await this.tenantService.changeStatus(id, status);
             res.json({
                 status: 'success',
-                data: tenant
+                data: tenant,
             });
         } catch (error) {
             next(error);
@@ -409,7 +413,7 @@ export class TenantController {
             const tenant = await this.tenantService.changePlan(id, plan);
             res.json({
                 status: 'success',
-                data: tenant
+                data: tenant,
             });
         } catch (error) {
             next(error);
@@ -421,7 +425,7 @@ export class TenantController {
             const plans = await this.tenantService.getTenantPlans();
             res.json({
                 status: 'success',
-                data: plans
+                data: plans,
             });
         } catch (error) {
             next(error);
@@ -433,15 +437,17 @@ export class TenantController {
             const { id } = req.params;
 
             // 验证权限 - 只有管理员或租户自身的管理员可以查看统计
-            if (req.user?.role !== 'ADMIN' &&
-                (req.tenantId !== id || req.user?.role !== 'TENANT_ADMIN')) {
+            if (
+                req.user?.role !== 'ADMIN' &&
+                (req.tenantId !== id || req.user?.role !== 'TENANT_ADMIN')
+            ) {
                 throw new ApiError(403, '无权执行此操作');
             }
 
             const stats = await this.tenantService.getTenantStats(id);
             res.json({
                 status: 'success',
-                data: stats
+                data: stats,
             });
         } catch (error) {
             next(error);
@@ -453,8 +459,10 @@ export class TenantController {
             const { id } = req.params;
 
             // 验证权限 - 只有管理员或租户自身的管理员可以查看配置
-            if (req.user?.role !== 'ADMIN' &&
-                (req.tenantId !== id || req.user?.role !== 'TENANT_ADMIN')) {
+            if (
+                req.user?.role !== 'ADMIN' &&
+                (req.tenantId !== id || req.user?.role !== 'TENANT_ADMIN')
+            ) {
                 throw new ApiError(403, '无权执行此操作');
             }
 
@@ -468,8 +476,8 @@ export class TenantController {
                 data: {
                     settings: config.settings,
                     theme: config.theme,
-                    apiCallLimits: config.apiCallLimits
-                }
+                    apiCallLimits: config.apiCallLimits,
+                },
             });
         } catch (error) {
             next(error);
@@ -482,8 +490,10 @@ export class TenantController {
             const { settings, theme, apiCallLimits } = req.body;
 
             // 验证权限 - 只有管理员或租户自身的管理员可以更新配置
-            if (req.user?.role !== 'ADMIN' &&
-                (req.tenantId !== id || req.user?.role !== 'TENANT_ADMIN')) {
+            if (
+                req.user?.role !== 'ADMIN' &&
+                (req.tenantId !== id || req.user?.role !== 'TENANT_ADMIN')
+            ) {
                 throw new ApiError(403, '无权执行此操作');
             }
 
@@ -500,11 +510,11 @@ export class TenantController {
                 data: {
                     settings: updatedConfig.settings,
                     theme: updatedConfig.theme,
-                    apiCallLimits: updatedConfig.apiCallLimits
-                }
+                    apiCallLimits: updatedConfig.apiCallLimits,
+                },
             });
         } catch (error) {
             next(error);
         }
     }
-} 
+}

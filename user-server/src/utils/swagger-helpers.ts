@@ -80,15 +80,15 @@ export class SwaggerResponses {
                                 {
                                     properties: {
                                         data: {
-                                            properties: schema
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
+                                            properties: schema,
+                                        },
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                },
+            },
         };
     }
 
@@ -107,15 +107,15 @@ export class SwaggerResponses {
                                 {
                                     properties: {
                                         data: {
-                                            properties: schema
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
+                                            properties: schema,
+                                        },
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                },
+            },
         };
     }
 
@@ -129,11 +129,11 @@ export class SwaggerResponses {
                 content: {
                     'application/json': {
                         schema: {
-                            $ref: '#/components/schemas/ErrorResponse'
-                        }
-                    }
-                }
-            }
+                            $ref: '#/components/schemas/ErrorResponse',
+                        },
+                    },
+                },
+            },
         };
     }
 
@@ -153,15 +153,15 @@ export class SwaggerResponses {
                                     properties: {
                                         data: {
                                             type: 'array',
-                                            items: itemSchema
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
+                                            items: itemSchema,
+                                        },
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                },
+            },
         };
     }
-} 
+}

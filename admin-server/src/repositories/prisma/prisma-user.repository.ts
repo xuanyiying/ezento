@@ -3,33 +3,32 @@ import { IUserRepository } from '../user.repository';
 import { User } from '../../domains/user/user.entity';
 
 export class PrismaUserRepository implements IUserRepository {
-    constructor(private prisma: PrismaClient) { }
-
+    constructor(private prisma: PrismaClient) {}
 
     async findById(id: string): Promise<User | null> {
         const user = await this.prisma.user.findUnique({
-            where: { id }
+            where: { id },
         });
         return user ? this.mapToEntity(user) : null;
     }
 
     async findByEmail(email: string): Promise<User | null> {
         const user = await this.prisma.user.findUnique({
-            where: { email }
+            where: { email },
         });
         return user ? this.mapToEntity(user) : null;
     }
 
     async findByTenant(tenantId: string): Promise<User[]> {
         const users = await this.prisma.user.findMany({
-            where: { tenantId }
+            where: { tenantId },
         });
         return users.map((user: any) => this.mapToEntity(user));
     }
 
     async create(data: Partial<User>): Promise<User> {
         const user = await this.prisma.user.create({
-            data: this.mapToPrisma(data)
+            data: this.mapToPrisma(data),
         });
         return this.mapToEntity(user);
     }
@@ -37,21 +36,21 @@ export class PrismaUserRepository implements IUserRepository {
     async update(id: string, data: Partial<User>): Promise<User> {
         const user = await this.prisma.user.update({
             where: { id },
-            data: this.mapToPrisma(data)
+            data: this.mapToPrisma(data),
         });
         return this.mapToEntity(user);
     }
 
     async delete(id: string): Promise<void> {
         await this.prisma.user.delete({
-            where: { id }
+            where: { id },
         });
     }
 
     async updatePassword(id: string, hashedPassword: string): Promise<void> {
         await this.prisma.user.update({
             where: { id },
-            data: { password: hashedPassword }
+            data: { password: hashedPassword },
         });
     }
 
@@ -64,7 +63,7 @@ export class PrismaUserRepository implements IUserRepository {
             role: prismaUser.role as 'ADMIN' | 'TENANT_ADMIN' | 'USER',
             tenantId: prismaUser.tenantId,
             createdAt: prismaUser.createdAt,
-            updatedAt: prismaUser.updatedAt
+            updatedAt: prismaUser.updatedAt,
         };
     }
 
@@ -73,7 +72,7 @@ export class PrismaUserRepository implements IUserRepository {
             email: user.email,
             name: user.name,
             role: user.role,
-            tenantId: user.tenantId
+            tenantId: user.tenantId,
         };
 
         // 只有当密码不为undefined时才添加，避免在更新时覆盖密码
@@ -83,4 +82,4 @@ export class PrismaUserRepository implements IUserRepository {
 
         return data;
     }
-} 
+}

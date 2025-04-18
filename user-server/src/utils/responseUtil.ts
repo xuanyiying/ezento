@@ -11,11 +11,16 @@ export class ResponseUtil {
      * @param message 成功消息，默认为"操作成功"
      * @param statusCode HTTP状态码，默认200
      */
-    static success(res: Response, data: any = null, message: string = '操作成功', statusCode: number = 200): Response {
+    static success(
+        res: Response,
+        data: any = null,
+        message: string = '操作成功',
+        statusCode: number = 200
+    ): Response {
         return res.status(statusCode).json({
             success: true,
             message,
-            data
+            data,
         });
     }
 
@@ -35,7 +40,7 @@ export class ResponseUtil {
     static badRequest(res: Response, message: string = '请求参数错误'): Response {
         return res.status(400).json({
             success: false,
-            message
+            message,
         });
     }
 
@@ -48,7 +53,7 @@ export class ResponseUtil {
         return res.status(401).json({
             success: false,
             message,
-            data: null
+            data: null,
         });
     }
 
@@ -61,7 +66,7 @@ export class ResponseUtil {
         return res.status(403).json({
             success: false,
             message,
-            data: null
+            data: null,
         });
     }
 
@@ -74,7 +79,7 @@ export class ResponseUtil {
         return res.status(404).json({
             success: false,
             message,
-            data: null
+            data: null,
         });
     }
 
@@ -87,7 +92,7 @@ export class ResponseUtil {
         return res.status(500).json({
             success: false,
             message,
-            data: null
+            data: null,
         });
     }
 
@@ -102,7 +107,7 @@ export class ResponseUtil {
         return res.status(statusCode).json({
             success: false,
             message,
-            data
+            data,
         });
     }
-} 
+}

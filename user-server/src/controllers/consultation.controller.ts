@@ -3,7 +3,7 @@ import ConsultationService from '../services/consultation.service';
 import { ResponseUtil } from '../utils/responseUtil';
 import { logger } from '../utils/logger';
 import { ConsultationType, ConsultationStatus } from '../interfaces/consultation.interface';
-import { Types } from 'mongoose';
+import { generateConsultationId } from '../utils/idGenerator';
 
 /**
  * 会诊控制器
@@ -27,7 +27,7 @@ class ConsultationController {
                 hospital,
                 reportImages,
                 description,
-                fee
+                fee,
             } = req.body;
             const userId = req.user?.userId;
 
@@ -44,10 +44,8 @@ class ConsultationController {
                 return;
             }
 
-            const validUserId = Types.ObjectId.isValid(userId) ? userId : new Types.ObjectId();
-
             const consultation = await ConsultationService.createConsultation({
-                userId: validUserId.toString(),
+                userId: userId,
                 consultationType,
                 symptoms,
                 bodyParts,
@@ -59,12 +57,12 @@ class ConsultationController {
                 hospital,
                 reportImages,
                 description,
-                fee
+                fee,
             });
             ResponseUtil.success(res, {
-                consultationId: consultation._id,
+                consultationId: consultation.id,
                 status: consultation.status,
-                createTime: consultation.createdAt
+                createTime: consultation.createdAt,
             });
         } catch (error: any) {
             logger.error(`创建会诊失败: ${error.message}`);
@@ -77,20 +75,14 @@ class ConsultationController {
      */
     static async getConsultationList(req: Request, res: Response): Promise<void> {
         try {
-            const {
-                userId,
-                consultationType,
-                status,
-                page,
-                limit
-            } = req.query;
+            const { userId, consultationType, status, page, limit } = req.query;
 
             const result = await ConsultationService.getConsultationList({
                 userId: userId as string,
                 consultationType: consultationType as ConsultationType,
                 status: status as ConsultationStatus,
                 page: page ? parseInt(page as string) : undefined,
-                limit: limit ? parseInt(limit as string) : undefined
+                limit: limit ? parseInt(limit as string) : undefined,
             });
 
             ResponseUtil.success(res, result);
@@ -133,18 +125,11 @@ class ConsultationController {
     static async updateConsultation(req: Request, res: Response): Promise<void> {
         try {
             const { id } = req.params;
-            const {
-                diagnosis,
-                prescription,
-                notes,
-                status,
-                endTime,
-                doctorAdvice
-            } = req.body;
+            const { diagnosis, prescription, notes, status, endTime, doctorAdvice } = req.body;
 
             if (!id) {
-                 ResponseUtil.badRequest(res, '缺少会诊ID');
-                 return;
+                ResponseUtil.badRequest(res, '缺少会诊ID');
+                return;
             }
             const result = await ConsultationService.updateConsultation({
                 consultationId: id,
@@ -156,17 +141,17 @@ class ConsultationController {
             });
 
             if (!result) {
-             ResponseUtil.notFound(res, '未找到会诊信息');
+                ResponseUtil.notFound(res, '未找到会诊信息');
             }
 
-             ResponseUtil.success(res, {
-                consultationId: result._id,
+            ResponseUtil.success(res, {
+                consultationId: result.id,
                 status: result.status,
-                message: '会诊更新成功'
+                message: '会诊更新成功',
             });
         } catch (error: any) {
             logger.error(`更新会诊失败: ${error.message}`);
-             ResponseUtil.serverError(res, `更新会诊失败: ${error.message}`);
+            ResponseUtil.serverError(res, `更新会诊失败: ${error.message}`);
         }
     }
 
@@ -179,8 +164,8 @@ class ConsultationController {
             const { page, limit } = req.query;
 
             if (!userId) {
-                 ResponseUtil.badRequest(res, '无法识别患者身份，请重新登录');;
-                 return
+                ResponseUtil.badRequest(res, '无法识别患者身份，请重新登录');
+                return;
             }
 
             const result = await ConsultationService.getPatientConsultations(
@@ -189,12 +174,12 @@ class ConsultationController {
                 limit ? parseInt(limit as string) : 10
             );
 
-             ResponseUtil.success(res, result);
+            ResponseUtil.success(res, result);
         } catch (error: any) {
             logger.error(`获取患者会诊列表失败: ${error.message}`);
-             ResponseUtil.serverError(res, `获取患者会诊列表失败: ${error.message}`);
+            ResponseUtil.serverError(res, `获取患者会诊列表失败: ${error.message}`);
         }
     }
 }
 
-export default ConsultationController; 
+export default ConsultationController;

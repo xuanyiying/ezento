@@ -6,7 +6,7 @@ import crypto from 'crypto';
 import fetch from 'node-fetch';
 
 export class ModelService {
-    constructor(private modelRepository: IModelRepository) { }
+    constructor(private modelRepository: IModelRepository) {}
 
     // 模型管理
     async getAllModels(page = 1, limit = 10): Promise<{ models: Model[]; total: number }> {
@@ -48,15 +48,26 @@ export class ModelService {
     }
 
     // 租户模型配置
-    async getTenantModels(tenantId: string, page = 1, limit = 10): Promise<{ configs: TenantModelConfig[]; total: number }> {
+    async getTenantModels(
+        tenantId: string,
+        page = 1,
+        limit = 10
+    ): Promise<{ configs: TenantModelConfig[]; total: number }> {
         return this.modelRepository.findTenantModels(tenantId, page, limit);
     }
 
-    async getTenantModelConfig(tenantId: string, modelId: string): Promise<TenantModelConfig | null> {
+    async getTenantModelConfig(
+        tenantId: string,
+        modelId: string
+    ): Promise<TenantModelConfig | null> {
         return this.modelRepository.findTenantModelConfig(tenantId, modelId);
     }
 
-    async configureTenantModel(tenantId: string, modelId: string, config: Partial<TenantModelConfig>): Promise<TenantModelConfig> {
+    async configureTenantModel(
+        tenantId: string,
+        modelId: string,
+        config: Partial<TenantModelConfig>
+    ): Promise<TenantModelConfig> {
         // 先检查模型是否存在
         await this.getModelById(modelId);
 
@@ -69,7 +80,7 @@ export class ModelService {
             return this.modelRepository.createTenantModelConfig({
                 tenantId,
                 modelId,
-                ...config
+                ...config,
             });
         }
     }
@@ -87,7 +98,11 @@ export class ModelService {
         return apiKey;
     }
 
-    async getTenantApiKeys(tenantId: string, page = 1, limit = 10): Promise<{ keys: ApiKey[]; total: number }> {
+    async getTenantApiKeys(
+        tenantId: string,
+        page = 1,
+        limit = 10
+    ): Promise<{ keys: ApiKey[]; total: number }> {
         return this.modelRepository.findApiKeysByTenant(tenantId, page, limit);
     }
 
@@ -114,7 +129,11 @@ export class ModelService {
     }
 
     // 推理调用
-    async inference(request: InferenceRequest, tenantId: string, userId?: string): Promise<InferenceResponse> {
+    async inference(
+        request: InferenceRequest,
+        tenantId: string,
+        userId?: string
+    ): Promise<InferenceResponse> {
         // 获取模型信息
         const model = await this.getModelById(request.modelId);
 
@@ -135,7 +154,7 @@ export class ModelService {
         const mergedParameters = {
             ...model.parameters,
             ...(tenantConfig?.customParameters || {}),
-            ...(request.parameters || {})
+            ...(request.parameters || {}),
         };
 
         // 调用外部API
@@ -188,7 +207,11 @@ export class ModelService {
         }
     }
 
-    private async callExternalModelAPI(model: Model, prompt: string, parameters: any): Promise<InferenceResponse> {
+    private async callExternalModelAPI(
+        model: Model,
+        prompt: string,
+        parameters: any
+    ): Promise<InferenceResponse> {
         const startTime = Date.now();
 
         // 构建请求体，根据不同的模型提供商有不同的格式
@@ -204,7 +227,7 @@ export class ModelService {
                     temperature: parameters.temperature ?? 0.7,
                     top_p: parameters.topP ?? 1,
                     frequency_penalty: parameters.frequencyPenalty ?? 0,
-                    presence_penalty: parameters.presencePenalty ?? 0
+                    presence_penalty: parameters.presencePenalty ?? 0,
                 };
                 headers['Authorization'] = `Bearer ${model.credentials?.apiKey}`;
                 break;
@@ -215,7 +238,7 @@ export class ModelService {
                     prompt: `Human: ${prompt}\nAssistant:`,
                     max_tokens_to_sample: parameters.maxTokens || model.maxOutputTokens,
                     temperature: parameters.temperature ?? 0.7,
-                    top_p: parameters.topP ?? 1
+                    top_p: parameters.topP ?? 1,
                 };
                 headers['x-api-key'] = model.credentials?.apiKey;
                 headers['anthropic-version'] = '2023-06-01';
@@ -225,7 +248,7 @@ export class ModelService {
                 // 通用格式
                 requestBody = {
                     prompt: prompt,
-                    parameters: parameters
+                    parameters: parameters,
                 };
                 if (model.credentials?.apiKey) {
                     headers['Authorization'] = `Bearer ${model.credentials.apiKey}`;
@@ -236,7 +259,7 @@ export class ModelService {
         const response = await fetch(model.baseEndpoint, {
             method: 'POST',
             headers,
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify(requestBody),
         });
 
         const endTime = Date.now();
@@ -285,16 +308,15 @@ export class ModelService {
             usage: {
                 promptTokens,
                 completionTokens,
-                totalTokens: promptTokens + completionTokens
+                totalTokens: promptTokens + completionTokens,
             },
             metadata: {
                 finishReason,
                 latencyMs: endTime - startTime,
                 model: model.name,
-                provider: model.provider
+                provider: model.provider,
             },
-            createdAt: new Date()
+            createdAt: new Date(),
         };
     }
-
 }

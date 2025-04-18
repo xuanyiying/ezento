@@ -1,14 +1,15 @@
 import { User } from '../models';
-import { UserDocument, UserCreateData, UserUpdateData } from '../interfaces/user.interface';
+import { UserCreateData } from '../interfaces/user.interface';
 import mongoose from 'mongoose';
 import logger from '../config/logger';
+import { generateUserId } from '../utils/idGenerator';
+import type { UserDocument } from '../models/User';
 
 interface SessionOptions {
     session?: mongoose.ClientSession;
 }
 
 class UserService {
-   
     /**
      * Find a user by username
      */
@@ -57,7 +58,10 @@ class UserService {
      * @param options 会话选项
      * @returns 创建的用户文档
      */
-    public static async createUser(data: UserCreateData, options: SessionOptions = {}): Promise<UserDocument> {
+    public static async createUser(
+        data: UserCreateData,
+        options: SessionOptions = {}
+    ): Promise<UserDocument> {
         try {
             const { session } = options;
             const [user] = await User.create([data], { session });
@@ -71,20 +75,25 @@ class UserService {
     /**
      * Create or update a WeChat user
      */
-    static async createOrUpdateWechatUser(wechatData: { openId: string, unionId?: string, name?: string, avatar?: string }) {
+    static async createOrUpdateWechatUser(wechatData: {
+        openId: string;
+        unionId?: string;
+        name?: string;
+        avatar?: string;
+    }) {
         try {
             let user = await this.findUserByOpenId(wechatData.openId);
-            
+
             if (user) {
                 // Update existing user
                 user = await User.findOneAndUpdate(
                     { openId: wechatData.openId },
-                    { 
-                        $set: { 
+                    {
+                        $set: {
                             unionId: wechatData.unionId,
                             avatar: wechatData.avatar || user.avatar,
-                            name: wechatData.name || user.name
-                        } 
+                            name: wechatData.name || user.name,
+                        },
                     },
                     { new: true }
                 ).exec();
@@ -92,14 +101,15 @@ class UserService {
             } else {
                 // Create new user with minimal data
                 const newUser = await this.createUser({
+                    id: generateUserId(),
                     openId: wechatData.openId,
                     unionId: wechatData.unionId,
                     name: wechatData.name || '微信用户',
                     avatar: wechatData.avatar || '',
-                    phone: '',  // Will be filled later
-                    role: 'user',  // Default role
+                    phone: '', // Will be filled later
+                    role: 'user', // Default role
                     isWechatUser: true,
-                    isActive: true
+                    isActive: true,
                 });
                 return { user: newUser, isNewUser: true };
             }
@@ -117,21 +127,21 @@ class UserService {
             if (!mongoose.Types.ObjectId.isValid(userId)) {
                 return null;
             }
-            
+
             const updatedUser = await User.findByIdAndUpdate(
                 userId,
-                { 
-                    $set: { 
+                {
+                    $set: {
                         name: userData.name,
                         phone: userData.phone,
                         gender: userData.gender,
                         birthDate: userData.birthDate,
-                        userType: userData.role.toLowerCase()
-                    } 
+                        userType: userData.role.toLowerCase(),
+                    },
                 },
                 { new: true }
             ).exec();
-            
+
             return updatedUser;
         } catch (error) {
             logger.error(`Error in UserService.updateWechatUserInfo: ${error}`);
@@ -142,16 +152,16 @@ class UserService {
     /**
      * Update a user
      */
-    static async updateUser(id: string, userData: any, p0: { session: mongoose.mongo.ClientSession; }) {
+    static async updateUser(
+        id: string,
+        userData: any,
+        p0: { session: mongoose.mongo.ClientSession }
+    ) {
         try {
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return null;
             }
-            const updatedUser = await User.findByIdAndUpdate(
-                id,
-                userData,
-                { new: true }
-            ).exec();
+            const updatedUser = await User.findByIdAndUpdate(id, userData, { new: true }).exec();
             return updatedUser;
         } catch (error) {
             logger.error(`Error in UserService.updateUser: ${error}`);
@@ -176,4 +186,4 @@ class UserService {
     }
 }
 
-export default UserService; 
+export default UserService;

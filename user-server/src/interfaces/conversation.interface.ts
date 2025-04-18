@@ -1,52 +1,53 @@
 import { Document } from 'mongoose';
-import mongoose from 'mongoose';
 
 /**
  * 会话类型枚举
  */
 export enum ConversationType {
     PRE_DIAGNOSIS = 'PRE_DIAGNOSIS', // 预问诊
-    GUIDE = 'GUIDE',                 // 导诊
-    REPORT = 'REPORT'                // 报告解读
+    GUIDE = 'GUIDE', // 导诊
+    REPORT = 'REPORT', // 报告解读
 }
 
 /**
  * 会话消息接口
  */
 export interface IConversationMessage {
-    content: string;             // 消息内容
-    role: 'user' | 'system';      // 发送者类型
-    timestamp: Date;             // 发送时间
+    id: string; // 消息ID
+    content: string; // 消息内容
+    role: 'user' | 'system'; // 发送者类型
+    timestamp: Date; // 发送时间
     metadata?: Record<string, any>; // 元数据（可包含图片链接等）
-    referenceId: string;         // 关联ID（预问诊ID、导诊ID或报告ID）
-    conversationId: mongoose.Types.ObjectId;      // 会话ID
+    conversationId: string; // 会话ID
+    consultationId: string; // 咨询ID
 }
 
 /**
  * 会话接口
  */
 export interface IConversation extends Document {
-    _id: mongoose.Types.ObjectId;        // 会话ID
-    conversationType: ConversationType;  // 会话类型
-    referenceId: string;                 // 关联ID（预问诊ID、导诊ID或报告ID）
-    userId: mongoose.Types.ObjectId;     // 用户ID
-    messages: IConversationMessage[];    // 消息记录
-    createdAt: Date;                     // 创建时间
-    updatedAt: Date;                     // 更新时间
-    status: 'ACTIVE' | 'CLOSED';         // 会话状态
+    id: string; // 会话ID
+    conversationType: ConversationType; // 会话类型
+    consultationId: string; // 关联ID（预问诊ID、导诊ID或报告ID）
+    userId: string; // 用户ID
+    messages?: IConversationMessage[]; // 消息记录 - 可能来自关联查询，使用可选标记
+    createdAt: Date; // 创建时间
+    updatedAt: Date; // 更新时间
+    status: 'ACTIVE' | 'CLOSED'; // 会话状态
     startTime: Date;
     endTime?: Date;
     isClosed: boolean;
+    metadata?: Record<string, any>;
 }
 
 /**
  * 创建会话请求接口
  */
 export interface CreateConversationRequest {
-    conversationId?: mongoose.Types.ObjectId; // 会话ID (可选)
+    conversationId?: string; // 会话ID (可选)
     conversationType: ConversationType;
-    referenceId?: string;
-    userId: string;  // Changed from patientId to userId
+    consultationId?: string;
+    userId: string; // Changed from patientId to userId
     initialMessage?: string;
     timestamp?: Date;
 }
@@ -55,12 +56,12 @@ export interface CreateConversationRequest {
  * 添加消息请求接口
  */
 export interface AddMessageRequest {
-    conversationId: mongoose.Types.ObjectId; // 会话ID
+    conversationId: string; // 会话ID
     content: string; // 消息内容
     role: 'user' | 'system'; // 发送者类型
     metadata?: Record<string, any>; // 元数据（可包含图片链接等）
-    referenceId: string; // 关联ID（预问诊ID、导诊ID或报告ID）
-    timestamp: Date; // 发送时间
+    consultationId?: string; // 关联ID（预问诊ID、导诊ID或报告ID）
+    timestamp?: Date; // 发送时间
 }
 
 /**
@@ -68,22 +69,23 @@ export interface AddMessageRequest {
  */
 export interface GetConversationHistoryRequest {
     conversationType: ConversationType;
-    referenceId: string;
+    consultationId: string;
 }
 
 /**
  * 导出会话历史记录请求接口
  */
 export interface ExportConversationRequest {
-    conversationId: mongoose.Types.ObjectId;
+    conversationId: string;
     format?: 'PDF' | 'TEXT';
 }
 
 export interface Message {
-    _id?: string;
+    id?: string;
     conversationId: string;
-    sender: string;
+    role: 'user' | 'system';
     content: string;
     metadata?: Record<string, any>;
+    consultationId: string;
     timestamp: Date;
 }

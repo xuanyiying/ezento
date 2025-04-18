@@ -18,7 +18,7 @@ export class PatientController {
             logger.error(`Error getting patients: ${error.message}`);
             res.status(500).json({
                 code: 500,
-                msg: 'Failed to retrieve patients'
+                msg: 'Failed to retrieve patients',
             });
         }
     }
@@ -35,7 +35,7 @@ export class PatientController {
             if (!patient) {
                 res.status(404).json({
                     code: 404,
-                    msg: 'Patient not found'
+                    msg: 'Patient not found',
                 });
                 return;
             }
@@ -45,7 +45,7 @@ export class PatientController {
             logger.error(`Error getting patient: ${error.message}`);
             res.status(500).json({
                 code: 500,
-                msg: 'Failed to retrieve patient'
+                msg: 'Failed to retrieve patient',
             });
         }
     }
@@ -64,12 +64,12 @@ export class PatientController {
             if (error.message.includes('validation failed')) {
                 res.status(400).json({
                     code: 400,
-                    msg: error.message
+                    msg: error.message,
                 });
             } else {
                 res.status(500).json({
                     code: 500,
-                    msg: 'Failed to create patient'
+                    msg: 'Failed to create patient',
                 });
             }
         }
@@ -88,7 +88,7 @@ export class PatientController {
             if (!patient) {
                 res.status(404).json({
                     code: 404,
-                    msg: 'Patient not found'
+                    msg: 'Patient not found',
                 });
                 return;
             }
@@ -99,12 +99,12 @@ export class PatientController {
             if (error.message.includes('validation failed')) {
                 res.status(400).json({
                     code: 400,
-                    msg: error.message
+                    msg: error.message,
                 });
             } else {
                 res.status(500).json({
                     code: 500,
-                    msg: 'Failed to update patient'
+                    msg: 'Failed to update patient',
                 });
             }
         }
@@ -122,25 +122,23 @@ export class PatientController {
             if (!deleted) {
                 res.status(404).json({
                     code: 404,
-                    msg: 'Patient not found'
+                    msg: 'Patient not found',
                 });
                 return;
             }
 
             res.status(200).json({
                 code: 200,
-                msg: 'Patient deleted successfully'
+                msg: 'Patient deleted successfully',
             });
         } catch (error: any) {
             logger.error(`Error deleting patient: ${error.message}`);
             res.status(500).json({
                 code: 500,
-                msg: 'Failed to delete patient'
+                msg: 'Failed to delete patient',
             });
         }
     }
-
-  
 
     /**
      * Get patient's consultations
@@ -154,7 +152,7 @@ export class PatientController {
             if (!patient) {
                 res.status(404).json({
                     code: 404,
-                    msg: 'Patient not found'
+                    msg: 'Patient not found',
                 });
                 return;
             }
@@ -164,10 +162,10 @@ export class PatientController {
             logger.error(`Error getting patient consultations: ${error.message}`);
             res.status(500).json({
                 code: 500,
-                msg: 'Failed to retrieve consultations'
+                msg: 'Failed to retrieve consultations',
             });
         }
     }
 }
 
-export default PatientController; 
+export default PatientController;

@@ -1,10 +1,14 @@
 import { IRechargeRepository } from '../repositories/recharge.repository';
-import { RechargeCard, RechargeRecord, RechargeCardBatch } from '../domains/recharge/recharge.entity';
+import {
+    RechargeCard,
+    RechargeRecord,
+    RechargeCardBatch,
+} from '../domains/recharge/recharge.entity';
 import { ApiError } from '../middlewares/errorHandler';
 import { generateRandomCode } from '../utils/codeGenerator';
 
 export class RechargeService {
-    constructor(private rechargeRepository: IRechargeRepository) { }
+    constructor(private rechargeRepository: IRechargeRepository) {}
 
     // 充值卡管理
     async getRechargeCardByCode(code: string): Promise<RechargeCard> {
@@ -23,7 +27,11 @@ export class RechargeService {
         return card;
     }
 
-    async getRechargeCardsByTenant(tenantId: string, page = 1, limit = 10): Promise<{ cards: RechargeCard[]; total: number }> {
+    async getRechargeCardsByTenant(
+        tenantId: string,
+        page = 1,
+        limit = 10
+    ): Promise<{ cards: RechargeCard[]; total: number }> {
         return this.rechargeRepository.findRechargeCardsByTenant(tenantId, page, limit);
     }
 
@@ -51,7 +59,11 @@ export class RechargeService {
         return batch;
     }
 
-    async getRechargeCardBatchesByTenant(tenantId: string, page = 1, limit = 10): Promise<{ batches: RechargeCardBatch[]; total: number }> {
+    async getRechargeCardBatchesByTenant(
+        tenantId: string,
+        page = 1,
+        limit = 10
+    ): Promise<{ batches: RechargeCardBatch[]; total: number }> {
         return this.rechargeRepository.findRechargeCardBatchesByTenant(tenantId, page, limit);
     }
 
@@ -60,7 +72,10 @@ export class RechargeService {
         return this.rechargeRepository.createRechargeCardBatch(batch);
     }
 
-    async updateRechargeCardBatch(id: string, batch: Partial<RechargeCardBatch>): Promise<RechargeCardBatch> {
+    async updateRechargeCardBatch(
+        id: string,
+        batch: Partial<RechargeCardBatch>
+    ): Promise<RechargeCardBatch> {
         await this.getRechargeCardBatchById(id);
         return this.rechargeRepository.updateRechargeCardBatch(id, batch);
     }
@@ -71,11 +86,19 @@ export class RechargeService {
     }
 
     // 充值记录管理
-    async getRechargeRecordsByTenant(tenantId: string, page = 1, limit = 10): Promise<{ records: RechargeRecord[]; total: number }> {
+    async getRechargeRecordsByTenant(
+        tenantId: string,
+        page = 1,
+        limit = 10
+    ): Promise<{ records: RechargeRecord[]; total: number }> {
         return this.rechargeRepository.findRechargeRecordsByTenant(tenantId, page, limit);
     }
 
-    async getRechargeRecordsByUser(userId: string, page = 1, limit = 10): Promise<{ records: RechargeRecord[]; total: number }> {
+    async getRechargeRecordsByUser(
+        userId: string,
+        page = 1,
+        limit = 10
+    ): Promise<{ records: RechargeRecord[]; total: number }> {
         return this.rechargeRepository.findRechargeRecordsByUser(userId, page, limit);
     }
 
@@ -138,4 +161,4 @@ export class RechargeService {
             throw new ApiError(400, '描述不能为空');
         }
     }
-} 
+}

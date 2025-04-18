@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { RechargeService } from '../services/recharge.service';
 
 export class RechargeController {
-    constructor(private rechargeService: RechargeService) { }
+    constructor(private rechargeService: RechargeService) {}
 
     // 充值卡管理
     getRechargeCardByCode = async (req: Request, res: Response, next: NextFunction) => {
@@ -30,7 +30,11 @@ export class RechargeController {
             const { tenantId } = req.params;
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
-            const result = await this.rechargeService.getRechargeCardsByTenant(tenantId, page, limit);
+            const result = await this.rechargeService.getRechargeCardsByTenant(
+                tenantId,
+                page,
+                limit
+            );
             res.json(result);
         } catch (error) {
             next(error);
@@ -82,7 +86,11 @@ export class RechargeController {
             const { tenantId } = req.params;
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
-            const result = await this.rechargeService.getRechargeCardBatchesByTenant(tenantId, page, limit);
+            const result = await this.rechargeService.getRechargeCardBatchesByTenant(
+                tenantId,
+                page,
+                limit
+            );
             res.json(result);
         } catch (error) {
             next(error);
@@ -124,7 +132,11 @@ export class RechargeController {
             const { tenantId } = req.params;
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
-            const result = await this.rechargeService.getRechargeRecordsByTenant(tenantId, page, limit);
+            const result = await this.rechargeService.getRechargeRecordsByTenant(
+                tenantId,
+                page,
+                limit
+            );
             res.json(result);
         } catch (error) {
             next(error);
@@ -151,4 +163,4 @@ export class RechargeController {
             next(error);
         }
     };
-} 
+}

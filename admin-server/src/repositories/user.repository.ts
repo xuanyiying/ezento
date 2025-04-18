@@ -8,4 +8,4 @@ export interface IUserRepository {
     update(id: string, data: Partial<User>): Promise<User>;
     delete(id: string): Promise<void>;
     updatePassword(id: string, hashedPassword: string): Promise<void>;
-} 
+}

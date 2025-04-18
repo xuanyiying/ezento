@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ApiGatewayService } from '../services/api-gateway.service';
 
 export class ApiGatewayController {
-    constructor(private apiGatewayService: ApiGatewayService) { }
+    constructor(private apiGatewayService: ApiGatewayService) {}
 
     // API网关管理
     getGatewayById = async (req: Request, res: Response, next: NextFunction) => {
@@ -221,4 +221,4 @@ export class ApiGatewayController {
             next(error);
         }
     };
-} 
+}

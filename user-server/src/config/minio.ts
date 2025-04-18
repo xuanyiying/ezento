@@ -35,7 +35,7 @@ const initializeBucket = async () => {
         if (!bucketExists) {
             await minioClient.makeBucket(defaultBucket, process.env.MINIO_REGION || 'us-east-1');
             logger.info(`Created MinIO bucket: ${defaultBucket}`);
-            
+
             // Set bucket policy to allow public read access if needed
             if (process.env.MINIO_PUBLIC_BUCKET === 'true') {
                 const policy = {
@@ -45,9 +45,9 @@ const initializeBucket = async () => {
                             Effect: 'Allow',
                             Principal: { AWS: ['*'] },
                             Action: ['s3:GetObject'],
-                            Resource: [`arn:aws:s3:::${defaultBucket}/*`]
-                        }
-                    ]
+                            Resource: [`arn:aws:s3:::${defaultBucket}/*`],
+                        },
+                    ],
                 };
                 await minioClient.setBucketPolicy(defaultBucket, JSON.stringify(policy));
                 logger.info(`Set public read policy for bucket: ${defaultBucket}`);
@@ -70,4 +70,4 @@ initializeBucket().catch(err => {
 export const isMinioAvailable = () => isMinioConnected;
 
 // Export the client and bucket name
-export { minioClient, defaultBucket }; 
+export { minioClient, defaultBucket };

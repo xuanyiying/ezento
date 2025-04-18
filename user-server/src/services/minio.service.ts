@@ -32,8 +32,8 @@ export class MinioService {
                 file: {
                     originalname: file.originalname,
                     size: file.size,
-                    mimetype: file.mimetype
-                }
+                    mimetype: file.mimetype,
+                },
             };
         }
 
@@ -41,13 +41,9 @@ export class MinioService {
             const key = `${Date.now()}-${file.originalname}`;
             const stream = Readable.from(file.buffer);
 
-            const result = await minioClient.putObject(
-                bucket,
-                key,
-                stream,
-                file.size,
-                { 'Content-Type': file.mimetype }
-            );
+            const result = await minioClient.putObject(bucket, key, stream, file.size, {
+                'Content-Type': file.mimetype,
+            });
 
             return {
                 success: true,
@@ -57,8 +53,8 @@ export class MinioService {
                     mimetype: file.mimetype,
                     key: key,
                     bucket: bucket,
-                    etag: result.etag
-                }
+                    etag: result.etag,
+                },
             };
         } catch (error) {
             logger.error(`Error uploading file to MinIO: ${error}`);
@@ -68,12 +64,12 @@ export class MinioService {
                 file: {
                     originalname: file.originalname,
                     size: file.size,
-                    mimetype: file.mimetype
-                }
+                    mimetype: file.mimetype,
+                },
             };
         }
     }
-    
+
     /**
      * 上传多个文件到MinIO
      * @param files 文件对象数组
@@ -86,13 +82,13 @@ export class MinioService {
             originalname: string;
             mimetype: string;
             size: number;
-        }>, 
+        }>,
         customPath?: string
     ) {
         const uploadPromises = files.map(file => this.uploadFile(file, customPath));
         return Promise.all(uploadPromises);
     }
-    
+
     /**
      * 从MinIO删除文件
      * @param key 文件键
@@ -113,7 +109,7 @@ export class MinioService {
             return false;
         }
     }
-    
+
     /**
      * 获取文件的预签名URL
      * @param key 文件键
@@ -121,7 +117,11 @@ export class MinioService {
      * @param bucket 存储桶名称
      * @returns 预签名URL
      */
-    static async getPresignedUrl(key: string, expirySeconds: number = 3600, bucket: string = defaultBucket): Promise<string | null> {
+    static async getPresignedUrl(
+        key: string,
+        expirySeconds: number = 3600,
+        bucket: string = defaultBucket
+    ): Promise<string | null> {
         if (!isMinioAvailable() || !minioClient) {
             logger.warn('MinIO is not available, cannot generate presigned URL');
             return null;
@@ -136,4 +136,4 @@ export class MinioService {
     }
 }
 
-export default MinioService; 
+export default MinioService;

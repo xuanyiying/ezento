@@ -35,4 +35,4 @@ router.get('/routes/:routeId/logs', authMiddleware, apiGatewayController.getLogs
 router.get('/logs/:id', authMiddleware, apiGatewayController.getLogById);
 router.post('/logs', authMiddleware, apiGatewayController.createLog);
 
-export const apiGatewayRoutes = router; 
+export const apiGatewayRoutes = router;

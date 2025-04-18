@@ -12,13 +12,17 @@ export class PrismaApiGatewayRepository implements IApiGatewayRepository {
             include: {
                 routes: true,
                 apiKeys: true,
-                logs: true
-            }
+                logs: true,
+            },
         });
         return gateway ? this.mapToApiGateway(gateway) : null;
     }
 
-    async findGatewaysByTenant(tenantId: string, page: number, limit: number): Promise<{ gateways: ApiGateway[]; total: number }> {
+    async findGatewaysByTenant(
+        tenantId: string,
+        page: number,
+        limit: number
+    ): Promise<{ gateways: ApiGateway[]; total: number }> {
         const [gateways, total] = await Promise.all([
             this.prisma.apiGateway.findMany({
                 where: { tenantId },
@@ -27,17 +31,17 @@ export class PrismaApiGatewayRepository implements IApiGatewayRepository {
                 include: {
                     routes: true,
                     apiKeys: true,
-                    logs: true
-                }
+                    logs: true,
+                },
             }),
             this.prisma.apiGateway.count({
-                where: { tenantId }
-            })
+                where: { tenantId },
+            }),
         ]);
 
         return {
             gateways: gateways.map(this.mapToApiGateway),
-            total
+            total,
         };
     }
 
@@ -52,13 +56,13 @@ export class PrismaApiGatewayRepository implements IApiGatewayRepository {
                 rateLimit: gateway.rateLimit!,
                 cors: gateway.cors!,
                 authentication: gateway.authentication!,
-                metadata: gateway.metadata
+                metadata: gateway.metadata,
             },
             include: {
                 routes: true,
                 apiKeys: true,
-                logs: true
-            }
+                logs: true,
+            },
         });
         return this.mapToApiGateway(created);
     }
@@ -74,20 +78,20 @@ export class PrismaApiGatewayRepository implements IApiGatewayRepository {
                 rateLimit: gateway.rateLimit,
                 cors: gateway.cors,
                 authentication: gateway.authentication,
-                metadata: gateway.metadata
+                metadata: gateway.metadata,
             },
             include: {
                 routes: true,
                 apiKeys: true,
-                logs: true
-            }
+                logs: true,
+            },
         });
         return this.mapToApiGateway(updated);
     }
 
     async deleteGateway(id: string): Promise<void> {
         await this.prisma.apiGateway.delete({
-            where: { id }
+            where: { id },
         });
     }
 
@@ -98,8 +102,8 @@ export class PrismaApiGatewayRepository implements IApiGatewayRepository {
             include: {
                 routes: true,
                 apiKeys: true,
-                logs: true
-            }
+                logs: true,
+            },
         });
         return this.mapToApiGateway(updated);
     }
@@ -107,14 +111,14 @@ export class PrismaApiGatewayRepository implements IApiGatewayRepository {
     // API路由管理
     async findRouteById(id: string): Promise<ApiRoute | null> {
         const route = await this.prisma.apiRoute.findUnique({
-            where: { id }
+            where: { id },
         });
         return route ? this.mapToApiRoute(route) : null;
     }
 
     async findRoutesByGateway(gatewayId: string): Promise<ApiRoute[]> {
         const routes = await this.prisma.apiRoute.findMany({
-            where: { gatewayId }
+            where: { gatewayId },
         });
         return routes.map(this.mapToApiRoute);
     }
@@ -130,8 +134,8 @@ export class PrismaApiGatewayRepository implements IApiGatewayRepository {
                 authentication: route.authentication,
                 validation: route.validation,
                 transformation: route.transformation,
-                metadata: route.metadata
-            }
+                metadata: route.metadata,
+            },
         });
         return this.mapToApiRoute(created);
     }
@@ -147,29 +151,29 @@ export class PrismaApiGatewayRepository implements IApiGatewayRepository {
                 authentication: route.authentication,
                 validation: route.validation,
                 transformation: route.transformation,
-                metadata: route.metadata
-            }
+                metadata: route.metadata,
+            },
         });
         return this.mapToApiRoute(updated);
     }
 
     async deleteRoute(id: string): Promise<void> {
         await this.prisma.apiRoute.delete({
-            where: { id }
+            where: { id },
         });
     }
 
     // API密钥管理
     async findApiKeyById(id: string): Promise<ApiKey | null> {
         const apiKey = await this.prisma.apiKey.findUnique({
-            where: { id }
+            where: { id },
         });
         return apiKey ? this.mapToApiKey(apiKey) : null;
     }
 
     async findApiKeysByGateway(gatewayId: string): Promise<ApiKey[]> {
         const apiKeys = await this.prisma.apiKey.findMany({
-            where: { gatewayId }
+            where: { gatewayId },
         });
         return apiKeys.map(this.mapToApiKey);
     }
@@ -183,8 +187,8 @@ export class PrismaApiGatewayRepository implements IApiGatewayRepository {
                 description: apiKey.description,
                 status: apiKey.status!,
                 expiresAt: apiKey.expiresAt,
-                metadata: apiKey.metadata
-            }
+                metadata: apiKey.metadata,
+            },
         });
         return this.mapToApiKey(created);
     }
@@ -197,69 +201,77 @@ export class PrismaApiGatewayRepository implements IApiGatewayRepository {
                 description: apiKey.description,
                 status: apiKey.status,
                 expiresAt: apiKey.expiresAt,
-                metadata: apiKey.metadata
-            }
+                metadata: apiKey.metadata,
+            },
         });
         return this.mapToApiKey(updated);
     }
 
     async deleteApiKey(id: string): Promise<void> {
         await this.prisma.apiKey.delete({
-            where: { id }
+            where: { id },
         });
     }
 
     async updateApiKeyStatus(id: string, status: ApiKey['status']): Promise<ApiKey> {
         const updated = await this.prisma.apiKey.update({
             where: { id },
-            data: { status }
+            data: { status },
         });
         return this.mapToApiKey(updated);
     }
 
     async findApiKeyByKey(key: string): Promise<ApiKey | null> {
         const apiKey = await this.prisma.apiKey.findFirst({
-            where: { key }
+            where: { key },
         });
         return apiKey ? this.mapToApiKey(apiKey) : null;
     }
 
     // API日志管理
-    async findLogsByGateway(gatewayId: string, page: number, limit: number): Promise<{ logs: ApiLog[]; total: number }> {
+    async findLogsByGateway(
+        gatewayId: string,
+        page: number,
+        limit: number
+    ): Promise<{ logs: ApiLog[]; total: number }> {
         const [logs, total] = await Promise.all([
             this.prisma.apiLog.findMany({
                 where: { gatewayId },
                 skip: (page - 1) * limit,
                 take: limit,
-                orderBy: { createdAt: 'desc' }
+                orderBy: { createdAt: 'desc' },
             }),
             this.prisma.apiLog.count({
-                where: { gatewayId }
-            })
+                where: { gatewayId },
+            }),
         ]);
 
         return {
             logs: logs.map(this.mapToApiLog),
-            total
+            total,
         };
     }
 
-    async findLogsByRoute(routeId: string, page: number, limit: number): Promise<{ logs: ApiLog[]; total: number }> {
+    async findLogsByRoute(
+        routeId: string,
+        page: number,
+        limit: number
+    ): Promise<{ logs: ApiLog[]; total: number }> {
         const [logs, total] = await Promise.all([
             this.prisma.apiLog.findMany({
                 where: { routeId },
                 skip: (page - 1) * limit,
                 take: limit,
-                orderBy: { createdAt: 'desc' }
+                orderBy: { createdAt: 'desc' },
             }),
             this.prisma.apiLog.count({
-                where: { routeId }
-            })
+                where: { routeId },
+            }),
         ]);
 
         return {
             logs: logs.map(this.mapToApiLog),
-            total
+            total,
         };
     }
 
@@ -280,15 +292,15 @@ export class PrismaApiGatewayRepository implements IApiGatewayRepository {
                 responseHeaders: log.responseHeaders,
                 responseBody: log.responseBody,
                 error: log.error,
-                metadata: log.metadata
-            }
+                metadata: log.metadata,
+            },
         });
         return this.mapToApiLog(created);
     }
 
     async findLogById(id: string): Promise<ApiLog | null> {
         const log = await this.prisma.apiLog.findUnique({
-            where: { id }
+            where: { id },
         });
         return log ? this.mapToApiLog(log) : null;
     }
@@ -310,7 +322,7 @@ export class PrismaApiGatewayRepository implements IApiGatewayRepository {
             updatedAt: data.updatedAt,
             routes: data.routes?.map(this.mapToApiRoute) || [],
             apiKeys: data.apiKeys?.map(this.mapToApiKey) || [],
-            logs: data.logs?.map(this.mapToApiLog) || []
+            logs: data.logs?.map(this.mapToApiLog) || [],
         };
     }
 
@@ -327,7 +339,7 @@ export class PrismaApiGatewayRepository implements IApiGatewayRepository {
             transformation: data.transformation,
             metadata: data.metadata,
             createdAt: data.createdAt,
-            updatedAt: data.updatedAt
+            updatedAt: data.updatedAt,
         };
     }
 
@@ -343,7 +355,7 @@ export class PrismaApiGatewayRepository implements IApiGatewayRepository {
             lastUsedAt: data.lastUsedAt,
             metadata: data.metadata,
             createdAt: data.createdAt,
-            updatedAt: data.updatedAt
+            updatedAt: data.updatedAt,
         };
     }
 
@@ -365,7 +377,7 @@ export class PrismaApiGatewayRepository implements IApiGatewayRepository {
             responseBody: data.responseBody,
             error: data.error,
             metadata: data.metadata,
-            createdAt: data.createdAt
+            createdAt: data.createdAt,
         };
     }
-} 
+}

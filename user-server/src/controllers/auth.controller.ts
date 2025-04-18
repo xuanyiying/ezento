@@ -6,6 +6,7 @@ import { ResponseUtil } from '../utils/responseUtil';
 import PasswordUtil from '../utils/passwordUtil';
 import axios from 'axios';
 import crypto from 'crypto';
+import { generateUserId } from '../utils/idGenerator';
 
 /**
  * 认证控制器
@@ -55,7 +56,7 @@ export class AuthController {
 
                 const responseData = {
                     token,
-                    user : {
+                    user: {
                         userId: user._id,
                         role: user.role,
                         name: user.name,
@@ -65,10 +66,10 @@ export class AuthController {
                         gender: user.gender,
                         birthDate: user.birthDate,
                     },
-                    isNewUser: false
+                    isNewUser: false,
                 };
                 ResponseUtil.success(res, responseData);
-                logger.info(`--用户 ${user.username} 登录成功`, JSON.stringify(responseData) );
+                logger.info(`--用户 ${user.username} 登录成功`, JSON.stringify(responseData));
             } catch (bcryptError: any) {
                 logger.error(`密码验证错误: ${bcryptError.message}`);
                 ResponseUtil.unauthorized(res, '用户名或密码错误');
@@ -115,7 +116,7 @@ export class AuthController {
             const { openid, session_key, unionid } = wechatResponse.data;
 
             // 从微信提取的用户信息
-            let wechatUserInfo: { name?: string, avatar?: string } = {};
+            let wechatUserInfo: { name?: string; avatar?: string } = {};
 
             // 如果提供了encryptedData和iv，解密用户信息
             if (encryptedData && iv && session_key) {
@@ -123,7 +124,7 @@ export class AuthController {
                     const decryptedData = this.decryptWechatData(encryptedData, session_key, iv);
                     wechatUserInfo = {
                         name: decryptedData.nickName,
-                        avatar: decryptedData.avatarUrl
+                        avatar: decryptedData.avatarUrl,
                     };
                 } catch (error) {
                     logger.error(`解密微信数据失败: ${error}`);
@@ -135,14 +136,14 @@ export class AuthController {
             const { user, isNewUser } = await UserService.createOrUpdateWechatUser({
                 openId: openid,
                 unionId: unionid,
-                ...wechatUserInfo
+                ...wechatUserInfo,
             });
 
             // 生成JWT令牌
             const token = jwt.sign(
                 {
                     userId: user?._id,
-                    role: user?.role
+                    role: user?.role,
                 },
                 process.env.JWT_SECRET || 'your-secret-key',
                 { expiresIn: '24h' }
@@ -150,13 +151,13 @@ export class AuthController {
 
             ResponseUtil.success(res, {
                 token,
-                user : {
+                user: {
                     userId: user?._id,
                     role: user?.role,
                     userName: user?.name,
                     avatar: user?.avatar,
                 },
-                isNewUser
+                isNewUser,
             });
         } catch (error: any) {
             logger.error(`微信登录错误: ${error.message}`);
@@ -175,11 +176,7 @@ export class AuthController {
 
         try {
             // 创建解密器
-            const decipher = crypto.createDecipheriv(
-                'aes-128-cbc',
-                decodedSessionKey,
-                decodedIv
-            );
+            const decipher = crypto.createDecipheriv('aes-128-cbc', decodedSessionKey, decodedIv);
 
             // 禁用自动填充
             decipher.setAutoPadding(true);
@@ -221,7 +218,7 @@ export class AuthController {
                 phone,
                 gender,
                 birthDate,
-                role
+                role,
             });
 
             if (!user) {
@@ -231,7 +228,7 @@ export class AuthController {
 
             ResponseUtil.success(res, {
                 userId: user._id,
-                profileComplete: true
+                profileComplete: true,
             });
         } catch (error: any) {
             logger.error(`更新微信用户信息错误: ${error.message}`);
@@ -281,7 +278,7 @@ export class AuthController {
                 gender: user.gender,
                 birthDate: user.birthDate,
                 joinDate: user.createdAt,
-                age
+                age,
             });
         } catch (error: any) {
             logger.error(`获取用户信息错误: ${error.message}`);
@@ -313,6 +310,7 @@ export class AuthController {
             }
             // 创建新用户
             const user = await UserService.createUser({
+                id: generateUserId(),
                 username,
                 password,
                 name,
@@ -322,11 +320,36 @@ export class AuthController {
             });
 
             ResponseUtil.created(res, {
-                userId: user._id
+                userId: user._id,
             });
         } catch (error: any) {
             logger.error(`注册错误: ${error.message}`);
             ResponseUtil.serverError(res, '注册失败，请稍后重试');
+        }
+    }
+
+    /**
+     * 用户登出
+     * 清除用户的会话信息
+     */
+    static async logout(req: Request, res: Response): Promise<void> {
+        try {
+            // 获取用户ID
+            const userId = req.user?.userId;
+
+            if (!userId) {
+                ResponseUtil.unauthorized(res, '未授权');
+                return;
+            }
+
+            // 这里可以添加任何需要的清理操作
+            // 例如：清除Redis中的会话数据，更新用户的最后登出时间等
+
+            ResponseUtil.success(res, { message: '登出成功' });
+            logger.info(`用户 ${userId} 登出成功`);
+        } catch (error: any) {
+            logger.error(`登出错误: ${error.message}`);
+            ResponseUtil.serverError(res, '登出失败，请稍后重试');
         }
     }
 }

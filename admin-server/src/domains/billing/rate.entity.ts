@@ -21,4 +21,4 @@ export interface OverageSettings {
     disableThreshold?: number;
     createdAt: Date;
     updatedAt: Date;
-} 
+}

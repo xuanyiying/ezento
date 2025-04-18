@@ -11,4 +11,4 @@ router.post('/login', authController.login);
 // 验证令牌接口 - 需要认证
 router.get('/verify', authMiddleware, authController.verifyToken);
 
-export default router; 
+export default router;

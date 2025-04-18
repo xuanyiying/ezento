@@ -6,33 +6,37 @@ import { Invoice } from '../../domains/billing/invoice.entity';
 import { Rate, OverageSettings } from '../../domains/billing/rate.entity';
 
 export class PrismaBillingRepository implements IBillingRepository {
-    constructor(private prisma: PrismaClient) { }
+    constructor(private prisma: PrismaClient) {}
 
     // 使用量统计
     async findUsageAll(): Promise<{ usages: Usage[]; total: number }> {
         const [usages, total] = await Promise.all([
             this.prisma.usage.findMany({
-                orderBy: { date: 'desc' }
+                orderBy: { date: 'desc' },
             }),
-            this.prisma.usage.count()
+            this.prisma.usage.count(),
         ]);
 
         return {
             usages: usages.map((usage: any) => this.mapUsageToEntity(usage)),
-            total
+            total,
         };
     }
 
     async findUsageByTenant(tenantId: string): Promise<Usage[]> {
         const usages = await this.prisma.usage.findMany({
             where: { tenantId },
-            orderBy: { date: 'desc' }
+            orderBy: { date: 'desc' },
         });
 
         return usages.map((usage: any) => this.mapUsageToEntity(usage));
     }
 
-    async findDailyUsageByTenant(tenantId: string, startDate: Date, endDate: Date): Promise<DailyUsage[]> {
+    async findDailyUsageByTenant(
+        tenantId: string,
+        startDate: Date,
+        endDate: Date
+    ): Promise<DailyUsage[]> {
         const results = await this.prisma.$queryRaw`
             SELECT 
                 DATE(date) as date,
@@ -76,8 +80,8 @@ export class PrismaBillingRepository implements IBillingRepository {
                 endpoint: usage.endpoint,
                 requestCount: usage.requestCount || 1,
                 tokenCount: usage.tokenCount || 0,
-                costAmount: usage.costAmount || 0
-            }
+                costAmount: usage.costAmount || 0,
+            },
         });
 
         return this.mapUsageToEntity(newUsage);
@@ -86,7 +90,7 @@ export class PrismaBillingRepository implements IBillingRepository {
     // 套餐与计费
     async findAllBillingPlans(): Promise<BillingPlan[]> {
         const plans = await this.prisma.billingPlan.findMany({
-            orderBy: { basePrice: 'asc' }
+            orderBy: { basePrice: 'asc' },
         });
 
         return plans.map((plan: any) => this.mapBillingPlanToEntity(plan));
@@ -94,7 +98,7 @@ export class PrismaBillingRepository implements IBillingRepository {
 
     async findBillingPlanById(id: string): Promise<BillingPlan | null> {
         const plan = await this.prisma.billingPlan.findUnique({
-            where: { id }
+            where: { id },
         });
 
         return plan ? this.mapBillingPlanToEntity(plan) : null;
@@ -111,8 +115,8 @@ export class PrismaBillingRepository implements IBillingRepository {
                 billingCycle: plan.billingCycle!,
                 includedResources: plan.includedResources!,
                 overagePricing: plan.overagePricing!,
-                isActive: plan.isActive ?? true
-            }
+                isActive: plan.isActive ?? true,
+            },
         });
 
         return this.mapBillingPlanToEntity(newPlan);
@@ -130,8 +134,8 @@ export class PrismaBillingRepository implements IBillingRepository {
                 billingCycle: plan.billingCycle,
                 includedResources: plan.includedResources,
                 overagePricing: plan.overagePricing,
-                isActive: plan.isActive
-            }
+                isActive: plan.isActive,
+            },
         });
 
         return this.mapBillingPlanToEntity(updatedPlan);
@@ -139,7 +143,7 @@ export class PrismaBillingRepository implements IBillingRepository {
 
     async deleteBillingPlan(id: string): Promise<void> {
         await this.prisma.billingPlan.delete({
-            where: { id }
+            where: { id },
         });
     }
 
@@ -147,7 +151,7 @@ export class PrismaBillingRepository implements IBillingRepository {
     async findAllRates(): Promise<Rate[]> {
         const rates = await this.prisma.rate.findMany({
             where: { isActive: true },
-            orderBy: { resourceType: 'asc' }
+            orderBy: { resourceType: 'asc' },
         });
 
         return rates.map((rate: any) => this.mapRateToEntity(rate));
@@ -155,7 +159,7 @@ export class PrismaBillingRepository implements IBillingRepository {
 
     async findRateById(id: string): Promise<Rate | null> {
         const rate = await this.prisma.rate.findUnique({
-            where: { id }
+            where: { id },
         });
 
         return rate ? this.mapRateToEntity(rate) : null;
@@ -170,8 +174,8 @@ export class PrismaBillingRepository implements IBillingRepository {
                 currency: rate.currency!,
                 effectiveDate: rate.effectiveDate || new Date(),
                 expirationDate: rate.expirationDate,
-                isActive: rate.isActive ?? true
-            }
+                isActive: rate.isActive ?? true,
+            },
         });
 
         return this.mapRateToEntity(newRate);
@@ -187,8 +191,8 @@ export class PrismaBillingRepository implements IBillingRepository {
                 currency: rate.currency,
                 effectiveDate: rate.effectiveDate,
                 expirationDate: rate.expirationDate,
-                isActive: rate.isActive
-            }
+                isActive: rate.isActive,
+            },
         });
 
         return this.mapRateToEntity(updatedRate);
@@ -199,21 +203,21 @@ export class PrismaBillingRepository implements IBillingRepository {
         const [invoices, total] = await Promise.all([
             this.prisma.invoice.findMany({
                 include: { items: true },
-                orderBy: { createdAt: 'desc' }
+                orderBy: { createdAt: 'desc' },
             }),
-            this.prisma.invoice.count()
+            this.prisma.invoice.count(),
         ]);
 
         return {
             invoices: invoices.map((invoice: any) => this.mapInvoiceToEntity(invoice)),
-            total
+            total,
         };
     }
 
     async findInvoiceById(id: string): Promise<Invoice | null> {
         const invoice = await this.prisma.invoice.findUnique({
             where: { id },
-            include: { items: true }
+            include: { items: true },
         });
 
         return invoice ? this.mapInvoiceToEntity(invoice) : null;
@@ -223,7 +227,7 @@ export class PrismaBillingRepository implements IBillingRepository {
         const invoices = await this.prisma.invoice.findMany({
             where: { tenantId },
             include: { items: true },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
 
         return invoices.map((invoice: any) => this.mapInvoiceToEntity(invoice));
@@ -249,17 +253,20 @@ export class PrismaBillingRepository implements IBillingRepository {
                         quantity: item.quantity,
                         unitPrice: item.unitPrice,
                         amount: item.amount,
-                        type: item.type as InvoiceItemType
-                    }))
-                }
+                        type: item.type as InvoiceItemType,
+                    })),
+                },
             },
-            include: { items: true }
+            include: { items: true },
         });
 
         return this.mapInvoiceToEntity(newInvoice);
     }
 
-    async updateInvoiceStatus(id: string, status: 'DRAFT' | 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED'): Promise<Invoice> {
+    async updateInvoiceStatus(
+        id: string,
+        status: 'DRAFT' | 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED'
+    ): Promise<Invoice> {
         const updatedData: any = { status };
 
         if (status === 'PAID') {
@@ -269,7 +276,7 @@ export class PrismaBillingRepository implements IBillingRepository {
         const updatedInvoice = await this.prisma.invoice.update({
             where: { id },
             data: updatedData,
-            include: { items: true }
+            include: { items: true },
         });
 
         return this.mapInvoiceToEntity(updatedInvoice);
@@ -280,9 +287,9 @@ export class PrismaBillingRepository implements IBillingRepository {
         const usages = await this.prisma.usage.findMany({
             where: {
                 tenantId: tenantId ? tenantId : undefined,
-                isOverage: true
+                isOverage: true,
             },
-            orderBy: { date: 'desc' }
+            orderBy: { date: 'desc' },
         });
 
         return usages.map((usage: any) => this.mapUsageToEntity(usage));
@@ -290,7 +297,7 @@ export class PrismaBillingRepository implements IBillingRepository {
 
     async findOverageSettings(tenantId?: string): Promise<OverageSettings | null> {
         const settings = await this.prisma.overageSettings.findFirst({
-            where: { tenantId: tenantId ? tenantId : undefined }
+            where: { tenantId: tenantId ? tenantId : undefined },
         });
 
         return settings ? this.mapOverageSettingsToEntity(settings) : null;
@@ -304,14 +311,17 @@ export class PrismaBillingRepository implements IBillingRepository {
                 notificationThreshold: settings.notificationThreshold!,
                 notificationEmail: settings.notificationEmail,
                 autoDisable: settings.autoDisable ?? false,
-                disableThreshold: settings.disableThreshold
-            }
+                disableThreshold: settings.disableThreshold,
+            },
         });
 
         return this.mapOverageSettingsToEntity(newSettings);
     }
 
-    async updateOverageSettings(id: string, settings: Partial<OverageSettings>): Promise<OverageSettings> {
+    async updateOverageSettings(
+        id: string,
+        settings: Partial<OverageSettings>
+    ): Promise<OverageSettings> {
         const updatedSettings = await this.prisma.overageSettings.update({
             where: { id },
             data: {
@@ -319,8 +329,8 @@ export class PrismaBillingRepository implements IBillingRepository {
                 notificationThreshold: settings.notificationThreshold,
                 notificationEmail: settings.notificationEmail,
                 autoDisable: settings.autoDisable,
-                disableThreshold: settings.disableThreshold
-            }
+                disableThreshold: settings.disableThreshold,
+            },
         });
 
         return this.mapOverageSettingsToEntity(updatedSettings);
@@ -338,7 +348,7 @@ export class PrismaBillingRepository implements IBillingRepository {
             tokenCount: usage.tokenCount,
             costAmount: usage.costAmount,
             createdAt: usage.createdAt,
-            updatedAt: usage.updatedAt
+            updatedAt: usage.updatedAt,
         };
     }
 
@@ -355,7 +365,7 @@ export class PrismaBillingRepository implements IBillingRepository {
             overagePricing: plan.overagePricing,
             isActive: plan.isActive,
             createdAt: plan.createdAt,
-            updatedAt: plan.updatedAt
+            updatedAt: plan.updatedAt,
         };
     }
 
@@ -370,7 +380,7 @@ export class PrismaBillingRepository implements IBillingRepository {
             expirationDate: rate.expirationDate,
             isActive: rate.isActive,
             createdAt: rate.createdAt,
-            updatedAt: rate.updatedAt
+            updatedAt: rate.updatedAt,
         };
     }
 
@@ -393,10 +403,10 @@ export class PrismaBillingRepository implements IBillingRepository {
                 quantity: item.quantity,
                 unitPrice: item.unitPrice,
                 amount: item.amount,
-                type: item.type
+                type: item.type,
             })),
             createdAt: invoice.createdAt,
-            updatedAt: invoice.updatedAt
+            updatedAt: invoice.updatedAt,
         };
     }
 
@@ -410,7 +420,7 @@ export class PrismaBillingRepository implements IBillingRepository {
             autoDisable: settings.autoDisable,
             disableThreshold: settings.disableThreshold,
             createdAt: settings.createdAt,
-            updatedAt: settings.updatedAt
+            updatedAt: settings.updatedAt,
         };
     }
-} 
+}

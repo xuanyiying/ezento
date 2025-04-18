@@ -1,0 +1,189 @@
+.login-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 200px;
+        background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+        transform: skewY(-4deg);
+        transform-origin: 0;
+    }
+
+    .login-container {
+        background: white;
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 420px;
+        margin-top: 24px;
+        transition: all 0.3s ease;
+        position: relative;
+        border: 1px solid rgba(24, 144, 255, 0.1);
+        backdrop-filter: blur(10px);
+
+        &:hover {
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .ant-form {
+            .ant-form-item {
+                margin-bottom: 24px;
+
+                .ant-input-affix-wrapper {
+                    border-radius: 8px;
+                    border: 1px solid #e8e8e8;
+                    transition: all 0.3s ease;
+                    height: 44px;
+
+                    &:hover {
+                        border-color: #40a9ff;
+                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                    }
+
+                    &-focused {
+                        border-color: #1890ff;
+                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+                    }
+
+                    .ant-input {
+                        padding: 8px 11px;
+                        font-size: 15px;
+                    }
+
+                    .anticon {
+                        color: #bfbfbf;
+                        transition: all 0.3s ease;
+                    }
+
+                    &:hover .anticon {
+                        color: #40a9ff;
+                    }
+                }
+
+                .ant-btn {
+                    height: 44px;
+                    border-radius: 8px;
+                    font-weight: 500;
+                    font-size: 16px;
+                    transition: all 0.3s ease;
+
+                    &-primary {
+                        background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+                        border: none;
+
+                        &:hover {
+                            background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+                            transform: translateY(-1px);
+                            box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+                        }
+                    }
+                }
+
+                .ant-checkbox-wrapper {
+                    color: #666;
+
+                    &:hover {
+                        .ant-checkbox-inner {
+                            border-color: #1890ff;
+                        }
+                    }
+                }
+            }
+        }
+
+        .verification-code {
+            display: flex;
+            gap: 12px;
+
+            .ant-input {
+                border-radius: 8px;
+                height: 44px;
+                flex: 1;
+            }
+
+            .ant-btn {
+                min-width: 120px;
+                border-radius: 8px;
+                height: 44px;
+                border: 1px solid #1890ff;
+                color: #1890ff;
+
+                &:disabled {
+                    border-color: #d9d9d9;
+                    color: rgba(0, 0, 0, 0.25);
+                }
+            }
+        }
+
+        .ant-divider {
+            margin: 32px 0;
+            color: #999;
+            font-size: 14px;
+
+            &::before,
+            &::after {
+                border-top-color: #f0f0f0;
+            }
+        }
+
+        .forgot-password {
+            float: right;
+            color: #1890ff;
+            font-size: 14px;
+            transition: all 0.3s ease;
+
+            &:hover {
+                color: #40a9ff;
+                text-decoration: underline;
+            }
+        }
+    }
+
+    .ant-welcome {
+        text-align: center;
+        margin-bottom: 40px;
+        position: relative;
+        z-index: 1;
+
+        .ant-welcome-title {
+            font-size: 32px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 16px;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .ant-welcome-description {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.9);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .anticon {
+            font-size: 56px;
+            color: white;
+            margin-bottom: 24px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.2);
+            padding: 16px;
+            border-radius: 50%;
+            backdrop-filter: blur(4px);
+        }
+    }
+}

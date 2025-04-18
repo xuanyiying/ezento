@@ -3,7 +3,7 @@ import { TemplateService } from '../services/template.service';
 import { ApiError } from '../middlewares/errorHandler';
 
 export class TemplateController {
-    constructor(private templateService: TemplateService) { }
+    constructor(private templateService: TemplateService) {}
 
     // 模板管理
     /**
@@ -259,7 +259,11 @@ export class TemplateController {
     updateSection = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { templateId, sectionId } = req.params;
-            const section = await this.templateService.updateTemplateSection(templateId, sectionId, req.body);
+            const section = await this.templateService.updateTemplateSection(
+                templateId,
+                sectionId,
+                req.body
+            );
             res.json(section);
         } catch (error) {
             next(error);
@@ -551,7 +555,10 @@ export class TemplateController {
     getTemplateVersion = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { templateId, version } = req.params;
-            const templateVersion = await this.templateService.getTemplateVersion(templateId, version);
+            const templateVersion = await this.templateService.getTemplateVersion(
+                templateId,
+                version
+            );
             res.json(templateVersion);
         } catch (error) {
             next(error);
@@ -584,4 +591,4 @@ export class TemplateController {
             next(error);
         }
     };
-} 
+}

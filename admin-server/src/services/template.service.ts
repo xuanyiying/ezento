@@ -4,12 +4,12 @@ import {
     TemplateSection,
     FormElement,
     ValidationRule,
-    TemplateVersion
+    TemplateVersion,
 } from '../domains/template/template.entity';
 import { ApiError } from '../middlewares/errorHandler';
 
 export class TemplateService {
-    constructor(private templateRepository: ITemplateRepository) { }
+    constructor(private templateRepository: ITemplateRepository) {}
 
     // 模板管理
     async getAllTemplates(page = 1, limit = 10): Promise<{ templates: Template[]; total: number }> {
@@ -24,7 +24,11 @@ export class TemplateService {
         return template;
     }
 
-    async getTenantTemplates(tenantId: string, page = 1, limit = 10): Promise<{ templates: Template[]; total: number }> {
+    async getTenantTemplates(
+        tenantId: string,
+        page = 1,
+        limit = 10
+    ): Promise<{ templates: Template[]; total: number }> {
         return this.templateRepository.findTenantTemplates(tenantId, page, limit);
     }
 
@@ -78,7 +82,10 @@ export class TemplateService {
     }
 
     async getTemplateVersion(templateId: string, version: string): Promise<Template> {
-        const templateVersion = await this.templateRepository.findTemplateVersion(templateId, version);
+        const templateVersion = await this.templateRepository.findTemplateVersion(
+            templateId,
+            version
+        );
         if (!templateVersion) {
             throw new ApiError(404, '模板版本不存在');
         }
@@ -95,12 +102,19 @@ export class TemplateService {
         return this.templateRepository.findAllFormElements();
     }
 
-    async addTemplateSection(templateId: string, section: Partial<TemplateSection>): Promise<TemplateSection> {
+    async addTemplateSection(
+        templateId: string,
+        section: Partial<TemplateSection>
+    ): Promise<TemplateSection> {
         await this.getTemplateById(templateId);
         return this.templateRepository.addTemplateSection(templateId, section);
     }
 
-    async updateTemplateSection(templateId: string, sectionId: string, section: Partial<TemplateSection>): Promise<TemplateSection> {
+    async updateTemplateSection(
+        templateId: string,
+        sectionId: string,
+        section: Partial<TemplateSection>
+    ): Promise<TemplateSection> {
         await this.getTemplateById(templateId);
         return this.templateRepository.updateTemplateSection(sectionId, section);
     }
@@ -120,11 +134,13 @@ export class TemplateService {
         return this.templateRepository.findAllValidationRules();
     }
 
-    async validateTemplateData(templateId: string, data: any): Promise<{ isValid: boolean; errors: string[] }> {
+    async validateTemplateData(
+        templateId: string,
+        data: any
+    ): Promise<{ isValid: boolean; errors: string[] }> {
         const template = await this.getTemplateById(templateId);
         return this.templateRepository.validateTemplateData(template, data);
     }
-
 
     private validateRuleData(rule: Partial<ValidationRule>): void {
         if (!rule.type) {
@@ -140,4 +156,4 @@ export class TemplateService {
             throw new ApiError(400, '错误消息不能为空');
         }
     }
-} 
+}

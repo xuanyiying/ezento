@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { Tenant  } from '../models';
+import { Tenant } from '../models';
 import { Resp } from '../utils/response';
 import mongoose from 'mongoose';
-import {ITenant} from "../models/Tenant";
+import { ITenant } from '../models/Tenant';
 
 // Add tenant to request object with proper type definition
 declare global {
@@ -25,7 +25,7 @@ export const tenantContext = (req: Request, res: Response, next: NextFunction) =
     try {
         // Get tenant from subdomain or header
         const tenantCode = getTenantFromRequest(req);
-        
+
         if (!tenantCode) {
             // If no tenant is specified, use the default tenant
             // In a real application, you might want to redirect to a tenant selection page
@@ -44,9 +44,9 @@ export const tenantContext = (req: Request, res: Response, next: NextFunction) =
 
                 // Set tenant in request
                 req.tenant = {
-                    id: (tenant._id as mongoose.Types.ObjectId).toString(),
+                    id: tenant.id,
                     code: tenant.code,
-                    name: tenant.name
+                    name: tenant.name,
                 };
 
                 next();
@@ -69,13 +69,13 @@ function getTenantFromRequest(req: Request): string | null {
     // Option 1: Get tenant from subdomain
     const host = req.get('host') || '';
     const subdomain = host.split('.')[0];
-    
+
     // If subdomain is 'www' or 'localhost', try to get from header
     if (subdomain === 'www' || subdomain === 'localhost') {
         // Option 2: Get tenant from header
         return req.get('x-tenant-code') || null;
     }
-    
+
     return subdomain;
 }
 
@@ -89,4 +89,4 @@ export const requireTenant = (req: Request, res: Response, next: NextFunction) =
         return;
     }
     next();
-}; 
+};

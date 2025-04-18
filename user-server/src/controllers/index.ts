@@ -12,5 +12,5 @@ export {
     AuthController,
     ConversationController,
     ConsultationController,
-    UploadController
+    UploadController,
 };

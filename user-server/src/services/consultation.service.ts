@@ -1,26 +1,14 @@
 import logger from '../config/logger';
-import mongoose from 'mongoose';
-import { Consultation, User } from '../models';
-import { 
-    IConsultation, 
-    CreateConsultationRequest, 
-    UpdateConsultationRequest, 
+import { Consultation } from '../models';
+import { generateConsultationId } from '../utils/idGenerator';
+import {
+    IConsultation,
+    CreateConsultationRequest,
+    UpdateConsultationRequest,
     GetConsultationListRequest,
     ConsultationStatus,
-    IAiSuggestion
+    IAiSuggestion,
 } from '../interfaces/consultation.interface';
-
-// Define interfaces for populated fields
-interface PopulatedUser {
-    _id: mongoose.Types.ObjectId;
-    name: string;
-    gender?: string;
-    birthDate?: Date;
-}
-
-interface PopulatedConsultation extends Omit<IConsultation, 'userId'> {
-    userId: PopulatedUser;
-}
 
 class ConsultationService {
     /**
@@ -28,10 +16,11 @@ class ConsultationService {
      */
     static async createConsultation(data: CreateConsultationRequest): Promise<IConsultation> {
         try {
-            const userId = data.userId
+            const userId = data.userId;
 
             // 创建会诊，如果有AI建议则包含
             const consultation = new Consultation({
+                id: generateConsultationId(),
                 userId: userId,
                 consultationType: data.consultationType,
                 symptoms: data.symptoms,
@@ -46,13 +35,12 @@ class ConsultationService {
                 fee: data.fee,
                 status: ConsultationStatus.PENDING,
                 startTime: new Date(),
+                conversationId: data.conversationId,
             });
 
             await consultation.save();
-            return {
-                ...consultation.toObject(),
-                userId: consultation.userId.toString()
-            } as unknown as  IConsultation;
+            logger.info(`创建会诊成功: ${JSON.stringify(consultation)}`);
+            return consultation;
         } catch (error) {
             logger.error(`创建会诊时出错: ${error}`);
             throw error;
@@ -66,24 +54,24 @@ class ConsultationService {
         try {
             const { userId, consultationType, status, page = 1, limit = 10 } = params;
             const skip = (page - 1) * limit;
-            
+
             // 构建查询条件
             const query: any = {};
             if (userId) query.userId = userId;
             if (consultationType) query.consultationType = consultationType;
             if (status) query.status = status;
-            
+
             // 查询总数
             const total = await Consultation.countDocuments(query);
-            
+
             // 查询列表
             const consultations = await Consultation.find(query)
                 .populate('userId', 'name gender')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
-                .exec() as unknown as PopulatedConsultation[];
-            
+                .exec();
+
             // 格式化返回结果
             const list = consultations.map(consultation => {
                 // Ensure conversationId exists before converting to string
@@ -94,25 +82,24 @@ class ConsultationService {
                     status: consultation.status,
                     startTime: consultation.startTime,
                     endTime: consultation.endTime,
-
                 };
 
                 // Add conversationId only if it exists
                 if (consultation.conversationId) {
                     return {
                         ...listItem,
-                        conversationId: consultation.conversationId
+                        conversationId: consultation.conversationId,
                     };
                 }
-                
+
                 return listItem;
             });
-            
+
             return {
                 total,
                 list,
                 page,
-                limit
+                limit,
             };
         } catch (error) {
             logger.error(`获取会诊列表时出错: ${error}`);
@@ -127,11 +114,11 @@ class ConsultationService {
         try {
             const consultation = await Consultation.findById(id)
                 .populate('userId', 'name gender birthDate')
-                .exec() as unknown as PopulatedConsultation;
-            
+                .exec();
+
             if (!consultation) {
                 return null;
-            }            
+            }
             return {
                 consultationId: consultation._id,
                 userId: consultation.userId,
@@ -154,7 +141,7 @@ class ConsultationService {
                 endTime: consultation.endTime,
                 aiSuggestion: consultation.aiSuggestion,
                 createdAt: consultation.createdAt,
-                updatedAt: consultation.updatedAt
+                updatedAt: consultation.updatedAt,
             };
         } catch (error) {
             logger.error(`获取会诊详情时出错: ${error}`);
@@ -167,30 +154,35 @@ class ConsultationService {
      */
     static async updateConsultation(data: UpdateConsultationRequest): Promise<IConsultation> {
         try {
-            const { consultationId, diagnosis, prescription, notes, status, endTime, aiSuggestion } = data;
-            
+            const {
+                consultationId,
+                diagnosis,
+                prescription,
+                notes,
+                status,
+                endTime,
+                aiSuggestion,
+            } = data;
+
             // 查找会诊
             const consultation = await Consultation.findById(consultationId);
             if (!consultation) {
                 throw new Error('会诊不存在');
             }
-            
+
             // 更新字段
             if (diagnosis !== undefined) consultation.diagnosis = diagnosis;
             if (prescription !== undefined) consultation.prescription = prescription;
             if (notes !== undefined) consultation.notes = notes;
             if (status !== undefined) consultation.status = status;
             if (endTime !== undefined) consultation.endTime = endTime;
-            
+
             // 更新医生建议
             if (aiSuggestion) {
-                consultation.aiSuggestion = aiSuggestion
+                consultation.aiSuggestion = aiSuggestion;
             }
             await consultation.save();
-            return {
-                ...consultation.toObject(),
-                userId: consultation.userId.toString()
-            } as unknown as IConsultation;
+            return consultation;
         } catch (error) {
             logger.error(`更新会诊时出错: ${error}`);
             throw error;
@@ -218,10 +210,7 @@ class ConsultationService {
             }
             consultation.aiSuggestion = aiSuggestion;
             await consultation.save();
-            return {
-                ...consultation.toObject(),
-                userId: consultation.userId.toString()
-            } as unknown as IConsultation;
+            return consultation;
         } catch (error) {
             logger.error(`提交ai建议时出错: ${error}`);
             throw error;
@@ -229,4 +218,4 @@ class ConsultationService {
     }
 }
 
-export default ConsultationService; 
+export default ConsultationService;

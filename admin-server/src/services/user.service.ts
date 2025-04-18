@@ -4,7 +4,7 @@ import { ApiError } from '../middlewares/errorHandler';
 import bcrypt from 'bcrypt';
 
 export class UserService {
-    constructor(private userRepository: IUserRepository) { }
+    constructor(private userRepository: IUserRepository) {}
 
     async findById(id: string): Promise<User | null> {
         return this.userRepository.findById(id);
@@ -27,7 +27,7 @@ export class UserService {
         const hashedPassword = await bcrypt.hash(data.password!, 10);
         return this.userRepository.create({
             ...data,
-            password: hashedPassword
+            password: hashedPassword,
         });
     }
 
@@ -74,4 +74,4 @@ export class UserService {
         const isValid = await bcrypt.compare(password, user.password!);
         return isValid ? user : null;
     }
-} 
+}

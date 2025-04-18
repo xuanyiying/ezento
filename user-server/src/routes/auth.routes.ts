@@ -109,6 +109,42 @@ router.post('/login', AuthController.login);
 
 /**
  * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: 用户登出
+ *     description: 清除用户的会话信息
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 登出成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 200
+ *                 msg:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: 登出成功
+ *       401:
+ *         description: 未授权
+ *       500:
+ *         description: 服务器错误，登出失败
+ */
+router.post('/logout', auth, AuthController.logout);
+
+/**
+ * @swagger
  * /auth/wechat-login:
  *   post:
  *     summary: 微信一键登录
@@ -377,4 +413,4 @@ router.get('/user-info', auth, AuthController.getUserInfo);
  */
 router.post('/register', AuthController.register);
 
-export default router; 
+export default router;

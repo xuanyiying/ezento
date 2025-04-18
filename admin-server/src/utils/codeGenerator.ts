@@ -5,4 +5,4 @@ export function generateRandomCode(length: number = 16): string {
         code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return code;
-} 
+}

@@ -13,7 +13,10 @@ router.use(authMiddleware);
 router.get('/usage', billingController.getAllUsage.bind(billingController));
 router.get('/usage/:tenantId', billingController.getTenantUsage.bind(billingController));
 router.get('/usage/:tenantId/daily', billingController.getTenantDailyUsage.bind(billingController));
-router.get('/usage/:tenantId/models', billingController.getTenantModelUsage.bind(billingController));
+router.get(
+    '/usage/:tenantId/models',
+    billingController.getTenantModelUsage.bind(billingController)
+);
 
 // 套餐与计费
 router.get('/plans', billingController.getAllBillingPlans.bind(billingController));
@@ -31,13 +34,19 @@ router.get('/invoices', billingController.getAllInvoices.bind(billingController)
 router.get('/invoices/:id', billingController.getInvoiceById.bind(billingController));
 router.post('/invoices/generate', billingController.generateInvoice.bind(billingController));
 router.put('/invoices/:id/status', billingController.updateInvoiceStatus.bind(billingController));
-router.get('/tenants/:tenantId/invoices', billingController.getTenantInvoices.bind(billingController));
+router.get(
+    '/tenants/:tenantId/invoices',
+    billingController.getTenantInvoices.bind(billingController)
+);
 
 // 超额计费
 router.get('/overages', billingController.getOverages.bind(billingController));
 router.get('/overages/settings', billingController.getOverageSettings.bind(billingController));
 router.post('/overages/settings', billingController.createOverageSettings.bind(billingController));
-router.put('/overages/settings/:id', billingController.updateOverageSettings.bind(billingController));
+router.put(
+    '/overages/settings/:id',
+    billingController.updateOverageSettings.bind(billingController)
+);
 router.post('/overages/notify', billingController.notifyOverage.bind(billingController));
 
-export default router; 
+export default router;

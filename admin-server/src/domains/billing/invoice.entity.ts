@@ -22,4 +22,4 @@ export interface InvoiceItem {
     unitPrice: number;
     amount: number;
     type: 'SUBSCRIPTION' | 'OVERAGE' | 'ONE_TIME' | 'DISCOUNT';
-} 
+}

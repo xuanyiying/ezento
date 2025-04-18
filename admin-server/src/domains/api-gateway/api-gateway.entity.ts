@@ -1,4 +1,4 @@
-import { ApiRouteMethod } from "@prisma/client";
+import { ApiRouteMethod } from '@prisma/client';
 
 export interface ApiGateway {
     id: string;
@@ -93,4 +93,4 @@ export interface ApiLog {
     error?: string;
     metadata?: any;
     createdAt: Date;
-} 
+}

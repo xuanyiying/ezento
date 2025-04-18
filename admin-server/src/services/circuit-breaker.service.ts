@@ -1,9 +1,13 @@
 import { ICircuitBreakerRepository } from '../repositories/circuit-breaker.repository';
-import { CircuitBreaker, CircuitBreakerRule, CircuitBreakerEvent } from '../domains/circuit-breaker/circuit-breaker.entity';
+import {
+    CircuitBreaker,
+    CircuitBreakerRule,
+    CircuitBreakerEvent,
+} from '../domains/circuit-breaker/circuit-breaker.entity';
 import { ApiError } from '../middlewares/errorHandler';
 
 export class CircuitBreakerService {
-    constructor(private circuitBreakerRepository: ICircuitBreakerRepository) { }
+    constructor(private circuitBreakerRepository: ICircuitBreakerRepository) {}
 
     // 熔断器管理
     async getCircuitBreakerById(id: string): Promise<CircuitBreaker> {
@@ -14,7 +18,11 @@ export class CircuitBreakerService {
         return breaker;
     }
 
-    async getCircuitBreakersByTenant(tenantId: string, page = 1, limit = 10): Promise<{ breakers: CircuitBreaker[]; total: number }> {
+    async getCircuitBreakersByTenant(
+        tenantId: string,
+        page = 1,
+        limit = 10
+    ): Promise<{ breakers: CircuitBreaker[]; total: number }> {
         return this.circuitBreakerRepository.findCircuitBreakersByTenant(tenantId, page, limit);
     }
 
@@ -23,7 +31,10 @@ export class CircuitBreakerService {
         return this.circuitBreakerRepository.createCircuitBreaker(breaker);
     }
 
-    async updateCircuitBreaker(id: string, breaker: Partial<CircuitBreaker>): Promise<CircuitBreaker> {
+    async updateCircuitBreaker(
+        id: string,
+        breaker: Partial<CircuitBreaker>
+    ): Promise<CircuitBreaker> {
         await this.getCircuitBreakerById(id);
         return this.circuitBreakerRepository.updateCircuitBreaker(id, breaker);
     }
@@ -33,7 +44,10 @@ export class CircuitBreakerService {
         return this.circuitBreakerRepository.deleteCircuitBreaker(id);
     }
 
-    async updateCircuitBreakerStatus(id: string, status: CircuitBreaker['status']): Promise<CircuitBreaker> {
+    async updateCircuitBreakerStatus(
+        id: string,
+        status: CircuitBreaker['status']
+    ): Promise<CircuitBreaker> {
         await this.getCircuitBreakerById(id);
         return this.circuitBreakerRepository.updateCircuitBreakerStatus(id, status);
     }
@@ -50,7 +64,10 @@ export class CircuitBreakerService {
         return this.circuitBreakerRepository.createCircuitBreakerRule(rule);
     }
 
-    async updateCircuitBreakerRule(id: string, rule: Partial<CircuitBreakerRule>): Promise<CircuitBreakerRule> {
+    async updateCircuitBreakerRule(
+        id: string,
+        rule: Partial<CircuitBreakerRule>
+    ): Promise<CircuitBreakerRule> {
         const existingRule = await this.getCircuitBreakerRuleById(id);
         await this.getCircuitBreakerById(existingRule.circuitBreakerId);
         return this.circuitBreakerRepository.updateCircuitBreakerRule(id, rule);
@@ -69,12 +86,18 @@ export class CircuitBreakerService {
     }
 
     // 熔断事件管理
-    async getCircuitBreakerEvents(breakerId: string, page = 1, limit = 10): Promise<{ events: CircuitBreakerEvent[]; total: number }> {
+    async getCircuitBreakerEvents(
+        breakerId: string,
+        page = 1,
+        limit = 10
+    ): Promise<{ events: CircuitBreakerEvent[]; total: number }> {
         await this.getCircuitBreakerById(breakerId);
         return this.circuitBreakerRepository.findCircuitBreakerEvents(breakerId, page, limit);
     }
 
-    async createCircuitBreakerEvent(event: Partial<CircuitBreakerEvent>): Promise<CircuitBreakerEvent> {
+    async createCircuitBreakerEvent(
+        event: Partial<CircuitBreakerEvent>
+    ): Promise<CircuitBreakerEvent> {
         await this.getCircuitBreakerById(event.circuitBreakerId!);
         this.validateCircuitBreakerEvent(event);
         return this.circuitBreakerRepository.createCircuitBreakerEvent(event);
@@ -143,4 +166,4 @@ export class CircuitBreakerService {
             throw new ApiError(400, '原因不能为空');
         }
     }
-} 
+}

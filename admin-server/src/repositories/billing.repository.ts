@@ -17,23 +17,26 @@ export interface IBillingRepository {
     createBillingPlan(plan: Partial<BillingPlan>): Promise<BillingPlan>;
     updateBillingPlan(id: string, plan: Partial<BillingPlan>): Promise<BillingPlan>;
     deleteBillingPlan(id: string): Promise<void>;
-    
+
     // 资源单价
     findAllRates(): Promise<Rate[]>;
     findRateById(id: string): Promise<Rate | null>;
     createRate(rate: Partial<Rate>): Promise<Rate>;
     updateRate(id: string, rate: Partial<Rate>): Promise<Rate>;
-    
+
     // 账单管理
     findAllInvoices(): Promise<{ invoices: Invoice[]; total: number }>;
     findInvoiceById(id: string): Promise<Invoice | null>;
     findInvoicesByTenant(tenantId: string): Promise<Invoice[]>;
     createInvoice(invoice: Partial<Invoice>): Promise<Invoice>;
-    updateInvoiceStatus(id: string, status: 'DRAFT' | 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED'): Promise<Invoice>;
-    
+    updateInvoiceStatus(
+        id: string,
+        status: 'DRAFT' | 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED'
+    ): Promise<Invoice>;
+
     // 超额计费
     findOverages(tenantId?: string): Promise<Usage[]>;
     findOverageSettings(tenantId?: string): Promise<OverageSettings | null>;
     createOverageSettings(settings: Partial<OverageSettings>): Promise<OverageSettings>;
     updateOverageSettings(id: string, settings: Partial<OverageSettings>): Promise<OverageSettings>;
-} 
+}

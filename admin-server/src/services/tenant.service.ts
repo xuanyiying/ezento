@@ -4,7 +4,7 @@ import { TenantPlan } from '../domains/tenant-plan/tenant-plan.entity';
 import { ApiError } from '../middlewares/errorHandler';
 
 export class TenantService {
-    constructor(private tenantRepository: ITenantRepository) { }
+    constructor(private tenantRepository: ITenantRepository) {}
 
     async findById(id: string): Promise<Tenant | null> {
         return this.tenantRepository.findById(id);
@@ -43,7 +43,7 @@ export class TenantService {
             plan: data.plan || 'FREE',
             settings: data.settings || {},
             theme: data.theme || {},
-            apiCallLimits: data.apiCallLimits || { daily: 1000, monthly: 30000 }
+            apiCallLimits: data.apiCallLimits || { daily: 1000, monthly: 30000 },
         });
     }
 
@@ -131,7 +131,7 @@ export class TenantService {
             userCount,
             status: tenant.status,
             plan: tenant.plan,
-            createdAt: tenant.createdAt
+            createdAt: tenant.createdAt,
         };
     }
-} 
+}

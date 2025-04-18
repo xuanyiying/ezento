@@ -23,33 +23,30 @@ export const logger = winston.createLogger({
     transports: [
         // Console logger
         new winston.transports.Console({
-            format: winston.format.combine(
-                winston.format.colorize(),
-                logFormat
-            )
+            format: winston.format.combine(winston.format.colorize(), logFormat),
         }),
         // Error log file
-        new winston.transports.File({ 
-            filename: path.join(logDir, 'error.log'), 
-            level: 'error' 
+        new winston.transports.File({
+            filename: path.join(logDir, 'error.log'),
+            level: 'error',
         }),
         // Combined log file
-        new winston.transports.File({ 
-            filename: path.join(logDir, 'combined.log') 
-        })
-    ]
+        new winston.transports.File({
+            filename: path.join(logDir, 'combined.log'),
+        }),
+    ],
 });
 
 // Log uncaught exceptions
 winston.exceptions.handle(
-    new winston.transports.File({ 
-        filename: path.join(logDir, 'exceptions.log')
+    new winston.transports.File({
+        filename: path.join(logDir, 'exceptions.log'),
     })
 );
 
 // Log unhandled promise rejections
-process.on('unhandledRejection', (ex) => {
+process.on('unhandledRejection', ex => {
     throw ex;
 });
 
-export default logger; 
+export default logger;

@@ -24,4 +24,4 @@ export interface ModelUsage {
     requestCount: number;
     tokenCount: number;
     costAmount: number;
-} 
+}

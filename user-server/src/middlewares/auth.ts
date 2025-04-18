@@ -63,7 +63,7 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
             phone: user?.phone,
             gender: user?.gender,
             birthDate: user?.birthDate?.toDateString(),
-            ...(decoded.tenantId ? { tenantId: decoded.tenantId } : {})
+            ...(decoded.tenantId ? { tenantId: decoded.tenantId } : {}),
         };
 
         next();
@@ -83,7 +83,7 @@ export const patientAuth = (req: Request, res: Response, next: NextFunction) => 
 
     // Case insensitive role check
     const role = req.user.role?.toUpperCase();
-    if ( !role || role === 'PATIENT' ) {
+    if (!role || role === 'PATIENT') {
         next();
     } else {
         res.status(403).json(Resp.fail('Access denied: Patient only', 403));

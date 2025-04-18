@@ -10,39 +10,35 @@ const options: swaggerJsdoc.Options = {
             description: 'API documentation for Ezento Admin system',
             contact: {
                 name: 'API Support',
-                email: 'support@ezento.com'
-            }
+                email: 'support@ezento.com',
+            },
         },
         servers: [
             {
                 url: '/api/v1',
-                description: 'API Server'
-            }
+                description: 'API Server',
+            },
         ],
         components: {
             securitySchemes: {
                 bearerAuth: {
                     type: 'http',
                     scheme: 'bearer',
-                    bearerFormat: 'JWT'
-                }
-            }
+                    bearerFormat: 'JWT',
+                },
+            },
         },
         security: [
             {
-                bearerAuth: []
-            }
-        ]
+                bearerAuth: [],
+            },
+        ],
     },
     // 指定API路由所在的文件路径
-    apis: [
-        './src/routes/*.ts',
-        './src/controllers/*.ts',
-        './src/domains/**/*.entity.ts'
-    ]
+    apis: ['./src/routes/*.ts', './src/controllers/*.ts', './src/domains/**/*.entity.ts'],
 };
 
 // 生成Swagger规格
 const swaggerSpec = swaggerJsdoc(options);
 
-export default swaggerSpec; 
+export default swaggerSpec;

@@ -20,4 +20,4 @@ export interface BillingPlan {
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
-} 
+}

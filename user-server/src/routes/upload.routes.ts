@@ -109,4 +109,4 @@ router.post('/report', auth, UploadController.uploadAndProcessReport);
  */
 router.delete('/file', auth, UploadController.deleteFile);
 
-export default router; 
+export default router;

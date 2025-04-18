@@ -3,7 +3,11 @@ import { ApiGateway, ApiRoute, ApiKey, ApiLog } from '../domains/api-gateway/api
 export interface IApiGatewayRepository {
     // API网关管理
     findGatewayById(id: string): Promise<ApiGateway | null>;
-    findGatewaysByTenant(tenantId: string, page: number, limit: number): Promise<{ gateways: ApiGateway[]; total: number }>;
+    findGatewaysByTenant(
+        tenantId: string,
+        page: number,
+        limit: number
+    ): Promise<{ gateways: ApiGateway[]; total: number }>;
     createGateway(gateway: Partial<ApiGateway>): Promise<ApiGateway>;
     updateGateway(id: string, gateway: Partial<ApiGateway>): Promise<ApiGateway>;
     deleteGateway(id: string): Promise<void>;
@@ -26,8 +30,16 @@ export interface IApiGatewayRepository {
     findApiKeyByKey(key: string): Promise<ApiKey | null>;
 
     // API日志管理
-    findLogsByGateway(gatewayId: string, page: number, limit: number): Promise<{ logs: ApiLog[]; total: number }>;
-    findLogsByRoute(routeId: string, page: number, limit: number): Promise<{ logs: ApiLog[]; total: number }>;
+    findLogsByGateway(
+        gatewayId: string,
+        page: number,
+        limit: number
+    ): Promise<{ logs: ApiLog[]; total: number }>;
+    findLogsByRoute(
+        routeId: string,
+        page: number,
+        limit: number
+    ): Promise<{ logs: ApiLog[]; total: number }>;
     createLog(log: Partial<ApiLog>): Promise<ApiLog>;
     findLogById(id: string): Promise<ApiLog | null>;
-} 
+}

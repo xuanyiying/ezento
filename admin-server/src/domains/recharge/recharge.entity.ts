@@ -37,4 +37,4 @@ export interface RechargeCardBatch {
     metadata: Record<string, any>;
     createdAt: Date;
     updatedAt: Date;
-} 
+}

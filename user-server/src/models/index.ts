@@ -7,13 +7,4 @@ import Patient from './Patient';
 import Department from './Department';
 import Tenant, { ITenant } from './Tenant';
 
-export {
-    User,
-    Consultation,
-    Message,
-    Conversation,
-    Doctor,
-    Patient,
-    Department,
-    Tenant
-};
+export { User, Consultation, Message, Conversation, Doctor, Patient, Department, Tenant };

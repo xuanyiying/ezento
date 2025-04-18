@@ -1,7 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 
 export class ApiError extends Error {
-    constructor(public statusCode: number, message: string) {
+    constructor(
+        public statusCode: number,
+        message: string
+    ) {
         super(message);
         this.name = 'ApiError';
     }
@@ -16,7 +19,7 @@ export const errorHandler = (
     if (err instanceof ApiError) {
         return res.status(err.statusCode).json({
             status: 'error',
-            message: err.message
+            message: err.message,
         });
     }
 
@@ -24,6 +27,6 @@ export const errorHandler = (
     console.error('Error:', err);
     return res.status(500).json({
         status: 'error',
-        message: '服务器内部错误'
+        message: '服务器内部错误',
     });
-}; 
+};

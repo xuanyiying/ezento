@@ -1,180 +1,141 @@
-import React from 'react';
-import { Layout, Typography, Avatar, Button, Card, Row, Col } from 'antd';
-import { 
-  UserOutlined, 
-  SettingOutlined, 
-  FileTextOutlined, 
-  LockOutlined,
-  InfoCircleOutlined,
-  MedicineBoxOutlined,
-  FileOutlined,
-  ScanOutlined,
-  CustomerServiceOutlined,
-  LeftOutlined
-} from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
-import Header from '@/components/Header';
-import './ProfilePage.less';
-import { clearUser } from '@/store';
+import React, { useState } from 'react';
+import { XProvider, ThoughtChain } from '@ant-design/x';
+import { Form, Input, Select, Button, Avatar, Typography, DatePicker, App } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
+import type { Moment } from 'moment';
 
-const { Content } = Layout;
-const { Text, Title } = Typography;
-
+// 类型定义
 interface UserProfile {
-  id: string;
-  name: string;
-  motto: string;
-  avatar?: string;
+    name: string;
+    gender: 'MALE' | 'FEMALE' | '';
+    birthDate?: Moment;
+    phone: string;
+    email?: string;
+    address?: string;
 }
 
 const ProfilePage: React.FC = () => {
-  const navigate = useNavigate();
-  const [profile, setProfile] = React.useState<UserProfile>({
-    id: '10013428823',
-    name: '赵泽川',
-    motto: '让健康生活安诊无忧'
-  });
-  
-  const commonServices = [
-    { 
-      icon: <MedicineBoxOutlined />, 
-      title: '挂号记录',
-      path: '/appointments',
-      color: '#5c7cfa'
-    },
-    { 
-      icon: <FileOutlined />, 
-      title: '就诊记录',
-      path: '/medical-records',
-      color: '#22b8cf'
-    },
-    { 
-      icon: <ScanOutlined />, 
-      title: '扫一扫',
-      path: '/scan',
-      color: '#20c997'
-    },
-    { 
-      icon: <CustomerServiceOutlined />, 
-      title: '客服咨询',
-      path: '/customer-service',
-      color: '#2196f3'
-    }
-  ];
-  
-  const tools = [
-    { 
-      icon: <SettingOutlined />, 
-      title: '设置',
-      path: '/settings',
-      color: '#1890ff'
-    },
-    { 
-      icon: <FileTextOutlined />, 
-      title: '用户协议',
-      path: '/user-agreement',
-      color: '#52c41a'
-    },
-    { 
-      icon: <LockOutlined />, 
-      title: '隐私政策',
-      path: '/privacy-policy',
-      color: '#722ed1'
-    },
-    { 
-      icon: <InfoCircleOutlined />, 
-      title: '关于',
-      path: '/about',
-      color: '#fa8c16'
-    }
-  ];
-  
-  const handleLogout = () => {
-    console.log('退出登录');
-    clearUser();
-    navigate('/login');
-  };
-  
-  return (
-    <Layout className="profile-page">
-      <Header />
-      
-      <div className="page-header">
-        <LeftOutlined className="back-icon" onClick={() => navigate(-1)} />
-        <Text strong className="header-title">我的</Text>
-      </div>
-      
-      <Content className="profile-content">
-        <div className="profile-header">
-          <Avatar 
-            size={70}
-            icon={<UserOutlined />}
-            src={profile.avatar}
-            className="profile-avatar"
-          />
-          <div className="profile-info">
-            <Title level={4}>Hi, *{profile.name.slice(1)}</Title>
-            <Text type="secondary">{profile.motto}</Text>
-          </div>
-        </div>
-        
-        <Card className="id-card">
-          <div className="id-card-content">
-            <div>
-              <div className="id-card-name">
-                <span className="id-icon">🆔</span>
-                <Text className="name">{profile.name}</Text>
-              </div>
-              <Text className="id-number">ID {profile.id}</Text>
+    const [form] = Form.useForm();
+    const [loading, setLoading] = useState<boolean>(false);
+    const { message } = App.useApp();
+
+    // 模拟初始数据
+    const initialValues: UserProfile = {
+        name: '张三',
+        gender: 'MALE',
+        phone: '13800138000',
+        email: 'zhangsan@example.com',
+    };
+
+    const handleSubmit = (values: UserProfile) => {
+        setLoading(true);
+
+        // 模拟API请求
+        setTimeout(() => {
+            console.log('提交的数据:', values);
+            message.success('个人信息更新成功');
+            setLoading(false);
+        }, 1000);
+    };
+
+    return (
+        <XProvider>
+            <div className="profile-container">
+                <Typography.Title level={3}>个人资料</Typography.Title>
+
+                <div className="profile-header">
+                    <Avatar size={80} icon={<UserOutlined />} />
+                    <Button>更换头像</Button>
+                </div>
+
+                <Form
+                    form={form}
+                    layout="vertical"
+                    initialValues={initialValues}
+                    onFinish={handleSubmit}
+                >
+                    <ThoughtChain
+                        items={[
+                            {
+                                key: 'basic',
+                                title: '基本信息',
+                                content: (
+                                    <>
+                                        <Form.Item
+                                            name="name"
+                                            label="姓名"
+                                            rules={[{ required: true, message: '请输入姓名' }]}
+                                        >
+                                            <Input placeholder="请输入姓名" />
+                                        </Form.Item>
+
+                                        <Form.Item
+                                            name="gender"
+                                            label="性别"
+                                            rules={[{ required: true, message: '请选择性别' }]}
+                                        >
+                                            <Select placeholder="请选择性别">
+                                                <Select.Option value="MALE">男</Select.Option>
+                                                <Select.Option value="FEMALE">女</Select.Option>
+                                            </Select>
+                                        </Form.Item>
+
+                                        <Form.Item name="birthDate" label="出生日期">
+                                            <DatePicker
+                                                placeholder="请选择出生日期"
+                                                style={{ width: '100%' }}
+                                            />
+                                        </Form.Item>
+                                    </>
+                                ),
+                            },
+                            {
+                                key: 'contact',
+                                title: '联系方式',
+                                content: (
+                                    <>
+                                        <Form.Item
+                                            name="phone"
+                                            label="手机号码"
+                                            rules={[
+                                                { required: true, message: '请输入手机号码' },
+                                                {
+                                                    pattern: /^1\d{10}$/,
+                                                    message: '请输入有效的手机号码',
+                                                },
+                                            ]}
+                                        >
+                                            <Input placeholder="请输入手机号码" />
+                                        </Form.Item>
+
+                                        <Form.Item
+                                            name="email"
+                                            label="电子邮箱"
+                                            rules={[
+                                                { type: 'email', message: '请输入有效的邮箱地址' },
+                                            ]}
+                                        >
+                                            <Input placeholder="请输入电子邮箱" />
+                                        </Form.Item>
+
+                                        <Form.Item name="address" label="居住地址">
+                                            <Input.TextArea rows={3} placeholder="请输入居住地址" />
+                                        </Form.Item>
+                                    </>
+                                ),
+                            },
+                        ]}
+                    />
+
+                    <Form.Item>
+                        <Button type="primary" htmlType="submit" loading={loading}>
+                            保存修改
+                        </Button>
+                    </Form.Item>
+                </Form>
             </div>
-            <Button className="change-patient-btn">更换就诊人</Button>
-          </div>
-        </Card>
-        
-        <Card title="常用服务" className="services-card">
-          <Row gutter={[24, 24]}>
-            {commonServices.map((service, index) => (
-              <Col span={6} key={index}>
-                <div 
-                  className="service-item"
-                  onClick={() => navigate(service.path)}
-                >
-                  <div 
-                    className="service-icon"
-                    style={{ backgroundColor: `${service.color}20`, color: service.color }}
-                  >
-                    {service.icon}
-                  </div>
-                  <Text>{service.title}</Text>
-                </div>
-              </Col>
-            ))}
-          </Row>
-        </Card>
-        
-        <Card title="我的工具" className="tools-card">
-          <Row gutter={[24, 24]}>
-            {tools.map((tool, index) => (
-              <Col span={6} key={index}>
-                <div 
-                  className="service-item"
-                  onClick={() => navigate(tool.path)}
-                >
-                  <div 
-                    className="service-icon"
-                    style={{ backgroundColor: `${tool.color}20`, color: tool.color }}
-                  >
-                    {tool.icon}
-                  </div>
-                  <Text>{tool.title}</Text>
-                </div>
-              </Col>
-            ))}
-          </Row>
-        </Card>
-      </Content>
-    </Layout>
-  );
+        </XProvider>
+    );
 };
 
 export default ProfilePage;

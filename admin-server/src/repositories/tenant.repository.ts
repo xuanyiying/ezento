@@ -13,4 +13,4 @@ export interface ITenantRepository {
     changePlan(id: string, plan: string): Promise<Tenant>;
     getUserCount(id: string): Promise<number>;
     getTenantPlans(): Promise<TenantPlan[]>;
-} 
+}

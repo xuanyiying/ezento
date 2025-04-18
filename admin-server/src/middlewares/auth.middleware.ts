@@ -19,11 +19,7 @@ declare global {
         }
     }
 }
-export const authMiddleware = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     try {
         // 获取认证头
         const authHeader = req.headers.authorization;
@@ -64,4 +60,4 @@ export const authMiddleware = async (
             next(error);
         }
     }
-}; 
+};

@@ -1,238 +1,238 @@
 .guide-page {
-  background-color: #f5f9ff;
-  min-height: 100vh;
-  max-width: 390px;
-  margin: 0 auto;
-  position: relative;
+    background-color: #f5f9ff;
+    min-height: 100vh;
+    max-width: 390px;
+    margin: 0 auto;
+    position: relative;
 }
 
 .guide-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 56px;
-  background-color: #fff;
-  border-bottom: 1px solid #e8e8e8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 56px;
+    background-color: #fff;
+    border-bottom: 1px solid #e8e8e8;
 }
 
 .guide-header h1 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 500;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
 }
 
 .guide-content {
-  padding: 16px;
-  padding-bottom: 70px;
+    padding: 16px;
+    padding-bottom: 70px;
 }
 
 .placeholder-content {
-  text-align: center;
-  padding: 32px;
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  width: 100%;
-  max-width: 500px;
+    text-align: center;
+    padding: 32px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    max-width: 500px;
 }
 
 .placeholder-content h2 {
-  margin-top: 0;
-  color: #1677ff;
-  font-size: 22px;
-  margin-bottom: 12px;
+    margin-top: 0;
+    color: #1677ff;
+    font-size: 22px;
+    margin-bottom: 12px;
 }
 
 .placeholder-content p {
-  color: #666;
-  font-size: 16px;
-  margin-bottom: 0;
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 0;
 }
 
 .timestamp {
-  text-align: center;
-  color: #999;
-  font-size: 14px;
-  padding: 10px;
-  margin: 16px 0;
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+    padding: 10px;
+    margin: 16px 0;
 }
 
 .identity-card {
-  margin-bottom: 20px;
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  
-  .card-title {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-    
-    .icon {
-      color: #4285f4;
-      margin-right: 10px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    .card-title {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+
+        .icon {
+            color: #4285f4;
+            margin-right: 10px;
+        }
     }
-  }
-  
-  .card-content {
-    padding: 8px 0;
-    
-    .info-row {
-      display: flex;
-      margin-bottom: 10px;
-      
-      .label {
-        width: 80px;
-        flex-shrink: 0;
-      }
+
+    .card-content {
+        padding: 8px 0;
+
+        .info-row {
+            display: flex;
+            margin-bottom: 10px;
+
+            .label {
+                width: 80px;
+                flex-shrink: 0;
+            }
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+
+            .btn-outline {
+                border: 1px solid #4285f4;
+                color: #4285f4;
+                border-radius: 20px;
+                padding: 8px 20px;
+                font-size: 14px;
+            }
+
+            .btn-primary {
+                background-color: #4285f4;
+                border-radius: 20px;
+                padding: 8px 20px;
+                font-size: 14px;
+            }
+        }
     }
-    
-    .action-buttons {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 15px;
-      
-      .btn-outline {
-        border: 1px solid #4285f4;
-        color: #4285f4;
-        border-radius: 20px;
-        padding: 8px 20px;
-        font-size: 14px;
-      }
-      
-      .btn-primary {
-        background-color: #4285f4;
-        border-radius: 20px;
-        padding: 8px 20px;
-        font-size: 14px;
-      }
+
+    .privacy-notice {
+        display: flex;
+        align-items: center;
+        background-color: #fff9e6;
+        padding: 8px 15px;
+        border-radius: 5px;
+        color: #e6a23c;
+        font-size: 12px;
+        margin: 10px 0;
+
+        .icon {
+            margin-right: 8px;
+        }
     }
-  }
-  
-  .privacy-notice {
-    display: flex;
-    align-items: center;
-    background-color: #fff9e6;
-    padding: 8px 15px;
-    border-radius: 5px;
-    color: #e6a23c;
-    font-size: 12px;
-    margin: 10px 0;
-    
-    .icon {
-      margin-right: 8px;
-    }
-  }
 }
 
 .message-container {
-  margin: 10px 0;
-  
-  .message {
-    display: flex;
-    align-items: flex-start;
-    margin-bottom: 20px;
-    
-    &.left {
-      justify-content: flex-start;
-      
-      .message-content {
-        margin-left: 10px;
-        margin-right: 48px;
-        background-color: white;
-        border: 1px solid #e0e0e0;
-        color: #333;
-        max-width: 70%;
-      }
-    }
-    
-    &.right {
-      justify-content: flex-end;
-      
-      .message-content {
-        margin-right: 10px;
-        margin-left: 48px;
-        background-color: #4285f4;
-        color: white;
-        max-width: 70%;
-      }
-    }
-    
-    .avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      overflow: hidden;
-    }
-    
-    .message-content {
-      padding: 10px 15px;
-      border-radius: 10px;
-      word-break: break-word;
-      line-height: 1.6;
-      
-      .blue-link {
-        color: #4285f4;
-        cursor: pointer;
-        text-decoration: none;
-        
-        &:hover {
-          text-decoration: underline;
+    margin: 10px 0;
+
+    .message {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 20px;
+
+        &.left {
+            justify-content: flex-start;
+
+            .message-content {
+                margin-left: 10px;
+                margin-right: 48px;
+                background-color: white;
+                border: 1px solid #e0e0e0;
+                color: #333;
+                max-width: 70%;
+            }
         }
-      }
+
+        &.right {
+            justify-content: flex-end;
+
+            .message-content {
+                margin-right: 10px;
+                margin-left: 48px;
+                background-color: #4285f4;
+                color: white;
+                max-width: 70%;
+            }
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+
+        .message-content {
+            padding: 10px 15px;
+            border-radius: 10px;
+            word-break: break-word;
+            line-height: 1.6;
+
+            .blue-link {
+                color: #4285f4;
+                cursor: pointer;
+                text-decoration: none;
+
+                &:hover {
+                    text-decoration: underline;
+                }
+            }
+        }
     }
-  }
 }
 
 .doctors-container {
-  padding: 0 15px;
+    padding: 0 15px;
 }
 
 .doctor-card {
-  background-color: white;
-  border-radius: 10px;
-  padding: 15px;
-  margin: 10px 0;
-  
-  .doctor-info {
-    display: flex;
-    
-    .doctor-avatar {
-      width: 60px;
-      height: 60px;
-      margin-right: 15px;
-    }
-    
-    .doctor-details {
-      flex: 1;
-      
-      .doctor-name {
-        font-weight: bold;
-        font-size: 16px;
-      }
-      
-      .doctor-title {
-        color: #666;
-        margin: 5px 0;
-      }
-      
-      .doctor-hospital {
-        color: #999;
-        font-size: 14px;
-      }
-      
-      .schedule {
-        margin-top: 10px;
+    background-color: white;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 10px 0;
+
+    .doctor-info {
         display: flex;
-        
-        .label {
-          margin-right: 15px;
+
+        .doctor-avatar {
+            width: 60px;
+            height: 60px;
+            margin-right: 15px;
         }
-        
-        .date {
-          margin-right: 10px;
-          color: #4285f4;
+
+        .doctor-details {
+            flex: 1;
+
+            .doctor-name {
+                font-weight: bold;
+                font-size: 16px;
+            }
+
+            .doctor-title {
+                color: #666;
+                margin: 5px 0;
+            }
+
+            .doctor-hospital {
+                color: #999;
+                font-size: 14px;
+            }
+
+            .schedule {
+                margin-top: 10px;
+                display: flex;
+
+                .label {
+                    margin-right: 15px;
+                }
+
+                .date {
+                    margin-right: 10px;
+                    color: #4285f4;
+                }
+            }
         }
-      }
     }
-  }
-} 
+}

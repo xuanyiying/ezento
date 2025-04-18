@@ -2,9 +2,9 @@ import { Document } from 'mongoose';
 
 // 定义预诊断文档接口
 export interface PreDiagnosisDocument extends Document {
-    _id: string; // 预诊断ID
+    id: string; // 预诊断ID
     patientId: string; // 患者ID
-    symptoms: string; // 症状
+    symptoms?: string; // 症状
     bodyParts?: string[]; // 身体部位
     duration?: string; // 持续时间
     existingConditions?: string[]; // 现有条件
@@ -56,5 +56,4 @@ export interface PrediagnosisData {
         suggestedDepartments: string[]; // 推荐科室
         createTime: Date; // 创建时间
     };
-
 }

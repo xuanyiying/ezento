@@ -8,7 +8,11 @@ const circuitBreakerController = new CircuitBreakerController(DIContainer.circui
 
 // 熔断器管理路由
 router.get('/:id', authMiddleware, circuitBreakerController.getCircuitBreakerById);
-router.get('/tenant/:tenantId', authMiddleware, circuitBreakerController.getCircuitBreakersByTenant);
+router.get(
+    '/tenant/:tenantId',
+    authMiddleware,
+    circuitBreakerController.getCircuitBreakersByTenant
+);
 router.post('/', authMiddleware, circuitBreakerController.createCircuitBreaker);
 router.put('/:id', authMiddleware, circuitBreakerController.updateCircuitBreaker);
 router.delete('/:id', authMiddleware, circuitBreakerController.deleteCircuitBreaker);
@@ -25,4 +29,4 @@ router.patch('/rules/:id/priority', authMiddleware, circuitBreakerController.upd
 router.get('/:breakerId/events', authMiddleware, circuitBreakerController.getCircuitBreakerEvents);
 router.post('/events', authMiddleware, circuitBreakerController.createCircuitBreakerEvent);
 
-export const circuitBreakerRoutes = router; 
+export const circuitBreakerRoutes = router;

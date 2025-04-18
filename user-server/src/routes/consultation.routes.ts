@@ -148,4 +148,4 @@ router.get('/:id', auth, ConsultationController.getConsultationDetails);
  */
 router.put('/:id', auth, ConsultationController.updateConsultation);
 
-export default router; 
+export default router;

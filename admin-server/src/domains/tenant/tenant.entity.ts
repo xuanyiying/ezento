@@ -104,8 +104,6 @@ export class TenantEntity {
     private domains: string[];
     private settings: Record<string, any>;
 
-
-
     constructor(
         name: string,
         planId: string,
@@ -217,4 +215,4 @@ export class TenantEntity {
             throw new Error('至少需要一个域名');
         }
     }
-} 
+}

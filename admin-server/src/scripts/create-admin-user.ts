@@ -12,8 +12,8 @@ async function createAdminUser() {
         // 检查用户是否已存在
         const existingUser = await prisma.user.findUnique({
             where: {
-                email: 'admin@ezento.com'
-            }
+                email: 'admin@ezento.com',
+            },
         });
 
         if (existingUser) {
@@ -28,23 +28,23 @@ async function createAdminUser() {
                 code: 'admin',
                 status: 'ACTIVE',
                 plan: 'ENTERPRISE',
-                settings: {}
-            }
+                settings: {},
+            },
         });
 
         console.log('创建系统管理员租户成功:', adminTenant.id);
 
         // 创建管理员用户
         const hashedPassword = await bcrypt.hash('admin123', 10);
-        
+
         const adminUser = await prisma.user.create({
             data: {
                 email: 'admin@ezento.com',
                 name: '系统管理员',
                 password: hashedPassword,
                 role: 'ADMIN',
-                tenantId: adminTenant.id
-            }
+                tenantId: adminTenant.id,
+            },
         });
 
         console.log('创建管理员用户成功:', adminUser.id);
@@ -59,4 +59,4 @@ async function createAdminUser() {
 }
 
 // 执行脚本
-createAdminUser(); 
+createAdminUser();

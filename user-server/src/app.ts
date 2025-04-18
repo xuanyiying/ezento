@@ -1,4 +1,4 @@
-import express, { Express } from 'express';
+import express from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -43,24 +43,24 @@ class App {
         // 解析URL编码的请求体
         this.app.use(express.urlencoded({ extended: true }));
         // 跨域资源共享设置
-        this.app.use(cors(
-            {
+        this.app.use(
+            cors({
                 origin: '*',
                 methods: ['GET', 'POST', 'PUT', 'DELETE'],
                 allowedHeaders: ['Content-Type', 'Authorization'],
                 credentials: true,
-            }
-        ));
+            })
+        );
         // 安全HTTP头
         this.app.use(helmet());
         // 压缩响应
-        this.app.use(compression(
-            {
+        this.app.use(
+            compression({
                 threshold: 10240, // 只压缩大于10KB的响应
-                level: 6,         // 压缩级别6（0-9，9为最高压缩率）
-                memLevel: 9,      // 内存使用级别9（1-9，9为最高内存使用）
-            }
-        ));
+                level: 6, // 压缩级别6（0-9，9为最高压缩率）
+                memLevel: 9, // 内存使用级别9（1-9，9为最高内存使用）
+            })
+        );
         // API文档路由
         this.app.use('/api-docs', apiDocs());
     }
@@ -78,7 +78,7 @@ class App {
      * 这些中间件应当在路由之后添加，以捕获未匹配的路由
      */
     initializeErrorHandling() {
-        this.app.use(notFound);     // 处理404错误
+        this.app.use(notFound); // 处理404错误
         this.app.use(errorHandler); // 处理其他错误
     }
 
@@ -91,9 +91,9 @@ class App {
             logger.info('开始初始化WebSocket服务...');
             await WebSocketServer.initialize(this.server);
             const io = WebSocketServer.getInstance();
-            
+
             // 通过包装错误处理，防止单个连接错误导致整个服务崩溃
-            io.on('connection', (socket) => {
+            io.on('connection', socket => {
                 try {
                     WebSocketController.handleConnection(socket);
                 } catch (connError) {
@@ -101,12 +101,12 @@ class App {
                     // 不要让错误传播到Socket.IO库
                 }
             });
-            
+
             // 添加错误处理
-            io.on('error', (err) => {
+            io.on('error', err => {
                 logger.error(`WebSocket服务错误: ${err}`);
             });
-            
+
             logger.info('WebSocket服务器初始化成功');
         } catch (error) {
             logger.error(`WebSocket初始化失败: ${error}`);

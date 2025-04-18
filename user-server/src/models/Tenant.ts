@@ -3,23 +3,28 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 // 租户接口定义
 export interface ITenant extends Document {
-    name: string;                // 租户名称
-    code: string;                // 租户唯一代码
-    description?: string;        // 租户描述（可选）
-    isActive: boolean;           // 租户状态（启用/禁用）
-    settings?: {                 // 租户配置选项（可选）
-        allowPatientRegistration: boolean;  // 是否允许患者注册
-        allowDoctorRegistration: boolean;   // 是否允许医生注册
-        maxUsers: number;                   // 最大用户数量限制
-        features: string[];                 // 启用的功能特性列表
+    name: string; // 租户名称
+    code: string; // 租户唯一代码
+    description?: string; // 租户描述（可选）
+    isActive: boolean; // 租户状态（启用/禁用）
+    settings?: {
+        // 租户配置选项（可选）
+        allowPatientRegistration: boolean; // 是否允许患者注册
+        allowDoctorRegistration: boolean; // 是否允许医生注册
+        maxUsers: number; // 最大用户数量限制
+        features: string[]; // 启用的功能特性列表
     };
-    createdAt: Date;            // 创建时间
-    updatedAt: Date;            // 更新时间
+    createdAt: Date; // 创建时间
+    updatedAt: Date; // 更新时间
 }
 
 // 租户Schema定义
 const TenantSchema: Schema = new Schema(
     {
+        id: {
+            type: String,
+            required: true,
+        },
         name: {
             type: String,
             required: true,
@@ -51,9 +56,11 @@ const TenantSchema: Schema = new Schema(
                 type: Number,
                 default: 100,
             },
-            features: [{
-                type: String,
-            }],
+            features: [
+                {
+                    type: String,
+                },
+            ],
         },
     },
     { timestamps: true }

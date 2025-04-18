@@ -255,4 +255,4 @@ router.get('/department/:department', DoctorController.getDoctorsByDepartment);
  */
 router.put('/:id/toggle-availability', auth, DoctorController.toggleAvailability);
 
-export default router; 
+export default router;

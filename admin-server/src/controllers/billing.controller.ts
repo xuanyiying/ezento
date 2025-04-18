@@ -3,7 +3,7 @@ import { BillingService } from '../services/billing.service';
 import { ApiError } from '../middlewares/errorHandler';
 
 export class BillingController {
-    constructor(private billingService: BillingService) { }
+    constructor(private billingService: BillingService) {}
 
     // 使用量统计
     async getAllUsage(req: Request, res: Response, next: NextFunction) {
@@ -16,7 +16,7 @@ export class BillingController {
             const result = await this.billingService.getAllUsage();
             res.json({
                 status: 'success',
-                data: result
+                data: result,
             });
         } catch (error) {
             next(error);
@@ -28,15 +28,17 @@ export class BillingController {
             const { tenantId } = req.params;
 
             // 验证权限 - 只有管理员或租户自身的管理员可以查看
-            if (req.user?.role !== 'ADMIN' &&
-                (req.tenantId !== tenantId || req.user?.role !== 'TENANT_ADMIN')) {
+            if (
+                req.user?.role !== 'ADMIN' &&
+                (req.tenantId !== tenantId || req.user?.role !== 'TENANT_ADMIN')
+            ) {
                 throw new ApiError(403, '无权执行此操作');
             }
 
             const result = await this.billingService.getTenantUsage(tenantId);
             res.json({
                 status: 'success',
-                data: result
+                data: result,
             });
         } catch (error) {
             next(error);
@@ -49,8 +51,10 @@ export class BillingController {
             const { startDate, endDate } = req.query;
 
             // 验证权限 - 只有管理员或租户自身的管理员可以查看
-            if (req.user?.role !== 'ADMIN' &&
-                (req.tenantId !== tenantId || req.user?.role !== 'TENANT_ADMIN')) {
+            if (
+                req.user?.role !== 'ADMIN' &&
+                (req.tenantId !== tenantId || req.user?.role !== 'TENANT_ADMIN')
+            ) {
                 throw new ApiError(403, '无权执行此操作');
             }
 
@@ -69,7 +73,7 @@ export class BillingController {
             const result = await this.billingService.getTenantDailyUsage(tenantId, start, end);
             res.json({
                 status: 'success',
-                data: result
+                data: result,
             });
         } catch (error) {
             next(error);
@@ -81,15 +85,17 @@ export class BillingController {
             const { tenantId } = req.params;
 
             // 验证权限 - 只有管理员或租户自身的管理员可以查看
-            if (req.user?.role !== 'ADMIN' &&
-                (req.tenantId !== tenantId || req.user?.role !== 'TENANT_ADMIN')) {
+            if (
+                req.user?.role !== 'ADMIN' &&
+                (req.tenantId !== tenantId || req.user?.role !== 'TENANT_ADMIN')
+            ) {
                 throw new ApiError(403, '无权执行此操作');
             }
 
             const result = await this.billingService.getTenantModelUsage(tenantId);
             res.json({
                 status: 'success',
-                data: result
+                data: result,
             });
         } catch (error) {
             next(error);
@@ -129,7 +135,7 @@ export class BillingController {
             const plans = await this.billingService.getAllBillingPlans();
             res.json({
                 status: 'success',
-                data: plans
+                data: plans,
             });
         } catch (error) {
             next(error);
@@ -142,7 +148,7 @@ export class BillingController {
             const plan = await this.billingService.getBillingPlanById(id);
             res.json({
                 status: 'success',
-                data: plan
+                data: plan,
             });
         } catch (error) {
             next(error);
@@ -159,7 +165,7 @@ export class BillingController {
             const plan = await this.billingService.createBillingPlan(req.body);
             res.status(201).json({
                 status: 'success',
-                data: plan
+                data: plan,
             });
         } catch (error) {
             next(error);
@@ -178,7 +184,7 @@ export class BillingController {
             const plan = await this.billingService.updateBillingPlan(id, req.body);
             res.json({
                 status: 'success',
-                data: plan
+                data: plan,
             });
         } catch (error) {
             next(error);
@@ -197,7 +203,7 @@ export class BillingController {
             await this.billingService.deleteBillingPlan(id);
             res.json({
                 status: 'success',
-                data: null
+                data: null,
             });
         } catch (error) {
             next(error);
@@ -237,7 +243,7 @@ export class BillingController {
             const rates = await this.billingService.getAllRates();
             res.json({
                 status: 'success',
-                data: rates
+                data: rates,
             });
         } catch (error) {
             next(error);
@@ -256,7 +262,7 @@ export class BillingController {
             const rate = await this.billingService.updateRate(id, req.body);
             res.json({
                 status: 'success',
-                data: rate
+                data: rate,
             });
         } catch (error) {
             next(error);
@@ -303,7 +309,7 @@ export class BillingController {
             const result = await this.billingService.getAllInvoices();
             res.json({
                 status: 'success',
-                data: result
+                data: result,
             });
         } catch (error) {
             next(error);
@@ -358,7 +364,7 @@ export class BillingController {
 
             res.json({
                 status: 'success',
-                data: invoice
+                data: invoice,
             });
         } catch (error) {
             next(error);
@@ -415,7 +421,7 @@ export class BillingController {
             const invoices = await this.billingService.getTenantInvoices(tenantId);
             res.json({
                 status: 'success',
-                data: invoices
+                data: invoices,
             });
         } catch (error) {
             next(error);
@@ -432,7 +438,7 @@ export class BillingController {
             const invoice = await this.billingService.generateInvoice(req.body);
             res.status(201).json({
                 status: 'success',
-                data: invoice
+                data: invoice,
             });
         } catch (error) {
             next(error);
@@ -457,7 +463,7 @@ export class BillingController {
             const invoice = await this.billingService.updateInvoiceStatus(id, status);
             res.json({
                 status: 'success',
-                data: invoice
+                data: invoice,
             });
         } catch (error) {
             next(error);
@@ -471,15 +477,18 @@ export class BillingController {
 
             // 验证权限 - 只有管理员可以查看所有超额记录
             // 如果指定了租户，则租户管理员也可以查看自己的记录
-            if (req.user?.role !== 'ADMIN' &&
-                (tenantId && (req.tenantId !== tenantId || req.user?.role !== 'TENANT_ADMIN'))) {
+            if (
+                req.user?.role !== 'ADMIN' &&
+                tenantId &&
+                (req.tenantId !== tenantId || req.user?.role !== 'TENANT_ADMIN')
+            ) {
                 throw new ApiError(403, '无权执行此操作');
             }
 
             const overages = await this.billingService.getOverages(tenantId as string);
             res.json({
                 status: 'success',
-                data: overages
+                data: overages,
             });
         } catch (error) {
             next(error);
@@ -492,15 +501,18 @@ export class BillingController {
 
             // 验证权限 - 只有管理员可以查看所有设置
             // 如果指定了租户，则租户管理员也可以查看自己的设置
-            if (req.user?.role !== 'ADMIN' &&
-                (tenantId && (req.tenantId !== tenantId || req.user?.role !== 'TENANT_ADMIN'))) {
+            if (
+                req.user?.role !== 'ADMIN' &&
+                tenantId &&
+                (req.tenantId !== tenantId || req.user?.role !== 'TENANT_ADMIN')
+            ) {
                 throw new ApiError(403, '无权执行此操作');
             }
 
             const settings = await this.billingService.getOverageSettings(tenantId as string);
             res.json({
                 status: 'success',
-                data: settings
+                data: settings,
             });
         } catch (error) {
             next(error);
@@ -517,7 +529,7 @@ export class BillingController {
             const settings = await this.billingService.createOverageSettings(req.body);
             res.status(201).json({
                 status: 'success',
-                data: settings
+                data: settings,
             });
         } catch (error) {
             next(error);
@@ -536,7 +548,7 @@ export class BillingController {
             const settings = await this.billingService.updateOverageSettings(id, req.body);
             res.json({
                 status: 'success',
-                data: settings
+                data: settings,
             });
         } catch (error) {
             next(error);
@@ -559,10 +571,10 @@ export class BillingController {
             await this.billingService.notifyOverage(tenantId);
             res.json({
                 status: 'success',
-                message: '超额使用通知已发送'
+                message: '超额使用通知已发送',
             });
         } catch (error) {
             next(error);
         }
     }
-} 
+}

@@ -40,4 +40,4 @@ router.post('/versions/:versionId/publish', templateController.publishTemplateVe
 // 模板验证
 router.post('/:templateId/validate', templateController.validateTemplateWithData);
 
-export default router; 
+export default router;

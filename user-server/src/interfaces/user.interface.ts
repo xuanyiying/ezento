@@ -1,6 +1,3 @@
-import { Document, Types } from 'mongoose';
-import mongoose from 'mongoose';
-
 /**
  * 用户角色类型
  */
@@ -9,9 +6,10 @@ export type UserRole = 'admin' | 'doctor' | 'patient';
 /**
  * 用户性别类型
  */
-export type UserGender = 'male' | 'female' | 'other' | 'unknown';
+export type UserGender = '男' | '女' | '其他' | '未知';
 
 export interface UserBase {
+    id: string;
     name: string;
     username?: string;
     avatar?: string;
@@ -29,11 +27,8 @@ export interface UserBase {
     updatedAt: Date;
 }
 
-export interface UserDocument extends Document, UserBase {
-    _id: Types.ObjectId;
-}
-
 export type UserCreateData = {
+    id: string;
     name: string;
     username?: string;
     avatar?: string;
@@ -47,7 +42,7 @@ export type UserCreateData = {
     unionId?: string;
     isWechatUser?: boolean;
     isActive: boolean;
-    tenantId?: mongoose.Types.ObjectId;
+    tenantId?: string;
 };
 
 export type UserUpdateData = Partial<UserCreateData>;

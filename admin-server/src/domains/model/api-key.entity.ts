@@ -189,4 +189,4 @@ export interface InferenceHistory {
     cost: number;
     metadata?: any;
     createdAt: Date;
-} 
+}

@@ -1,155 +1,154 @@
 import React, { useState } from 'react';
-import { Layout, Card, Typography, Button, Avatar } from 'antd';
-import { UserOutlined, LockOutlined, MessageOutlined } from '@ant-design/icons';
-import Header from '@/components/Header';
-import TabBar from '@/components/TabBar';
-import MessageInput from '@/components/MessageInput';
-import './GuidePage.less';
-import { Message } from '@/types/conversation';
+import { XProvider, Prompts } from '@ant-design/x';
+import { Typography, Card, Avatar, List, Input, Button } from 'antd';
+import { BookOutlined, SearchOutlined, RightOutlined } from '@ant-design/icons';
 
-const { Content } = Layout;
-const { Text } = Typography;
+// 类型定义
+interface Department {
+    id: string;
+    name: string;
+    description: string;
+    icon: React.ReactNode;
+}
 
-interface Doctor {
-  id: string;
-  name: string;
-  title: string;
-  department: string;
-  hospital: string;
-  availableDates: string[];
+interface Symptom {
+    id: string;
+    name: string;
 }
 
 const GuidePage: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      _id: 'guide-initial-0',
-      content: '你好，我是XX医院的XXX医生，请问您哪里不舒服?',
-      role: 'system',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      conversationId: 'guide-placeholder',
-      metadata: {}
-    },
-  ]);
-  
-  const [doctors, setDoctors] = useState<Doctor[]>([
-    {
-      id: '1',
-      name: '姚建利',
-      title: '副主任医师',
-      department: '呼吸内科',
-      hospital: 'XX医院南院区',
-      availableDates: ['04-10', '04-13']
-    },
-    {
-      id: '2',
-      name: '姚建利',
-      title: '副主任医师',
-      department: '呼吸内科',
-      hospital: 'XX医院南院区',
-      availableDates: ['04-10', '04-13']
-    }
-  ]);
-  
-  const handleSendMessage = (content: string) => {
-    const newMessage: Message = {
-      _id: Date.now().toString(),
-      content,
-      role: 'user',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      conversationId: 'guide-placeholder',
-      metadata: {}
+    const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
+    const [searchValue, setSearchValue] = useState<string>('');
+    const [searchResults, setSearchResults] = useState<Symptom[]>([]);
+
+    // 科室数据
+    const departments: Department[] = [
+        { id: 'internal', name: '内科', description: '处理内脏疾病', icon: <BookOutlined /> },
+        { id: 'surgery', name: '外科', description: '处理需要手术的疾病', icon: <BookOutlined /> },
+        {
+            id: 'gynecology',
+            name: '妇产科',
+            description: '处理女性生殖系统疾病',
+            icon: <BookOutlined />,
+        },
+        { id: 'pediatrics', name: '儿科', description: '处理儿童疾病', icon: <BookOutlined /> },
+        {
+            id: 'dermatology',
+            name: '皮肤科',
+            description: '处理皮肤相关疾病',
+            icon: <BookOutlined />,
+        },
+        {
+            id: 'psychology',
+            name: '心理科',
+            description: '处理心理健康问题',
+            icon: <BookOutlined />,
+        },
+        { id: 'tcm', name: '中医科', description: '提供传统中医治疗', icon: <BookOutlined /> },
+        { id: 'ophthalmology', name: '眼科', description: '处理眼部疾病', icon: <BookOutlined /> },
+    ];
+
+    const handleDepartmentSelect = (id: string) => {
+        const dept = departments.find(d => d.id === id);
+        if (dept) {
+            setSelectedDepartment(dept);
+        }
     };
-    
-    setMessages([...messages, newMessage]);
-  };
-  
-  return (
-    <Layout className="guide-page">
-      <Header />
-      <TabBar />
-      
-      <Content className="guide-content">
-        <div className="timestamp">2024-04-02 20:28</div>
-        
-        <Card className="identity-card">
-          <div className="card-title">
-            <UserOutlined className="icon" />
-            <Text strong>确认身份信息</Text>
-          </div>
-          
-          <div className="card-content">
-            <div className="info-row">
-              <Text type="secondary" className="label">患者：</Text>
-              <Text>张*华(女 24岁)</Text>
-            </div>
-            <div className="info-row">
-              <Text type="secondary" className="label">电话：</Text>
-              <Text>187****0291</Text>
-            </div>
-            
-            <div className="action-buttons">
-              <Button className="btn-outline">更换就诊人</Button>
-              <Button type="primary" className="btn-primary">确认无误</Button>
-            </div>
-          </div>
-          
-          <div className="privacy-notice">
-            <LockOutlined className="icon" />
-            <Text type="warning">隐私保护·平台保障您的隐私安全</Text>
-          </div>
-        </Card>
-        
-        <div className="message-container">
-          {messages.map(message => (
-            <div 
-              key={message._id}
-              className={`message ${message.role === 'user' ? 'right' : 'left'}`}
-            >
-              {message.role !== 'user' && (
-                <Avatar icon={<MessageOutlined />} className="avatar" />
-              )}
-              
-              <div className="message-content">
-                {message.content}
-                {message.content === '为您推荐以下医生和排班' && (
-                  <Text className="blue-link"> 更多医生</Text>
-                )}
-              </div>
-              
-              {message.role === 'user' && (
-                <Avatar icon={<UserOutlined />} className="avatar" />
-              )}
-            </div>
-          ))}
-        </div>
-        
-        <div className="doctors-container">
-          {doctors.map(doctor => (
-            <Card key={doctor.id} className="doctor-card">
-              <div className="doctor-info">
-                <Avatar size={60} icon={<UserOutlined />} />
-                <div className="doctor-details">
-                  <Text strong className="doctor-name">{doctor.name}</Text>
-                  <Text className="doctor-title">{doctor.title} | {doctor.department}</Text>
-                  <Text type="secondary" className="doctor-hospital">{doctor.hospital}</Text>
-                  <div className="schedule">
-                    <Text type="secondary" className="label">预约日期</Text>
-                    {doctor.availableDates.map(date => (
-                      <Text key={date} className="date">{date}</Text>
-                    ))}
-                  </div>
+
+    const handleSearch = (value: string) => {
+        if (!value.trim()) {
+            setSearchResults([]);
+            return;
+        }
+
+        // 模拟搜索结果
+        setTimeout(() => {
+            const results: Symptom[] = [
+                { id: 's1', name: '头痛' },
+                { id: 's2', name: '发热' },
+                { id: 's3', name: '咳嗽' },
+                { id: 's4', name: '腹痛' },
+            ].filter(item => item.name.includes(value));
+
+            setSearchResults(results);
+        }, 300);
+    };
+
+    return (
+        <XProvider>
+            <div className="guide-page">
+                <Typography.Title level={4}>医院导诊助手</Typography.Title>
+
+                <div className="search-section">
+                    <Input.Search
+                        placeholder="请输入症状或疾病名称"
+                        value={searchValue}
+                        onChange={e => setSearchValue(e.target.value)}
+                        onSearch={handleSearch}
+                        enterButton={<SearchOutlined />}
+                    />
+
+                    {searchResults.length > 0 && (
+                        <List
+                            className="search-results"
+                            size="small"
+                            bordered
+                            dataSource={searchResults}
+                            renderItem={item => (
+                                <List.Item>
+                                    <div className="symptom-item">
+                                        {item.name}
+                                        <span className="recommendation">建议就诊: 内科</span>
+                                    </div>
+                                </List.Item>
+                            )}
+                        />
+                    )}
                 </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </Content>
-      
-      <MessageInput onSend={handleSendMessage} />
-    </Layout>
-  );
+
+                <div className="department-section">
+                    <Typography.Title level={5}>选择科室</Typography.Title>
+
+                    <Prompts
+                        items={departments.map(dept => ({
+                            key: dept.id,
+                            id: dept.id,
+                            content: dept.name,
+                            onClick: () => handleDepartmentSelect(dept.id),
+                        }))}
+                        title="常见科室"
+                    />
+                </div>
+
+                {selectedDepartment && (
+                    <Card className="department-detail">
+                        <div className="department-header">
+                            <Avatar icon={selectedDepartment.icon} />
+                            <Typography.Title level={5}>{selectedDepartment.name}</Typography.Title>
+                        </div>
+                        <div className="department-description">
+                            {selectedDepartment.description}
+                        </div>
+                        <div className="common-diseases">
+                            <Typography.Title level={5}>常见疾病</Typography.Title>
+                            <ul>
+                                <li>
+                                    病症示例1 <RightOutlined />
+                                </li>
+                                <li>
+                                    病症示例2 <RightOutlined />
+                                </li>
+                                <li>
+                                    病症示例3 <RightOutlined />
+                                </li>
+                            </ul>
+                        </div>
+                        <Button type="primary">在线问诊此科室</Button>
+                    </Card>
+                )}
+            </div>
+        </XProvider>
+    );
 };
 
-export default GuidePage; 
+export default GuidePage;

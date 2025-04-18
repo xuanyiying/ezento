@@ -30,7 +30,6 @@ import { PrismaClient } from '@prisma/client';
 import { AuthController } from '../controllers/auth.controller';
 
 export class DIContainer {
-
     private static _tenantRepository: ITenantRepository;
     private static _userRepository: IUserRepository;
     private static _billingRepository: IBillingRepository;
@@ -74,12 +73,16 @@ export class DIContainer {
             DIContainer._templateRepository,
             DIContainer._rechargeRepository,
             DIContainer._circuitBreakerRepository,
-            DIContainer._apiGatewayRepository
+            DIContainer._apiGatewayRepository,
         ];
 
         // Attempt to close Prisma connections if possible
         for (const repo of prismaRepositories) {
-            if (repo && (repo as any).prisma && typeof (repo as any).prisma.$disconnect === 'function') {
+            if (
+                repo &&
+                (repo as any).prisma &&
+                typeof (repo as any).prisma.$disconnect === 'function'
+            ) {
                 await (repo as any).prisma.$disconnect();
             }
         }
@@ -129,14 +132,18 @@ export class DIContainer {
 
     static get circuitBreakerService(): CircuitBreakerService {
         if (!DIContainer._circuitBreakerService) {
-            DIContainer._circuitBreakerService = new CircuitBreakerService(DIContainer.circuitBreakerRepository);
+            DIContainer._circuitBreakerService = new CircuitBreakerService(
+                DIContainer.circuitBreakerRepository
+            );
         }
         return DIContainer._circuitBreakerService;
     }
 
     static get apiGatewayService(): ApiGatewayService {
         if (!DIContainer._apiGatewayService) {
-            DIContainer._apiGatewayService = new ApiGatewayService(DIContainer.apiGatewayRepository);
+            DIContainer._apiGatewayService = new ApiGatewayService(
+                DIContainer.apiGatewayRepository
+            );
         }
         return DIContainer._apiGatewayService;
     }
@@ -185,7 +192,9 @@ export class DIContainer {
 
     static get circuitBreakerRepository(): ICircuitBreakerRepository {
         if (!DIContainer._circuitBreakerRepository) {
-            DIContainer._circuitBreakerRepository = new PrismaCircuitBreakerRepository(DIContainer.prisma);
+            DIContainer._circuitBreakerRepository = new PrismaCircuitBreakerRepository(
+                DIContainer.prisma
+            );
         }
         return DIContainer._circuitBreakerRepository;
     }

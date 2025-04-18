@@ -1,356 +1,608 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Alert, Button, App, UploadFile, Tooltip, Upload, Typography } from 'antd';
 import {
-  Alert, Avatar, Button, Card, Spin, Typography, message as antdMessage
-} from 'antd';
-import {
-  CheckOutlined, LockOutlined, UserOutlined
+    LockOutlined,
+    UserOutlined,
+    SettingOutlined,
+    AudioOutlined,
+    FileImageOutlined,
+    FilePdfOutlined,
+    MenuUnfoldOutlined,
+    MenuFoldOutlined,
 } from '@ant-design/icons';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { RootState } from '../../store';
-import {
-  addMessage, setLoading, setCurrentConversation
-} from '../../store/slices/conversationSlice';
-import { ConversationAPI } from '../../services/conversation';
-import { Message, ConversationType } from '../../types/conversation';
-import WebSocketService from '../../services/websocket';
-import MessageInput from '../../components/MessageInput';
+import { RootState } from '@/store';
+import { addMessage, setCurrentConversation } from '@/store/slices/conversationSlice';
+import { ConversationAPI } from '@/services/conversation';
+import { ConversationType, Conversation } from '@/types/conversation';
+import WebSocketService from '@/services/websocket';
+import { XProvider, Welcome, Sender, Bubble } from '@ant-design/x';
+import type { BubbleProps } from '@ant-design/x';
+import markdownit from 'markdown-it';
 import './ChatPage.less';
+import VoiceInput from '@/components/VoiceInput';
+import SettingsPanel from '@/components/SettingsPanel';
+import { UploadChangeParam } from 'antd/es/upload';
 
-const { Title, Text } = Typography;
+const md = markdownit({ html: true, breaks: true });
+
+const renderMarkdown: BubbleProps['messageRender'] = (content) => (
+    <Typography>
+        <div dangerouslySetInnerHTML={{ __html: md.render(content) }} />
+    </Typography>
+);
 
 export const ChatPage: React.FC = () => {
   const dispatch = useDispatch();
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
-  const currentUser = useSelector((state: RootState) => state.authUser.user);
+    const currentUser = useSelector((state: RootState) => state.auth.user);
   const { loading, currentConversation } = useSelector((state: RootState) => state.conversation);
   const [userInput, setUserInput] = useState<string>('');
-  const [isIdentityConfirmed, setIsIdentityConfirmed] = useState<boolean>(false);
+    const { message } = App.useApp();
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    // 从localStorage读取身份确认状态，如果有则使用，否则默认为false
+    const [isIdentityConfirmed, setIsIdentityConfirmed] = useState<boolean>(() => {
+        // 检查localStorage中是否有保存的确认状态
+        const savedState = localStorage.getItem('identityConfirmed');
+        // 如果存在且为当前用户，则返回true
+        if (savedState) {
+            try {
+                const { userId, confirmed } = JSON.parse(savedState);
+                // 确保确认状态是针对当前用户的
+                return currentUser && userId === currentUser.userId && confirmed;
+            } catch (e) {
+                console.error('解析保存的确认状态失败:', e);
+                return false;
+            }
+        }
+        return false;
+    });
   const [wsService] = useState(() => WebSocketService.getInstance());
   const messages = currentConversation?.messages || [];
-  const [isWsConnected, setIsWsConnected] = useState(false);
+    const [settingsVisible, setSettingsVisible] = useState(false);
+    const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+    const [attachments, setAttachments] = useState<any[]>([]);
 
-  // 改进WebSocket连接逻辑，在页面刷新时自动重连
-  useEffect(() => {
-    let isComponentMounted = true; // 跟踪组件是否仍然挂载
+    // 示例推荐问题
+    const suggestedQuestions = [
+        "为什么有人长期使用药物会自己停药?",
+        "金霉素不能吃，为何物过敏症状是?",
+        "大麻过量摄入为何比酒更安全?"
+    ];
+
+    // 改进WebSocket连接逻辑，在页面刷新时自动重连
+useEffect(() => {
+  let isComponentMounted = true; // 跟踪组件是否仍然挂载
+  
+        // 仅当会话ID存在且用户已认证且组件挂载时才连接
+        if (currentConversation?.id && isAuthenticated && user && isComponentMounted) {
+    console.log('开始连接WebSocket...');
+            wsService.connect(currentConversation.id);
     
-    // 仅当会话ID存在且组件挂载时才连接
-    if (currentConversation?._id && isComponentMounted) {
-      console.log('开始连接WebSocket...');
-      wsService.connect(currentConversation._id);
-      
-      // 创建轮询检查连接状态
-      const checkConnection = setInterval(() => {
-        if (wsService.isConnected() && isComponentMounted) {
-          setIsWsConnected(true);
-          clearInterval(checkConnection);
-        }
-      }, 2000); // 减少检查间隔
-      
-      // 监听socket事件
-      const handleReconnect = () => {
-        console.log('WebSocket 重新连接成功');
-        setIsWsConnected(true);
-      };
-      
-      const handleDisconnect = () => {
-        console.log('WebSocket 连接断开');
-        setIsWsConnected(false);
-      };
-      
-      wsService.onReconnect(handleReconnect);
-      wsService.onDisconnect(handleDisconnect);
-      
-      // 清理函数
-      return () => {
-        isComponentMounted = false; // 标记组件已卸载
+    // 创建轮询检查连接状态
+    const checkConnection = setInterval(() => {
+      if (wsService.isConnected() && isComponentMounted) {
         clearInterval(checkConnection);
-        
-        // 移除事件监听
-        wsService.offReconnect(handleReconnect);
-        wsService.offDisconnect(handleDisconnect);
-        
-        // 仅在之前已连接时才断开
-        if (isWsConnected) {
-          console.log('组件卸载，断开WebSocket连接');
-          wsService.disconnect();
+      }
+            }, 2000); // 减少检查间隔
+
+            // 监听socket事件
+            const handleReconnect = () => {
+                console.log('WebSocket 重新连接成功');
+            };
+
+            const handleDisconnect = () => {
+                console.log('WebSocket 连接断开');
+            };
+
+            wsService.onReconnect(handleReconnect);
+            wsService.onDisconnect(handleDisconnect);
+    
+    // 清理函数
+    return () => {
+      isComponentMounted = false; // 标记组件已卸载
+      clearInterval(checkConnection);
+      
+                // 移除事件监听
+                wsService.offReconnect(handleReconnect);
+                wsService.offDisconnect(handleDisconnect);
+            };
+        } else if (!isAuthenticated || !user) {
+            console.log('用户未认证，无法建立WebSocket连接');
         }
-      };
-    }
-  }, [currentConversation?._id, wsService, isWsConnected]);
+    }, [currentConversation?.id, isAuthenticated, user, wsService]);
 
-  // 修改初始化会话的代码
-  useEffect(() => {
-    // 如果用户已登录但没有当前会话，自动创建一个会话
-    if (currentUser && !currentConversation) {
-      console.log('Attempting to create/get conversation...');
-      // Log the currentUser object to see its structure
-      console.log('Current User:', JSON.stringify(currentUser, null, 2)); 
+    // 初始化会话
+    useEffect(() => {
+        const initializeConversation = async () => {
+            try {
+                const savedConversationJson = localStorage.getItem('currentConversation');
+                let savedConversation: Conversation | null = null;
 
-      dispatch(setLoading(true));
-      
-      // 确保currentUser不为null并且有有效的ID
-      if (!currentUser) {
-        console.error('无法创建会话：currentUser为null');
-        antdMessage.error('无法启动对话，请先登录');
-        dispatch(setLoading(false));
-        return;
-      }
-      const userId = currentUser.userId 
-      console.log('Using User ID:', userId);
-      
-      // 只有当userId有值时才创建会话
-      if (userId) {
-        ConversationAPI.createOrGetConversation({
-          conversationType: ConversationType.PRE_DIAGNOSIS, 
-          referenceId: userId,
-          userId: userId, // Assuming patientId is the same as userId for this context
-          initialMessage: '您好，有什么可以帮您的吗？', // Simplified initial message
-          messages: [] // Ensure messages array is passed if required by backend
-         })
-          .then((conversation) => {
-            console.log('Conversation created/retrieved successfully:', conversation);
-            if (conversation && conversation._id) {
-              dispatch(setCurrentConversation(conversation));
-            } else {
-              // Handle case where backend returns unexpected data
-              console.error('Received invalid conversation object:', conversation);
-              antdMessage.error('无法处理会话数据，请稍后再试');
+                if (
+                    savedConversationJson &&
+                    savedConversationJson !== 'undefined' &&
+                    savedConversationJson !== 'null'
+                ) {
+                    try {
+                        const parsed = JSON.parse(savedConversationJson);
+                        if (parsed && typeof parsed === 'object' && parsed.id) {
+                            savedConversation = parsed;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing saved conversation:', e);
+                        localStorage.removeItem('currentConversation');
+                    }
+                }
+
+                if (!savedConversation) {
+                    if (!currentUser?.userId) {
+                        throw new Error('User ID is required to create a conversation');
+                    }
+
+                    const apiResponse = await ConversationAPI.createOrGetConversation({
+            conversationType: ConversationType.PRE_DIAGNOSIS, 
+                        userId: currentUser.userId,
+                        referenceId: '',
+                        messages: [],
+                    });
+
+                    console.log('API Response:', apiResponse);
+
+                    // 直接使用API返回的数据
+                    if (apiResponse && apiResponse.id) {
+                        // 确保对象符合Conversation类型定义
+                        const conversation: Conversation = {
+                            id: apiResponse.id,
+                            type: ConversationType.PRE_DIAGNOSIS,
+                            referenceId: apiResponse.referenceId || '',
+                            patientId: currentUser.userId,
+                            messages: apiResponse.messages || [],
+                            status: apiResponse.status || 'ACTIVE',
+                            startTime: apiResponse.startTime,
+                            conversationId: apiResponse.id,
+                            consultationId: apiResponse.consultationId,
+                        };
+
+                dispatch(setCurrentConversation(conversation));
+                        localStorage.setItem('currentConversation', JSON.stringify(conversation));
+                    } else {
+                        throw new Error('Failed to create conversation: Missing required fields in response');
+                    }
+              } else {
+                    dispatch(setCurrentConversation(savedConversation));
+                }
+            } catch (error) {
+                console.error('Error initializing conversation:', error);
+                message.error('Failed to initialize chat. Please try again.');
             }
-          })
-          .catch((error) => {
-            console.error('Conversation initialization failed:', error);
-            // Log the full error object if available
-            if (error.response) {
-              console.error('Error Response Data:', error.response.data);
-              console.error('Error Response Status:', error.response.status);
-            }
-            antdMessage.error('无法启动对话，请检查网络或联系管理员');
-          })
-          .finally(() => {
-            dispatch(setLoading(false));
-            console.log('Finished conversation initialization attempt.');
-          });
-      } else {
-         // Log why the effect didn't run
-         if (!currentUser) console.log('Conversation init skipped: currentUser is null.');
-         if (currentConversation) console.log('Conversation init skipped: currentConversation already exists.');
-      }
-    } else {
-       // Log why the effect didn't run
-       if (!currentUser) console.log('Conversation init skipped: currentUser is null.');
-       if (currentConversation) console.log('Conversation init skipped: currentConversation already exists.');
-    }
-  }, [currentUser, currentConversation, dispatch]); // Keep dependencies as is for now
+        };
 
-  // 改进滚动到底部功能
-  const scrollToBottom = () => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }
-  };
+        initializeConversation();
 
-  // 在消息变化和组件挂载时自动滚动到底部
+        // 清理函数
+        return () => {
+            wsService.disconnect();
+        };
+    }, [currentUser?.userId]);
+
+    // 滚动到底部的函数
+    const scrollToBottom = () => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
+    // 当消息列表改变时滚动到底部
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+    }, [messages.length]);
 
-  // 在组件挂载和会话切换时也滚动到底部
-  useEffect(() => {
-    if (currentConversation) {
-      setTimeout(scrollToBottom, 100); // 短暂延迟以确保DOM更新
-    }
-  }, [currentConversation?._id]);
+    // 组件挂载后和对话初始化后滚动到底部
+    useEffect(() => {
+        if (currentConversation?.id) {
+            setTimeout(scrollToBottom, 100); // 稍微延迟确保DOM已更新
+        }
+    }, [currentConversation?.id]);
 
   const handleConfirmIdentity = () => {
     setIsIdentityConfirmed(true);
-    
-    // 构建用户确认信息消息
-    if (currentUser) {
-      const gender = currentUser.gender === 'MALE' ? '男' : 
-                    currentUser.gender === 'FEMALE' ? '女' : '未设置';
-      
-      const userInfoMessage = `我已确认以下信息：
+
+        // 保存确认状态到localStorage，包含用户ID以确保是当前用户的确认状态
+        if (currentUser && currentUser.userId) {
+            localStorage.setItem(
+                'identityConfirmed',
+                JSON.stringify({
+                    userId: currentUser.userId,
+                    confirmed: true,
+                    timestamp: new Date().toISOString(),
+                })
+            );
+        }
+
+        // 构建用户确认信息消息
+        if (currentUser) {
+            const gender =
+                currentUser.gender === 'MALE'
+                    ? '男'
+                    : currentUser.gender === 'FEMALE'
+                        ? '女'
+                        : '未设置';
+
+            const userInfoMessage = `我已确认以下信息：
 姓名: ${currentUser.name || '未设置'}
 手机号: ${currentUser.phone || '未设置'}
 性别: ${gender}`;
-      
-      // 发送用户确认信息作为消息
-      handleSendMessage(userInfoMessage);
-    }
-  };
 
-  const handleSendMessage = (message?: string) => {
-    const messageToSend = message || userInput.trim();
-    if (!messageToSend) return;
+            // 发送用户确认信息作为消息
+            handleSendMessage(userInfoMessage);
+        }
+    };
 
-    console.log('用户发送消息:', messageToSend, '当前会话ID:', currentConversation?._id);
-    
-    // 检查WebSocket连接状态
-    const connected = wsService.isConnected();
-    console.log('WebSocket连接状态:', connected ? '已连接' : '未连接');
-    
-    if (!connected) {
-      console.log('尝试重新连接WebSocket...');
-      wsService.connect(currentConversation?._id || '');
-      antdMessage.warning('正在重新连接服务器，请稍后再试');
+    const handleSendMessage = async (content: string) => {
+        if (!currentConversation?.id) {
+            message.error('会话未初始化，请刷新页面重试');
       return;
     }
 
-    const newMessage: Message = {
-      _id: Date.now().toString(),
-      content: messageToSend,
-      role: 'user' as const,
-      conversationId: currentConversation?._id || '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      metadata: {}
+        try {
+            // 添加用户消息到界面
+            dispatch(
+                addMessage({
+                    content,
+                    role: 'user',
+                    timestamp: new Date().toISOString(),
+                    conversationId: currentConversation.id,
+                })
+            );
+
+            // 通过WebSocket发送消息
+            wsService.sendMessage(content, currentConversation.id);
+
+            // 清空附件列表
+            setAttachments([]);
+        } catch (error) {
+            console.error('发送消息失败:', error);
+            message.error('发送消息失败，请重试');
+        }
     };
 
-    console.log('添加本地消息:', newMessage);
-    dispatch(addMessage(newMessage));
-    
-    // Send message via WebSocket
-    console.log('发送WebSocket消息...');
-    wsService.sendMessage(messageToSend);
-    console.log('WebSocket消息已发送');
-    
-    setUserInput('');
-    scrollToBottom();
-  };
+    // 处理附件上传
+    const handleAttachmentChange = (info: UploadChangeParam<UploadFile<any>>) => {
+        const files = info.fileList || [];
+        setAttachments(files);
+        console.log('附件已更新:', files);
+    };
 
-  // Group messages by date
-  const getMessageGroups = () => {
-    const groups: Record<string, Message[]> = {};
-    
-    messages.forEach(msg => {
-      const date = new Date(msg.createdAt).toLocaleDateString();
-      if (!groups[date]) {
-        groups[date] = [];
-      }
-      groups[date].push(msg);
-    });
-    
-    return groups;
-  };
+    // 处理图片上传
+    const handleImageUpload = (file: File) => {
+        // 检查文件类型
+        const isImage = file.type.startsWith('image/');
+        if (!isImage) {
+            message.error('只能上传图片文件!');
+            return false;
+        }
+        
+        // 检查文件大小
+        const isLt5M = file.size / 1024 / 1024 < 5;
+        if (!isLt5M) {
+            message.error('图片必须小于5MB!');
+            return false;
+        }
+        
+        // 将图片添加到附件列表
+        const newFile = {
+            uid: Date.now().toString(),
+            name: file.name,
+            status: 'done',
+            url: URL.createObjectURL(file),
+            originFileObj: file,
+        } as UploadFile;
+        
+        setAttachments(prev => [...prev, newFile]);
+        return false; // 阻止自动上传
+    };
 
-  const renderMessageGroups = () => {
-    const groups = getMessageGroups();
-    
-    return Object.entries(groups).map(([date, msgs]) => (
-      <div key={date}>
-        <div className="timestamp">{date}</div>
-        {msgs.map((msg, index) => (
-          <div 
-            className={`message ${msg.role === 'user' ? 'right' : 'left'}`}
-            key={msg._id || index}
-          >
-            <Avatar 
-              className="avatar" 
-              icon={msg.role === 'user' ? <UserOutlined /> : <CheckOutlined />}
-            />
-            <div className="message-content">
-              {msg.role === 'user' ? (
-                // 用户消息用纯文本显示
-                msg.content
-              ) : (
-                // AI回复使用Markdown渲染
-                <div className="markdown-content">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {msg.content}
-                  </ReactMarkdown>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    ));
-  };
+    // 处理报告上传
+    const handleReportUpload = (file: File) => {
+        // 检查文件类型
+        const isPdf = file.type === 'application/pdf';
+        const isDoc = file.type === 'application/msword' || 
+                      file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        
+        if (!isPdf && !isDoc) {
+            message.error('只能上传PDF或Word文档!');
+            return false;
+        }
+        
+        // 检查文件大小
+        const isLt10M = file.size / 1024 / 1024 < 10;
+        if (!isLt10M) {
+            message.error('文件必须小于10MB!');
+            return false;
+        }
+        
+        // 将报告添加到附件列表
+        const newFile = {
+            uid: Date.now().toString(),
+            name: file.name,
+            status: 'done',
+            url: URL.createObjectURL(file),
+            originFileObj: file,
+        } as UploadFile;
+        
+        setAttachments(prev => [...prev, newFile]);
+        return false; // 阻止自动上传
+    };
+
+    // 添加一个useEffect，在用户信息变化时处理身份确认状态
+    useEffect(() => {
+        // 如果当前没有用户（如退出登录状态），清除身份确认
+        if (!currentUser) {
+            localStorage.removeItem('identityConfirmed');
+            setIsIdentityConfirmed(false);
+        }
+    }, [currentUser]);
+
+    // Handle voice input
+    const handleVoiceInput = (text: string) => {
+        setUserInput(prev => prev + text);
+    };
+
+    // 点击推荐问题
+    const handleQuestionClick = (question: string) => {
+        handleSendMessage(question);
+    };
+
+    // 切换侧边栏
+    const toggleSidebar = () => {
+        setSidebarCollapsed(!sidebarCollapsed);
+    };
 
   if (loading) {
     return (
       <div className="chat-page">
         <div className="loading-container">
-          <Spin size="large">
-            <div className="spin-content">正在加载...</div>
-          </Spin>
+                    <div className="loading-spinner"></div>
+                    <p>正在加载对话...</p>
         </div>
       </div>
     );
   }
 
+    if (!currentConversation) {
   return (
     <div className="chat-page">
-      <div className="chat-content">
-        {!isIdentityConfirmed && currentUser ? (
-          <Card className="identity-card">
-            <div className="card-title">
-              <UserOutlined className="icon" />
-              <Title level={4}>确认您的身份信息</Title>
+                <div className="error-container">
+                    <p>无法加载对话，请刷新页面重试</p>
+                    <button onClick={() => window.location.reload()}>刷新页面</button>
+                </div>
             </div>
-            <div className="card-content">
+        );
+    }
+
+    // 触发语音输入
+    const handleVoiceButton = () => {
+        const voiceInputBtn = document.querySelector(
+            '.voice-input-button button'
+        ) as HTMLButtonElement;
+        if (voiceInputBtn) {
+            voiceInputBtn.click();
+        }
+    };
+
+    return (
+        <XProvider>
+            <div className={`chat-page ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+                <div className="chat-app-header">
+                    <div className="header-left">
+                        <Button
+                            type="text"
+                            icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                            onClick={toggleSidebar}
+                            className="sidebar-toggle"
+                        />
+                        <span className="app-title">AI问诊</span>
+                    </div>
+                    <div className="header-right">
+                        <Button
+                            icon={<SettingOutlined />}
+                            type="text"
+                            onClick={() => setSettingsVisible(true)}
+                            aria-label="设置与辅助功能"
+                        />
+                    </div>
+                </div>
+
+                {!isIdentityConfirmed && currentUser ? (
+                    <div className="welcome-card fade-in">
+                        <h3 className="flex items-center">
+                            <UserOutlined className="mr-sm" /> 确认您的身份信息
+                        </h3>
+                        <div className="info-container">
               <div className="info-row">
-                <Text className="label">姓名：</Text>
-                <Text>{currentUser.name || '未设置'}</Text>
+                                <span className="label">姓名：</span>
+                                <span>{currentUser.name || '未设置'}</span>
               </div>
               <div className="info-row">
-                <Text className="label">手机号：</Text>
-                <Text>{currentUser.phone || '未设置'}</Text>
+                                <span className="label">手机号：</span>
+                                <span>{currentUser.phone || '未设置'}</span>
               </div>
               <div className="info-row">
-                <Text className="label">性别：</Text>
-                <Text>{currentUser.gender === 'MALE' ? '男' : 
-                      currentUser.gender === 'FEMALE' ? '女' : '未设置'}</Text>
-              </div>
-              <div className="action-buttons">
-                <Button className="btn-outline" onClick={() => antdMessage.info('即将支持身份编辑功能')}>
-                  修改信息
-                </Button>
-                <Button type="primary" className="btn-primary" onClick={handleConfirmIdentity}>
-                  确认身份
-                </Button>
+                                <span className="label">性别：</span>
+                                <span>
+                                    {currentUser.gender === 'MALE'
+                                        ? '男'
+                                        : currentUser.gender === 'FEMALE'
+                                            ? '女'
+                                            : '未设置'}
+                                </span>
               </div>
             </div>
             <div className="privacy-notice">
               <LockOutlined className="icon" />
-              <Text type="warning">您的个人信息受到保护，仅用于提供个性化医疗建议</Text>
+                            <span>您的个人信息受到保护，仅用于提供个性化医疗建议</span>
+                        </div>
+                        <div className="welcome-actions">
+                            <button
+                                onClick={() => message.info('即将支持身份编辑功能')}
+                                className="btn btn-secondary btn-ripple"
+                            >
+                                修改信息
+                            </button>
+                            <button
+                                className="btn btn-primary btn-ripple"
+                                onClick={handleConfirmIdentity}
+                            >
+                                确认身份
+                            </button>
+                        </div>
             </div>
-          </Card>
-        ) : !currentConversation?._id ? (
+                ) : !currentConversation?.id ? (
           <Alert
-            className="error-alert"
+                        className="error-alert fade-in"
             message="对话初始化失败"
             description="无法启动与健康助手的对话，请刷新页面重试。"
             type="error"
             showIcon
+                        action={
+                            <Button type="primary" onClick={() => window.location.reload()}>
+                                刷新页面
+                            </Button>
+                        }
           />
         ) : (
-          <>
-            <div className="message-container">
-              {messages.length === 0 ? (
-                <div className="empty-messages">
-                  <Text type="secondary">对话刚刚开始，发送消息开始咨询吧！</Text>
+                    <div className="conversations-container fade-in">
+                        {messages.length === 0 && (
+                            <div className="welcome-section">
+                                <h2>Hi, {currentUser?.name || '用户'}</h2>
+                                <p className="subtitle">你可以询问我</p>
+                                <div className="suggested-questions">
+                                    {suggestedQuestions.map((question, index) => (
+                                        <div
+                                            key={index}
+                                            className="question-item"
+                                            onClick={() => handleQuestionClick(question)}
+                                        >
+                                            {question}
+                                        </div>
+                                    ))}
+                                </div>
                 </div>
-              ) : (
-                renderMessageGroups()
-              )}
-              <div ref={messagesEndRef} style={{ height: 1, clear: 'both' }} />
-            </div>
-          </>
-        )}
-      </div>
+                        )}
 
-      {/* 统一显示消息输入框，避免重复 */}
-      {(isIdentityConfirmed || currentConversation?._id) && (
-        <MessageInput
-          onSend={handleSendMessage}
-          disabled={loading || !currentConversation?._id}
-          placeholder="请输入症状/药品名称/疾病..."
-        />
-      )}
+                        <div className="messages-wrapper">
+                            {messages.map(msg =>
+                                msg.role === 'system' ? (
+                                    <Welcome
+                                        key={msg.id}
+                                        variant="filled"
+                                        title="医疗助手"
+                                        description={msg.content}
+                                        icon={
+                                            <img
+                                                src="/assets/assistant-avatar.svg"
+                                                alt="AI助手"
+                                                style={{
+                                                    width: 40,
+                                                    height: 40,
+                                                    borderRadius: '50%',
+                                                }}
+                                            />
+                                        }
+                                    />
+                                ) : (
+                                    <div className={`message-container ${msg.role}-message`} key={msg.id}>
+                                        <Bubble
+                                            content={msg.content}
+                                            messageRender={renderMarkdown}
+                                            variant={msg.role === 'user' ? 'filled' : 'outlined'}
+                                            avatar={msg.role !== 'user' ? {
+                                                src: "/assets/assistant-avatar.svg"
+                                            } : undefined}
+                                        />
+                                    </div>
+                                )
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+                    </div>
+                )}
+
+                {(isIdentityConfirmed || currentConversation?.id) && (
+                    <div className="sender-container slide-in-up">
+                        <Sender
+                            disabled={loading || !currentConversation?.id}
+                            placeholder="有问题，随时问我"
+                            value={userInput}
+                            onChange={value => setUserInput(value)}
+                            onSubmit={() => {
+                                if (userInput.trim()) {
+                                    handleSendMessage(userInput);
+                                    setUserInput('');
+                                }
+                            }}
+                            actions={(oriNode) => (
+                                <div className="action-buttons">
+                                    <Tooltip title="语音输入">
+                                        <Button 
+                                            icon={<AudioOutlined />} 
+                                            onClick={handleVoiceButton}
+                                        />
+                                    </Tooltip>
+                                    <Tooltip title="上传图片">
+                                        <Upload
+                                            showUploadList={false}
+                                            beforeUpload={handleImageUpload}
+                                            accept=".jpg,.jpeg,.png,.gif"
+                                        >
+                                            <Button 
+                                                icon={<FileImageOutlined />}
+                                            />
+                                        </Upload>
+                                    </Tooltip>
+                                    <Tooltip title="上传报告">
+                                        <Upload
+                                            showUploadList={false}
+                                            beforeUpload={handleReportUpload}
+                                            accept=".pdf,.doc,.docx"
+                                        >
+                                            <Button 
+                                                icon={<FilePdfOutlined />}
+                                            />
+                                        </Upload>
+                                    </Tooltip>
+                                    {oriNode}
+                                </div>
+                            )}
+                        />
+
+                        {/* 隐藏的语音输入组件 */}
+                        <div style={{ display: 'none' }}>
+                            <VoiceInput
+                                onTranscript={handleVoiceInput}
+                                disabled={loading || !currentConversation?.id}
+                                buttonOnly={true}
+                            />
+      </div>
     </div>
+                )}
+
+                {/* Settings panel for accessibility and personalization */}
+                <SettingsPanel
+                    visible={settingsVisible}
+                    onClose={() => setSettingsVisible(false)}
+                />
+
+                {/* Loading indicator */}
+                {loading && (
+                    <div className="loading-indicator">
+                        <div className="loading-spinner" />
+                        <span className="loading-text">正在处理...</span>
+                    </div>
+                )}
+            </div>
+        </XProvider>
   );
 };
 

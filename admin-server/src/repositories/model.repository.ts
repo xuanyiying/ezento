@@ -15,16 +15,28 @@ export interface IModelRepository {
     updateModelParameters(id: string, parameters: ModelParameters): Promise<Model>;
 
     // 租户模型配置
-    findTenantModels(tenantId: string, page: number, limit: number): Promise<{ configs: TenantModelConfig[]; total: number }>;
+    findTenantModels(
+        tenantId: string,
+        page: number,
+        limit: number
+    ): Promise<{ configs: TenantModelConfig[]; total: number }>;
     findTenantModelConfig(tenantId: string, modelId: string): Promise<TenantModelConfig | null>;
     createTenantModelConfig(config: Partial<TenantModelConfig>): Promise<TenantModelConfig>;
-    updateTenantModelConfig(tenantId: string, modelId: string, config: Partial<TenantModelConfig>): Promise<TenantModelConfig>;
+    updateTenantModelConfig(
+        tenantId: string,
+        modelId: string,
+        config: Partial<TenantModelConfig>
+    ): Promise<TenantModelConfig>;
 
     // API密钥管理
     findAllApiKeys(page: number, limit: number): Promise<{ keys: ApiKey[]; total: number }>;
     findApiKeyById(id: string): Promise<ApiKey | null>;
-    findApiKeysByTenant(tenantId: string, page: number, limit: number): Promise<{ keys: ApiKey[]; total: number }>;
+    findApiKeysByTenant(
+        tenantId: string,
+        page: number,
+        limit: number
+    ): Promise<{ keys: ApiKey[]; total: number }>;
     createApiKey(apiKey: Partial<ApiKey>): Promise<ApiKey>;
     deleteApiKey(id: string): Promise<void>;
     rotateApiKey(id: string): Promise<ApiKey>;
-} 
+}

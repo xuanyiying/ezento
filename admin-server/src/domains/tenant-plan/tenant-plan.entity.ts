@@ -12,4 +12,4 @@ export interface TenantPlan {
     };
     createdAt: Date;
     updatedAt: Date;
-} 
+}

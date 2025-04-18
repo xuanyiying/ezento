@@ -29,4 +29,4 @@ router.get('/tenants/:tenantId/records', rechargeController.getRechargeRecordsBy
 router.get('/users/:userId/records', rechargeController.getRechargeRecordsByUser);
 router.post('/records', rechargeController.createRechargeRecord);
 
-export default router; 
+export default router;

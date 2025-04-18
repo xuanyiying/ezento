@@ -3,7 +3,7 @@ import { ModelService } from '../services/model.service';
 import { ApiError } from '../middlewares/errorHandler';
 
 export class ModelController {
-    constructor(private modelService: ModelService) { }
+    constructor(private modelService: ModelService) {}
 
     // 模型管理
     /**
@@ -554,7 +554,11 @@ export class ModelController {
     configureTenantModel = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { tenantId, modelId } = req.params;
-            const config = await this.modelService.configureTenantModel(tenantId, modelId, req.body);
+            const config = await this.modelService.configureTenantModel(
+                tenantId,
+                modelId,
+                req.body
+            );
             res.json(config);
         } catch (error) {
             next(error);
@@ -890,4 +894,4 @@ export class ModelController {
     };
 
     // 推理历史方法已移除，因为不再支持相关功能
-} 
+}

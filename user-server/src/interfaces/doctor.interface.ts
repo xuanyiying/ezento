@@ -1,13 +1,22 @@
-import { Document, Model, Types } from 'mongoose';
-import { UserDocument } from './user.interface';
+import { Document, Types } from 'mongoose';
+
+/**
+ * 可用时间段接口
+ */
+export interface AvailableTime {
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+}
 
 /**
  * 医生文档接口
  * 描述MongoDB中的医生文档结构
  */
 export interface DoctorBase {
-    userId: Types.ObjectId | UserDocument;
-    departmentId: Types.ObjectId;
+    id: string;
+    userId: string;
+    departmentId: string;
     title: string;
     specialties: string[];
     introduction: string;
@@ -16,22 +25,15 @@ export interface DoctorBase {
     rating: number;
     consultationCount: number;
     goodReviewRate: number;
-    availableTimes: Array<{
-        dayOfWeek: number;
-        startTime: string;
-        endTime: string;
-    }>;
-    thirdPartyId?: string;
+    availableTimes: Types.Array<AvailableTime>;
+    thirdPartyId?: string | null;
     createdAt: Date;
     updatedAt: Date;
 }
 
-export interface DoctorDocument extends Document<Types.ObjectId, {}, DoctorBase>, DoctorBase {
-    _id: Types.ObjectId;
-}
-
-export interface DoctorModel extends Model<DoctorDocument> {
-    // Custom methods can be added here if needed
+export interface DoctorDocument extends Document, Omit<DoctorBase, 'id' | 'availableTimes'> {
+    id: string;
+    availableTimes: Types.Array<AvailableTime>;
 }
 
 /**
@@ -39,7 +41,7 @@ export interface DoctorModel extends Model<DoctorDocument> {
  * 创建医生记录时需要提供的数据
  */
 export interface DoctorCreateData {
-    userId?: Types.ObjectId;
+    userId?: string;
     userData?: {
         name: string;
         avatar?: string;
@@ -47,17 +49,13 @@ export interface DoctorCreateData {
         phone: string;
         isActive: boolean;
     };
-    departmentId: Types.ObjectId;
+    departmentId: string;
     title: string;
     specialties: string[];
     introduction: string;
     consultationFee: number;
     isAvailable?: boolean;
-    availableTimes?: Array<{
-        dayOfWeek: number;
-        startTime: string;
-        endTime: string;
-    }>;
+    availableTimes?: AvailableTime[];
 }
 
 /**
@@ -65,7 +63,7 @@ export interface DoctorCreateData {
  * 更新医生记录时需要提供的数据，所有字段均为可选
  */
 export interface DoctorUpdateData {
-    departmentId?: Types.ObjectId;
+    departmentId?: string;
     userData?: {
         name?: string;
         avatar?: string;
@@ -75,9 +73,5 @@ export interface DoctorUpdateData {
     introduction?: string;
     consultationFee?: number;
     isAvailable?: boolean;
-    availableTimes?: Array<{
-        dayOfWeek: number;
-        startTime: string;
-        endTime: string;
-    }>;
-} 
+    availableTimes?: AvailableTime[];
+}

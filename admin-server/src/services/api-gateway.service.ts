@@ -3,7 +3,7 @@ import { ApiGateway, ApiRoute, ApiKey, ApiLog } from '../domains/api-gateway/api
 import { ApiError } from '../middlewares/errorHandler';
 
 export class ApiGatewayService {
-    constructor(private apiGatewayRepository: IApiGatewayRepository) { }
+    constructor(private apiGatewayRepository: IApiGatewayRepository) {}
 
     // API网关管理
     async getGatewayById(id: string): Promise<ApiGateway> {
@@ -14,7 +14,11 @@ export class ApiGatewayService {
         return gateway;
     }
 
-    async getGatewaysByTenant(tenantId: string, page = 1, limit = 10): Promise<{ gateways: ApiGateway[]; total: number }> {
+    async getGatewaysByTenant(
+        tenantId: string,
+        page = 1,
+        limit = 10
+    ): Promise<{ gateways: ApiGateway[]; total: number }> {
         return this.apiGatewayRepository.findGatewaysByTenant(tenantId, page, limit);
     }
 
@@ -113,12 +117,20 @@ export class ApiGatewayService {
     }
 
     // API日志管理
-    async getLogsByGateway(gatewayId: string, page = 1, limit = 10): Promise<{ logs: ApiLog[]; total: number }> {
+    async getLogsByGateway(
+        gatewayId: string,
+        page = 1,
+        limit = 10
+    ): Promise<{ logs: ApiLog[]; total: number }> {
         await this.getGatewayById(gatewayId);
         return this.apiGatewayRepository.findLogsByGateway(gatewayId, page, limit);
     }
 
-    async getLogsByRoute(routeId: string, page = 1, limit = 10): Promise<{ logs: ApiLog[]; total: number }> {
+    async getLogsByRoute(
+        routeId: string,
+        page = 1,
+        limit = 10
+    ): Promise<{ logs: ApiLog[]; total: number }> {
         await this.getRouteById(routeId);
         return this.apiGatewayRepository.findLogsByRoute(routeId, page, limit);
     }
@@ -176,4 +188,4 @@ export class ApiGatewayService {
             throw new ApiError(400, 'API Key value is required');
         }
     }
-} 
+}

@@ -11,36 +11,32 @@ const options: swaggerJsdoc.Options = {
             description: 'E诊通应用程序API文档',
             contact: {
                 name: 'API Support',
-                email: 'support@ezento.com'
-            }
+                email: 'support@ezento.com',
+            },
         },
         servers: [
             {
                 url: '/api',
-                description: 'API Server'
-            }
+                description: 'API Server',
+            },
         ],
         components: {
             securitySchemes: {
                 bearerAuth: {
                     type: 'http',
                     scheme: 'bearer',
-                    bearerFormat: 'JWT'
-                }
-            }
+                    bearerFormat: 'JWT',
+                },
+            },
         },
         security: [
             {
-                bearerAuth: []
-            }
-        ]
+                bearerAuth: [],
+            },
+        ],
     },
     // Path to the API docs
-    apis: [
-        './src/controllers/*.ts',
-        './src/routes/*.ts',
-        './src/models/*.ts'
-    ]
+    apis: ['./src/controllers/*.ts', './src/routes/*.ts', './src/models/*.ts'],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
@@ -48,8 +44,8 @@ const swaggerSpec = swaggerJsdoc(options);
 const specs = swaggerJsdoc(options);
 
 export default function apiDocs() {
-  const router = express.Router();
-  router.use('/', swaggerUi.serve);
-  router.get('/', swaggerUi.setup(specs));
-  return router;
+    const router = express.Router();
+    router.use('/', swaggerUi.serve);
+    router.get('/', swaggerUi.setup(specs));
+    return router;
 }

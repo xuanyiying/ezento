@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 
 export class AuthController {
-    constructor(private userService: UserService) { }
+    constructor(private userService: UserService) {}
 
     /**
      * @swagger
@@ -98,12 +98,12 @@ export class AuthController {
                 name: user.name,
                 email: user.email,
                 role: user.role,
-                tenantId: user.tenantId
+                tenantId: user.tenantId,
             };
 
             res.json({
                 token,
-                user: userResponse
+                user: userResponse,
             });
         } catch (error) {
             next(error);
@@ -159,11 +159,11 @@ export class AuthController {
                 name: user.name,
                 email: user.email,
                 role: user.role,
-                tenantId: user.tenantId
+                tenantId: user.tenantId,
             };
 
             res.json({
-                user: userResponse
+                user: userResponse,
             });
         } catch (error) {
             next(error);
@@ -179,7 +179,7 @@ export class AuthController {
         const payload = {
             userId: user.id,
             tenantId: user.tenantId,
-            role: user.role
+            role: user.role,
         };
 
         // 从环境变量获取密钥
@@ -191,4 +191,4 @@ export class AuthController {
         // 生成令牌，设置过期时间为24小时
         return jwt.sign(payload, secret, { expiresIn: '24h' });
     }
-} 
+}

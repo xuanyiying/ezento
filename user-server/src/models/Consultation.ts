@@ -1,11 +1,15 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import { UserDocument } from '../interfaces/user.interface';
-import { ConsultationType, ConsultationStatus, IAiSuggestion } from '../interfaces/consultation.interface';
+import {
+    ConsultationType,
+    ConsultationStatus,
+    IAiSuggestion,
+} from '../interfaces/consultation.interface';
 
 export interface IConsultation extends Document {
-    userId: UserDocument['_id'] | UserDocument;
+    id: string;
+    userId: string;
     consultationType: ConsultationType;
-    symptoms: string;
+    symptoms?: string;
     bodyParts?: string[];
     duration?: string;
     existingConditions?: string[];
@@ -22,16 +26,20 @@ export interface IConsultation extends Document {
     startTime: Date;
     endTime?: Date;
     aiSuggestion?: IAiSuggestion;
-    conversationId?: Schema.Types.ObjectId;
+    conversationId?: string;
     createdAt: Date;
     updatedAt: Date;
 }
 
 const ConsultationSchema: Schema = new Schema(
     {
+        id: {
+            type: String,
+            required: true,
+            unique: true,
+        },
         userId: {
-            type: Schema.Types.ObjectId,
-            ref: 'User',
+            type: String,
             required: true,
         },
         consultationType: {
@@ -41,7 +49,7 @@ const ConsultationSchema: Schema = new Schema(
         },
         symptoms: {
             type: String,
-            required: true,
+            required: false,
         },
         bodyParts: {
             type: [String],
@@ -97,8 +105,7 @@ const ConsultationSchema: Schema = new Schema(
             type: Date,
         },
         conversationId: {
-            type: Schema.Types.ObjectId,
-            ref: 'Conversation',
+            type: String,
         },
         aiSuggestion: {
             possibleConditions: { type: String },
@@ -117,4 +124,4 @@ ConsultationSchema.index({ status: 1 });
 ConsultationSchema.index({ consultationType: 1 });
 ConsultationSchema.index({ conversationId: 1 });
 
-export const Consultation = mongoose.model<IConsultation>('Consultation', ConsultationSchema); 
+export const Consultation = mongoose.model<IConsultation>('Consultation', ConsultationSchema);

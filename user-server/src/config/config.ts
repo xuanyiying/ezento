@@ -1,20 +1,21 @@
 import dotenv from 'dotenv';
 import winston from 'winston';
+
 dotenv.config();
 
 // 创建配置日志记录器
 const configLogger = winston.createLogger({
-  level: 'info',
-  format: winston.format.combine(
-      winston.format.timestamp(),
-      winston.format.printf(({ timestamp, level, message }) => {
-          return `[${timestamp}] ${level.toUpperCase()}: ${message}`;
-      })
-  ),
-  transports: [
-      new winston.transports.Console(),
-      new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-  ],
+    level: 'info',
+    format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.printf(({ timestamp, level, message }) => {
+            return `[${timestamp}] ${level.toUpperCase()}: ${message}`;
+        })
+    ),
+    transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
+    ],
 });
 
 export interface Config {
@@ -32,18 +33,18 @@ export interface Config {
     logDir: string;
 
     // AI 服务配置
-    aiModel: 'alibaba' | 'ollama' | 'deepseek';  // 使用的AI模型类型
-    aiModelName: string;                          // 模型名称
-    aiApiEndpoint: string;                        // AI API接口地址
-    aiApiKey: string;                             // AI API密钥
-    aiApiStream: boolean;                         // 是否使用流式响应
-    aiApiSystemPrompt: string;                    // 系统提示词
-    aiApiMaxTokens: number;                       // 最大生成token数
-    aiApiTemperature: number;                     // 温度参数
-    aiApiTopP: number;                            // Top-p采样参数
-    aiApiTopK: number;                            // Top-k采样参数
-    aiApiRepeatPenalty: number;                   // 重复惩罚参数
-    aiApiRepeatPenaltyFrequency: number;          // 重复惩罚频率
+    aiModel: 'alibaba' | 'ollama' | 'deepseek'; // 使用的AI模型类型
+    aiModelName: string; // 模型名称
+    aiApiEndpoint: string; // AI API接口地址
+    aiApiKey: string; // AI API密钥
+    aiApiStream: boolean; // 是否使用流式响应
+    aiApiSystemPrompt: string; // 系统提示词
+    aiApiMaxTokens: number; // 最大生成token数
+    aiApiTemperature: number; // 温度参数
+    aiApiTopP: number; // Top-p采样参数
+    aiApiTopK: number; // Top-k采样参数
+    aiApiRepeatPenalty: number; // 重复惩罚参数
+    aiApiRepeatPenaltyFrequency: number; // 重复惩罚频率
 
     // 文件上传配置
     uploadDir: string;
@@ -115,7 +116,7 @@ const config: Config = {
     wechatAppSecret: process.env.WECHAT_APP_SECRET || '',
     wechatToken: process.env.WECHAT_TOKEN || '',
     wechatEncodingAESKey: process.env.WECHAT_ENCODING_AES_KEY || '',
-    
+
     // redis 配置
     redisHost: process.env.REDIS_HOST || 'localhost',
     redisPort: parseInt(process.env.REDIS_PORT || '6379'),
@@ -124,11 +125,12 @@ const config: Config = {
 };
 
 // 记录配置信息
-configLogger.info('配置已加载，核心配置：' + 
-  `\nMongoDB: ${config.mongoURI}` +
-  `\nAI模型: ${config.aiModel}` +
-  `\nMinIO: ${config.minioEndpoint}` +
-  `\nRedis: ${config.redisHost}:${config.redisPort}`
+configLogger.info(
+    '配置已加载，核心配置：' +
+        `\nMongoDB: ${config.mongoURI}` +
+        `\nAI模型: ${config.aiModel}` +
+        `\nMinIO: ${config.minioEndpoint}` +
+        `\nRedis: ${config.redisHost}:${config.redisPort}`
 );
 
-export default config; 
+export default config;
