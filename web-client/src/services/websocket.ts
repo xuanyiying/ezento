@@ -273,7 +273,7 @@ class WebSocketService {
                 const safeConversation = {
                     ...conversation,
                     messages: Array.isArray(conversation.messages) ? conversation.messages : [],
-                    type: conversation.type || 'PRE_DIAGNOSIS',
+                    type: conversation.type || 'DIAGNOSIS',
                     status: conversation.status || 'ACTIVE',
                     startTime: conversation.startTime || new Date().toISOString(),
                     referenceId: conversation.referenceId || '',
@@ -342,7 +342,7 @@ class WebSocketService {
         const state = store.getState() as any;
         const msgConversationId = conversationId || state.conversation?.currentConversation?.id;
         const msgConversationType =
-            type || state.conversation?.currentConversation?.type || 'PRE_DIAGNOSIS';
+            type || state.conversation?.currentConversation?.type || 'DIAGNOSIS';
 
         if (!msgConversationId) {
             console.error('找不到会话ID，无法发送消息');

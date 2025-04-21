@@ -31,7 +31,7 @@ const router = express.Router();
  *             properties:
  *               type:
  *                 type: string
- *                 enum: [PRE_DIAGNOSIS, GUIDE, REPORT]
+ *                 enum: [DIAGNOSIS, GUIDE, REPORT]
  *                 description: 会话类型
  *               referenceId:
  *                 type: string
@@ -105,7 +105,7 @@ router.post('/:conversationId/messages', auth, ConversationController.addMessage
  *         required: true
  *         schema:
  *           type: string
- *           enum: [PRE_DIAGNOSIS, GUIDE, REPORT]
+ *           enum: [DIAGNOSIS, GUIDE, REPORT]
  *         description: 会话类型
  *       - in: path
  *         name: referenceId
