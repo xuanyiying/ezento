@@ -5,6 +5,7 @@ import { ResponseUtil } from '../utils/responseUtil';
 import { logger } from '../utils/logger';
 import path from 'path';
 import fs from 'fs';
+import { Conversation } from '../models';
 
 /**
  * 会话控制器
@@ -15,13 +16,13 @@ class ConversationController {
      * 创建或获取会话
      * 根据会话类型和关联ID创建新会话或获取已存在的会话
      *
-     * @param req - 请求对象，包含conversationType、referenceId和initialMessage参数
+     * @param req - 请求对象，包含type、referenceId和initialMessage参数
      * @param res - 响应对象
      */
     static async createOrGetConversation(req: Request, res: Response): Promise<void> {
         try {
             // 从请求体中获取参数
-            const { conversationType, initialMessage } = req.body;
+            const { type, initialMessage } = req.body;
             const userId = req.user?.userId;
 
             // 验证权限和必要参数
@@ -30,7 +31,7 @@ class ConversationController {
                 return;
             }
 
-            if (!conversationType) {
+            if (!type) {
                 ResponseUtil.error(res, 400, '会话类型不能为空');
                 return;
             }
@@ -38,7 +39,7 @@ class ConversationController {
             // 创建或获取会话
             try {
                 const conversationData = {
-                    conversationType,
+                    type,
                     userId,
                     initialMessage,
                 };
@@ -214,32 +215,91 @@ class ConversationController {
      * 下载导出的会话文件
      * 提供已导出的会话文件下载
      *
-     * @param req - 请求对象，包含filename参数
+     * @param req - 请求对象，包含filePath参数
      * @param res - 响应对象
      */
     static async downloadExportedFile(req: Request, res: Response): Promise<Response | void> {
         try {
-            const { filename } = req.params;
+            const { filePath } = req.params;
             const userId = req.user?.userId;
 
             if (!userId) {
-                return ResponseUtil.unauthorized(res, '未授权，请先登录');
+                ResponseUtil.unauthorized(res, '未授权，请先登录');
+                return;
             }
 
-            // 构建导出文件路径
+            // 验证文件路径是否合法
             const exportDir = path.join(__dirname, '../../exports');
-            const filePath = path.join(exportDir, filename);
+            const fullPath = path.join(exportDir, filePath);
 
             // 检查文件是否存在
-            if (!fs.existsSync(filePath)) {
-                return ResponseUtil.notFound(res, '未找到文件');
+            if (!fs.existsSync(fullPath)) {
+                ResponseUtil.notFound(res, '文件不存在');
+                return;
             }
 
-            // 发送文件
-            return res.download(filePath);
+            // 返回文件
+            return res.download(fullPath);
         } catch (error) {
             logger.error('下载导出文件失败', error);
-            return ResponseUtil.serverError(res, '下载导出文件失败');
+            ResponseUtil.serverError(res, '下载导出文件失败');
+        }
+    }
+
+    /**
+     * 获取用户的所有会话
+     * 返回当前登录用户的所有会话列表
+     * 
+     * @param req - 请求对象
+     * @param res - 响应对象
+     */
+    static async getUserConversations(req: Request, res: Response): Promise<void> {
+        try {
+            const userId = req.user?.userId;
+            if (!userId) {
+                ResponseUtil.unauthorized(res, '未授权，请先登录');
+                return;
+            }
+
+            const conversations = await ConversationService.getUserConversations(userId);
+            ResponseUtil.success(res, conversations);
+        } catch (error) {
+            logger.error('获取用户会话列表失败', error);
+            ResponseUtil.serverError(res, '获取用户会话列表失败');
+        }
+    }
+
+    /**
+     * 删除会话
+     */
+    static async deleteConversation(req: Request, res: Response): Promise<void> {
+        try {
+            const { conversationId } = req.params;
+            const userId = req.user?.userId;
+
+            if (!userId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
+
+            // 检查会话是否存在且属于当前用户
+            const conversation = await Conversation.findOne({
+                id: conversationId,
+                userId
+            });
+
+            if (!conversation) {
+                res.status(404).json({ error: 'Conversation not found' });
+                return;
+            }
+
+            // 删除会话
+            await Conversation.deleteOne({ id: conversationId });
+
+            res.json({ message: 'Conversation deleted successfully' });
+        } catch (error) {
+            console.error('Error deleting conversation:', error);
+            res.status(500).json({ error: 'Failed to delete conversation' });
         }
     }
 }

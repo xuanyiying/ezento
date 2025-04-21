@@ -72,6 +72,7 @@ class DepartmentController {
                 status,
                 parentId,
                 order,
+                id: ''
             };
 
             const department = await DepartmentService.createDepartment(departmentData);

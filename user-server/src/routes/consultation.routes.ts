@@ -25,11 +25,11 @@ const router = express.Router();
  *           schema:
  *             type: object
  *             required:
- *               - consultationType
+ *               - type
  *               - symptoms
  *               - fee
  *             properties:
- *               consultationType:
+ *               type:
  *                 type: string
  *                 enum: [PRE_DIAGNOSIS, GUIDE, REPORT_INTERPRETATION]
  *               symptoms:
@@ -66,7 +66,7 @@ router.post('/', auth, ConsultationController.createConsultation);
  *         schema:
  *           type: string
  *       - in: query
- *         name: consultationType
+ *         name: type
  *         schema:
  *           type: string
  *           enum: [PRE_DIAGNOSIS, GUIDE, REPORT_INTERPRETATION]

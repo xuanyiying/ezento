@@ -26,10 +26,10 @@ const router = express.Router();
  *           schema:
  *             type: object
  *             required:
- *               - conversationType
+ *               - type
  *               - referenceId
  *             properties:
- *               conversationType:
+ *               type:
  *                 type: string
  *                 enum: [PRE_DIAGNOSIS, GUIDE, REPORT]
  *                 description: 会话类型
@@ -92,7 +92,7 @@ router.post('/:conversationId/messages', auth, ConversationController.addMessage
 
 /**
  * @swagger
- * /conversations/{conversationType}/{referenceId}/history:
+ * /conversations/{type}/{referenceId}/history:
  *   get:
  *     summary: 获取会话历史
  *     description: 获取指定类型和关联ID的会话历史记录
@@ -101,7 +101,7 @@ router.post('/:conversationId/messages', auth, ConversationController.addMessage
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: conversationType
+ *         name: type
  *         required: true
  *         schema:
  *           type: string
@@ -124,6 +124,25 @@ router.post('/:conversationId/messages', auth, ConversationController.addMessage
  *         description: 服务器错误
  */
 router.get('/:conversationId', auth, ConversationController.getConversationHistory);
+
+/**
+ * @swagger
+ * /conversations/user/all:
+ *   get:   
+ *     summary: 获取用户的所有会话
+ *     description: 获取当前登录用户的所有会话列表
+ *     tags: [Conversation]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功获取用户会话列表
+ *       401:
+ *         description: 未授权
+ *       500:
+ *         description: 服务器错误
+ */
+router.get('/user/all', auth, ConversationController.getUserConversations);
 
 /**
  * @swagger
@@ -187,5 +206,33 @@ router.put('/:conversationId/close', auth, ConversationController.closeConversat
  *         description: 服务器错误
  */
 router.get('/:conversationId/export', auth, ConversationController.exportConversation);
+
+/**
+ * @swagger
+ * /conversations/{conversationId}:
+ *   delete:
+ *     summary: 删除会话
+ *     description: 删除指定的会话
+ *     tags: [Conversation]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: conversationId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 会话ID
+ *     responses:
+ *       200:
+ *         description: 会话成功删除
+ *       400:
+ *         description: 请求参数错误
+ *       404:
+ *         description: 会话不存在
+ *       500:
+ *         description: 服务器错误
+ */
+router.delete('/:conversationId', auth, ConversationController.deleteConversation);
 
 export default router;

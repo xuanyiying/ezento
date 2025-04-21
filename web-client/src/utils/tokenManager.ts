@@ -22,14 +22,20 @@ export class TokenManager {
     static removeTokens(): void {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(REFRESH_TOKEN_KEY);
+        localStorage.removeItem(CSRF_TOKEN_KEY);
+        localStorage.removeItem('user');
+        window.dispatchEvent(new Event('storage'));
     }
 
     static isTokenExpired(token: string): boolean {
         try {
             const decoded = jwtDecode<TokenPayload>(token);
             const currentTime = Date.now() / 1000;
-            return decoded.exp < currentTime;
-        } catch {
+            
+            const earlyExpirationTime = 5 * 60; // 5 minutes in seconds
+            return decoded.exp < (currentTime + earlyExpirationTime);
+        } catch (error) {
+            console.error('解析token失败:', error);
             throw new InvalidTokenError();
         }
     }
@@ -37,7 +43,8 @@ export class TokenManager {
     static getTokenPayload(token: string): TokenPayload {
         try {
             return jwtDecode<TokenPayload>(token);
-        } catch {
+        } catch (error) {
+            console.error('获取token payload失败:', error);
             throw new InvalidTokenError();
         }
     }
@@ -45,10 +52,40 @@ export class TokenManager {
     static validateToken(): void {
         const token = this.getToken();
         if (!token) {
+            console.error('Token不存在');
             throw new InvalidTokenError();
         }
-        if (this.isTokenExpired(token)) {
-            throw new TokenExpiredError();
+        
+        try {
+            const decoded = jwtDecode<TokenPayload>(token);
+            const currentTime = Date.now() / 1000;
+            
+            if (decoded.exp < currentTime) {
+                console.error('Token已过期');
+                throw new TokenExpiredError();
+            }
+            
+            if (!decoded.userId) {
+                console.error('Token缺少必要的信息');
+                throw new InvalidTokenError();
+            }
+        } catch (error) {
+            if (error instanceof TokenExpiredError) {
+                throw error;
+            }
+            console.error('验证token时发生错误:', error);
+            throw new InvalidTokenError();
+        }
+    }
+
+    static isLoggedIn(): boolean {
+        const token = this.getToken();
+        if (!token) return false;
+        
+        try {
+            return !this.isTokenExpired(token);
+        } catch (error) {
+            return false;
         }
     }
 

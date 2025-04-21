@@ -99,7 +99,7 @@ export interface GenerateTextOptions {
     stream?: boolean;
     reportInfo?: ReportInfo;
     messages?: Array<{ role: 'user' | 'system'; content: string }>;
-    consultationType?: string;
+    type?: string;
 }
 
 export interface GenerateTextResponse {

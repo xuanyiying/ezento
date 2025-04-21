@@ -1,7 +1,7 @@
-export enum ConversationType {
-    PRE_DIAGNOSIS = 'PRE_DIAGNOSIS',
+export enum Types {
+    DIAGNOSIS = 'DIAGNOSIS',
     GUIDE = 'GUIDE',
-    REPORT_INTERPRETATION = 'REPORT',
+    REPORT = 'REPORT',
 }
 
 export interface Message {
@@ -18,10 +18,16 @@ export interface Conversation {
     conversationId: string;
     consultationId: string;
     id: string;
-    type: ConversationType;
+    userId?: string;  // 用户ID
+    type: Types;
     referenceId: string;
     patientId: string;
     messages: Message[];
     status: 'ACTIVE' | 'CLOSED';
     startTime: string;
+    updateTime?: string;  // 会话更新时间
+    timestamp?: string; // ISO timestamp for the conversation
+    title?: string; // Custom title for the conversation
+    pinned?: boolean; // Whether the conversation is pinned to the top
+    favorite?: boolean; // Whether the conversation is marked as favorite
 }

@@ -1,5 +1,5 @@
-import { get, post, put } from '@/utils/http';
-import { ConversationType, Message, Conversation } from '@/types/conversation';
+import { get, post, put, del } from '@/utils/http';
+import { Types, Message, Conversation } from '@/types/conversation';
 
 const API_URL = '/conversations';
 
@@ -10,38 +10,8 @@ export interface ApiResponse<T> {
     data: T;
 }
 
-export const createOrGetConversation = async (
-    conversationType: ConversationType,
-    referenceId: string,
-    initialMessage?: string
-): Promise<Conversation> => {
-    const response = await post<ApiResponse<Conversation>>(API_URL, {
-        conversationType,
-        referenceId,
-        initialMessage,
-    });
-    return response.data;
-};
-
-export const addMessage = async (conversationId: string, content: string): Promise<Message> => {
-    const response = await post<ApiResponse<Message>>(`${API_URL}/${conversationId}/messages`, {
-        content,
-    });
-    return response.data;
-};
-
-export const getConversationHistory = async (conversationId: string): Promise<Conversation> => {
-    const response = await get<ApiResponse<Conversation>>(`${API_URL}/${conversationId}`);
-    return response.data;
-};
-
-export const closeConversation = async (conversationId: string): Promise<Conversation> => {
-    const response = await put<ApiResponse<Conversation>>(`${API_URL}/${conversationId}/close`);
-    return response.data;
-};
-
 export interface CreateConversationRequest {
-    conversationType: ConversationType;
+    type: Types;
     referenceId: string;
     userId: string;
     initialMessage?: string;
@@ -74,6 +44,16 @@ export const ConversationAPI = {
         }
     },
 
+    getUserConversations: async (): Promise<Conversation[]> => {
+        try {
+            const response = await get<ApiResponse<Conversation[]>>(`${API_URL}/user/all`);
+            return response.data;
+        } catch (error) {
+            console.error('Error getting user conversations:', error);
+            throw error;
+        }
+    },
+
     addMessage: async (
         conversationId: string,
         params: AddMessageRequest
@@ -92,13 +72,13 @@ export const ConversationAPI = {
     },
 
     getConversationHistory: async (
-        conversationType: string,
+        type: string,
         referenceId: string
     ): Promise<Conversation> => {
         try {
-            console.log(`Getting conversation history for ${conversationType}/${referenceId}`);
+            console.log(`Getting conversation history for ${type}/${referenceId}`);
             const response = await get<ApiResponse<Conversation>>(
-                `${API_URL}/${conversationType}/${referenceId}/history`
+                `${API_URL}/${type}/${referenceId}/history`
             );
             return response.data;
         } catch (error) {
@@ -116,7 +96,22 @@ export const ConversationAPI = {
             throw error;
         }
     },
-
+    deleteConversation: async (conversationId: string): Promise<void> => {
+        try {
+            await del<ApiResponse<void>>(`${API_URL}/${conversationId}`);
+        } catch (error) {
+            console.error('Error deleting conversation:', error);
+            throw error;        
+        }
+    },
+    renameConversation: async (conversationId: string, newName: string): Promise<void> => {
+        try {
+            await put<ApiResponse<void>>(`${API_URL}/${conversationId}/rename`, { newName });
+        } catch (error) {
+            console.error('Error renaming conversation:', error);
+            throw error;
+        }
+    },
     exportConversation: async (
         conversationId: string,
         format: 'PDF' | 'TEXT' = 'PDF'
@@ -132,6 +127,25 @@ export const ConversationAPI = {
             return response.data;
         } catch (error) {
             console.error('Error exporting conversation:', error);
+            throw error;
+        }
+    },
+    updateConversation: async (
+        conversationId: string,
+        data: {
+            title?: string;
+            favorite?: boolean;
+            status?: 'ACTIVE' | 'CLOSED';
+        }
+    ): Promise<void> => {
+        try {
+            console.log(`更新会话 ${conversationId}:`, data);
+            await put<ApiResponse<void>>(
+                `${API_URL}/${conversationId}`,
+                data
+            );
+        } catch (error) {
+            console.error('更新会话失败:', error);
             throw error;
         }
     },

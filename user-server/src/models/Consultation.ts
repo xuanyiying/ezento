@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import {
-    ConsultationType,
+    Types,
     ConsultationStatus,
     IAiSuggestion,
 } from '../interfaces/consultation.interface';
@@ -8,7 +8,7 @@ import {
 export interface IConsultation extends Document {
     id: string;
     userId: string;
-    consultationType: ConsultationType;
+    type: Types;
     symptoms?: string;
     bodyParts?: string[];
     duration?: string;
@@ -42,9 +42,9 @@ const ConsultationSchema: Schema = new Schema(
             type: String,
             required: true,
         },
-        consultationType: {
+        type: {
             type: String,
-            enum: Object.values(ConsultationType),
+            enum: Object.values(Types),
             required: true,
         },
         symptoms: {
@@ -121,7 +121,7 @@ const ConsultationSchema: Schema = new Schema(
 // Create indexes for faster queries
 ConsultationSchema.index({ userId: 1, createdAt: -1 });
 ConsultationSchema.index({ status: 1 });
-ConsultationSchema.index({ consultationType: 1 });
+ConsultationSchema.index({ type: 1 });
 ConsultationSchema.index({ conversationId: 1 });
 
 export const Consultation = mongoose.model<IConsultation>('Consultation', ConsultationSchema);

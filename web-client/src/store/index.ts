@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import conversationReducer from './slices/conversationSlice';
 import authReducer from './slices/authSlice';
+import userReducer from './slices/userSlice';
 import { createSlice } from '@reduxjs/toolkit';
 import { User } from '@/types';
 
@@ -79,9 +80,9 @@ export const { setToken, clearToken } = tokenSlice.actions;
 export const store = configureStore({
     reducer: {
         conversation: conversationReducer,
-        authUser: userSlice.reducer,
         auth: authReducer,
         authToken: tokenSlice.reducer,
+        user: userReducer,
     },
 });
 

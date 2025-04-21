@@ -54,8 +54,19 @@ export class AuthController {
                     { expiresIn: '24h' }
                 );
 
+                // 生成刷新令牌
+                const refreshToken = jwt.sign(
+                    {
+                        userId: user._id,
+                        role: user.role,
+                    },
+                    process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key',
+                    { expiresIn: '7d' }
+                );
+
                 const responseData = {
                     token,
+                    refreshToken,
                     user: {
                         userId: user._id,
                         role: user.role,
@@ -149,8 +160,19 @@ export class AuthController {
                 { expiresIn: '24h' }
             );
 
+            // 生成刷新令牌
+            const refreshToken = jwt.sign(
+                {
+                    userId: user?._id,
+                    role: user?.role,
+                },
+                process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key',
+                { expiresIn: '7d' }
+            );
+
             ResponseUtil.success(res, {
                 token,
+                refreshToken,
                 user: {
                     userId: user?._id,
                     role: user?.role,
@@ -350,6 +372,80 @@ export class AuthController {
         } catch (error: any) {
             logger.error(`登出错误: ${error.message}`);
             ResponseUtil.serverError(res, '登出失败，请稍后重试');
+        }
+    }
+
+    /**
+     * 刷新访问令牌
+     * 使用刷新令牌获取新的访问令牌
+     */
+    static async refreshToken(req: Request, res: Response): Promise<void> {
+        try {
+            const { refreshToken } = req.body;
+
+            if (!refreshToken) {
+                ResponseUtil.badRequest(res, '刷新令牌不能为空');
+                return;
+            }
+
+            try {
+                // 验证刷新令牌
+                const decoded = jwt.verify(
+                    refreshToken,
+                    process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key'
+                ) as { userId: string; role: string };
+
+                // 获取用户信息
+                const user = await UserService.findUserById(decoded.userId);
+                if (!user) {
+                    ResponseUtil.unauthorized(res, '用户不存在');
+                    return;
+                }
+
+                // 生成新的访问令牌
+                const newToken = jwt.sign(
+                    {
+                        userId: user._id,
+                        role: user.role,
+                    },
+                    process.env.JWT_SECRET || 'your-secret-key',
+                    { expiresIn: '24h' }
+                );
+
+                // 生成新的刷新令牌
+                const newRefreshToken = jwt.sign(
+                    {
+                        userId: user._id,
+                        role: user.role,
+                    },
+                    process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key',
+                    { expiresIn: '7d' }
+                );
+
+                // 确保响应格式与前端期望的格式一致
+                ResponseUtil.success(res, {
+                    token: newToken,
+                    refreshToken: newRefreshToken,
+                    user: {
+                        userId: user._id,
+                        role: user.role,
+                        name: user.name,
+                        avatar: user.avatar,
+                        email: user.email,
+                        phone: user.phone,
+                        gender: user.gender,
+                        birthDate: user.birthDate,
+                    }
+                });
+                
+                logger.info(`--用户 ${user.username || user._id} 刷新令牌成功`);
+            } catch (jwtError) {
+                logger.error(`刷新令牌验证失败: ${jwtError}`);
+                ResponseUtil.unauthorized(res, '刷新令牌无效或已过期');
+            }
+        } catch (error: any) {
+            logger.error(`刷新令牌错误: ${error.message}`);
+            ResponseUtil.serverError(res, '刷新令牌失败，请稍后重试');
         }
     }
 }

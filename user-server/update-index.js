@@ -24,17 +24,17 @@ async function updateIndex() {
       console.log('删除userId_1索引时发生错误（可能不存在）:', error.message);
     }
     
-    // 尝试删除conversationType+referenceId的唯一索引
+    // 尝试删除type+referenceId的唯一索引
     try {
-      await mongoose.connection.collection('conversations').dropIndex('conversationType_1_referenceId_1');
-      console.log('成功删除conversationType_1_referenceId_1索引');
+      await mongoose.connection.collection('conversations').dropIndex('type_1_referenceId_1');
+      console.log('成功删除type_1_referenceId_1索引');
     } catch (error) {
-      console.log('删除conversationType_1_referenceId_1索引时发生错误（可能不存在）:', error.message);
+      console.log('删除type_1_referenceId_1索引时发生错误（可能不存在）:', error.message);
     }
     
     // 创建非唯一索引
     await mongoose.connection.collection('conversations').createIndex(
-      { conversationType: 1, referenceId: 1 },
+      { type: 1, referenceId: 1 },
       { unique: false }
     );
     console.log('成功创建非唯一复合索引');

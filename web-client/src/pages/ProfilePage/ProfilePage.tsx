@@ -6,7 +6,7 @@ import type { Moment } from 'moment';
 
 // 类型定义
 interface UserProfile {
-    name: string;
+  name: string;
     gender: 'MALE' | 'FEMALE' | '';
     birthDate?: Moment;
     phone: string;
@@ -36,18 +36,18 @@ const ProfilePage: React.FC = () => {
             message.success('个人信息更新成功');
             setLoading(false);
         }, 1000);
-    };
-
-    return (
+  };
+  
+  return (
         <XProvider>
             <div className="profile-container">
                 <Typography.Title level={3}>个人资料</Typography.Title>
 
-                <div className="profile-header">
+        <div className="profile-header">
                     <Avatar size={80} icon={<UserOutlined />} />
                     <Button>更换头像</Button>
-                </div>
-
+        </div>
+        
                 <Form
                     form={form}
                     layout="vertical"
@@ -133,9 +133,9 @@ const ProfilePage: React.FC = () => {
                         </Button>
                     </Form.Item>
                 </Form>
-            </div>
+                  </div>
         </XProvider>
-    );
+  );
 };
 
 export default ProfilePage;

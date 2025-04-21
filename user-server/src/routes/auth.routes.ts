@@ -413,4 +413,44 @@ router.get('/user-info', auth, AuthController.getUserInfo);
  */
 router.post('/register', AuthController.register);
 
+/**
+ * @swagger
+ * /auth/refresh:
+ *   post:
+ *     summary: 刷新访问令牌
+ *     description: 使用刷新令牌获取新的访问令牌
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 description: 刷新令牌
+ *     responses:
+ *       200:
+ *         description: 令牌刷新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                   description: 新的访问令牌
+ *                 refreshToken:
+ *                   type: string
+ *                   description: 新的刷新令牌
+ *       401:
+ *         description: 刷新令牌无效或已过期
+ *       500:
+ *         description: 服务器错误
+ */
+router.post('/refresh', AuthController.refreshToken);
+
 export default router;

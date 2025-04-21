@@ -1,5 +1,5 @@
 import config from '../../config/config';
-import { ConversationType } from '../../interfaces/conversation.interface';
+import { Types } from '../../interfaces/conversation.interface';
 import logger from '../../utils/logger';
 import OCRService from '../ocr.service';
 import {
@@ -11,16 +11,6 @@ import {
     Message,
 } from './ai.interfaces';
 import { AIProviderFactory } from './ai.provider';
-
-/**
- * 咨询类型枚举
- */
-export enum ConsultationType {
-    PRE_DIAGNOSIS = 'PRE_DIAGNOSIS', // 问诊
-    GUIDE = 'GUIDE', // 导诊
-    REPORT_INTERPRETATION = 'REPORT_INTERPRETATION', // 报告解读
-    GENERAL = 'GENERAL', // 一般咨询
-}
 
 /**
  * 核心AI服务， 根据不同的会话类型构建不同场景的请求body
@@ -187,13 +177,13 @@ export class AiService {
     static async *generateStreamingResponse(
         userMessage: string,
         messages: Array<{ role: string; content: string }>,
-        conversationType: ConversationType,
+        type: Types,
         referenceId: string
     ): AsyncGenerator<string> {
         try {
             // 1. 准备上下文和系统提示
             const { systemPrompt, additionalContext } = await this.prepareContextByType(
-                conversationType,
+                type,
                 referenceId
             );
 
@@ -268,23 +258,23 @@ export class AiService {
      * 根据会话类型准备上下文和系统提示
      */
     private static async prepareContextByType(
-        conversationType: ConversationType,
+        type: Types,
         referenceId: string
     ): Promise<{ systemPrompt: string; additionalContext?: string }> {
         let systemPrompt = '';
         let additionalContext = '';
 
-        switch (conversationType) {
-            case ConversationType.PRE_DIAGNOSIS:
+        switch (type) {
+            case Types.DIAGNOSIS:
                 systemPrompt =
                     '你是一位经验丰富的医生助手，正在进行预问诊。请根据患者描述的症状提供专业的建议。';
                 break;
 
-            case ConversationType.GUIDE:
+            case Types.GUIDE:
                 systemPrompt = '你是一位导诊助手，帮助患者了解就医流程和科室选择。';
                 break;
 
-            case ConversationType.REPORT:
+            case Types.REPORT:
                 systemPrompt = '你是一位医学报告解读专家，帮助患者理解检查报告的内容和含义。';
                 // 如果是报告解读，获取报告文本
                 try {
@@ -338,7 +328,7 @@ export class AiService {
                 maxTokens = 2048,
                 temperature = 0.7,
                 messages = [],
-                consultationType,
+                type,
             } = options;
 
             // 构建增强提示
@@ -349,7 +339,7 @@ export class AiService {
 
             // 添加系统提示 (使用传入的systemPrompt或根据咨询类型获取)
             const finalSystemPrompt =
-                systemPrompt || (consultationType ? this.getSystemPrompt(consultationType) : '');
+                systemPrompt || (type ? this.getSystemPrompt(type) : '');
             if (finalSystemPrompt) {
                 formattedMessages.push({ role: 'system', content: finalSystemPrompt });
             }
@@ -387,9 +377,9 @@ export class AiService {
             });
 
             // 处理响应内容 - 根据咨询类型格式化
-            const responseContent = this.formatResponseByConsultationType(
+            const responseContent = this.formatResponseBytype(
                 response.content || '',
-                consultationType
+                type
             );
 
             // 构建结果
@@ -400,7 +390,7 @@ export class AiService {
             };
 
             logger.info(
-                `AI文本生成成功，长度: ${result.text.length}字节，类型: ${consultationType || ConsultationType.GENERAL}`
+                `AI文本生成成功，长度: ${result.text.length}字节，类型: ${type}`
             );
             return result;
         } catch (error: any) {
@@ -428,14 +418,14 @@ ${prompt}`;
 
     /**
      * 获取针对特定咨询类型的系统提示
-     * @param consultationType 咨询类型
+     * @param type 咨询类型
      * @returns 系统提示内容
      */
-    private static getSystemPrompt(consultationType?: string): string {
+    private static getSystemPrompt(type?: string): string {
         const basePrompt = '你是一位专业的医疗AI助手，名为"医小通"。';
 
-        switch (consultationType) {
-            case ConsultationType.PRE_DIAGNOSIS:
+        switch (type) {
+            case Types.DIAGNOSIS:
                 return `${basePrompt}
 你是一位经验丰富的医学专家，具有丰富的初步诊断经验。
 请根据患者提供的症状和信息进行初步分析，提出可能的病因，并给出合理的就医建议。
@@ -452,7 +442,7 @@ ${prompt}`;
 
 请保持专业、准确和谨慎。`;
 
-            case ConsultationType.GUIDE:
+            case Types.GUIDE:
                 return `${basePrompt}
 你是一位医院导诊专家，熟悉各科室职能和医生专长。
 请根据患者描述的症状和需求，提供以下信息：
@@ -464,7 +454,7 @@ ${prompt}`;
 
 请提供客观、清晰的指导，并注明这仅是一般性建议，具体诊疗应遵医嘱。`;
 
-            case ConsultationType.REPORT_INTERPRETATION:
+            case Types.REPORT:
                 return `${basePrompt}
 你是一位专业的医学影像/检验报告解读专家。
 请解读患者提供的医疗报告，并提供以下信息：
@@ -501,14 +491,14 @@ ${prompt}`;
         options: {
             stream?: boolean;
             chunkCallback?: (chunk: string) => void;
-            consultationType?: string | ConsultationType;
+            type?: string | Types;
         } = {}
     ): Promise<string> {
-        const { chunkCallback, consultationType } = options;
+        const { chunkCallback, type } = options;
 
         try {
             // 1. 准备系统提示
-            const systemPrompt = this.getSystemPrompt(consultationType);
+            const systemPrompt = this.getSystemPrompt(type);
 
             // 添加当前用户消息
             messages.push({ role: 'user', content: message });
@@ -535,9 +525,9 @@ ${prompt}`;
             }
 
             // 4. 根据咨询类型处理响应内容
-            responseContent = this.formatResponseByConsultationType(
+            responseContent = this.formatResponseBytype(
                 responseContent,
-                consultationType
+                type
             );
 
             return responseContent;
@@ -550,28 +540,28 @@ ${prompt}`;
     /**
      * 根据咨询类型格式化响应内容
      * @param content 原始响应内容
-     * @param consultationType 咨询类型
+     * @param type 咨询类型
      * @returns 格式化后的响应内容
      */
-    private static formatResponseByConsultationType(
+    private static formatResponseBytype(
         content: string,
-        consultationType?: string
+        type?: string
     ): string {
         // 确保content不为空，避免数据库验证错误
         if (!content || content.trim() === '') {
             return '抱歉，AI响应内容为空。请稍后再试或重新提问。';
         }
 
-        switch (consultationType) {
-            case ConsultationType.PRE_DIAGNOSIS:
+        switch (type) {
+            case Types.DIAGNOSIS:
                 // 问诊类型：格式化为标准病历格式
                 return this.formatMedicalRecord(content);
 
-            case ConsultationType.REPORT_INTERPRETATION:
+            case Types.REPORT:
                 // 报告解读类型：可以添加特定格式化处理
                 return content;
 
-            case ConsultationType.GUIDE:
+            case Types.GUIDE:
                 // 导诊类型：可以添加特定格式化处理
                 return content;
 

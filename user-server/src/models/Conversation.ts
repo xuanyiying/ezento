@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import { IConversation, ConversationType } from '../interfaces/conversation.interface';
+import { IConversation, Types } from '../interfaces/conversation.interface';
 
 /**
  * 会话Schema // 会话类型、关联ID、患者ID、消息列表、状态
@@ -14,9 +14,9 @@ const ConversationSchema: Schema = new Schema(
             type: String,
             required: true,
         },
-        conversationType: {
+        type: {
             type: String,
-            enum: Object.values(ConversationType),
+            enum: Object.values(Types),
             required: true,
         },
         consultationId: {
@@ -50,7 +50,7 @@ ConversationSchema.index({ userId: 1 });
 ConversationSchema.index({ createdAt: -1 });
 ConversationSchema.index({ status: 1 });
 // 添加复合索引
-ConversationSchema.index({ conversationType: 1, consultationId: 1 });
+ConversationSchema.index({ type: 1, consultationId: 1 });
 
 /**
  * 会话模型

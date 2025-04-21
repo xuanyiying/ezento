@@ -56,7 +56,7 @@ export class WebSocketController {
                 conversationId: string;
                 content: string;
                 metadata?: any;
-                conversationType: string;
+                type: string;
             }) => this.handleMessage(socket, data, userId)
         );
 
@@ -115,12 +115,12 @@ export class WebSocketController {
                 conversationId: string;
                 content: string;
                 metadata?: any;
-                conversationType: string;
+                type: string;
         },
         userId: string
     ): Promise<void> {
         try {
-            const { conversationId, content, conversationType } = data;
+            const { conversationId, content, type } = data;
             if (!conversationId || !content) {
                 throw new Error('Missing required fields');
             }
@@ -137,7 +137,7 @@ export class WebSocketController {
             // 创建或获取会话
             const conversation = await ConversationService.createOrGetConversation({
                 userId: userId,
-                conversationType: conversationType as ConversationType,
+                type: type as ConversationType,
                 initialMessage: content,
                 consultationId: conversationId,
             });
@@ -167,7 +167,7 @@ export class WebSocketController {
             });
 
             // 生成AI响应
-            await this.generateAiResponse(socket, conversation, conversationType);
+            await this.generateAiResponse(socket, conversation, type);
         } catch (error: any) {
             console.error('处理消息时出错:', error);
             socket.emit('error', { message: '处理消息时出错' });
@@ -176,13 +176,13 @@ export class WebSocketController {
 
     // 准备AI服务所需的上下文数据
     private static async prepareContextData(
-        conversationType: string,
+        type: string,
         metadata?: Record<string, any>
     ): Promise<any> {
         const additionalData: any = {};
 
         try {
-            if (conversationType === 'GUIDE') {
+            if (type === 'GUIDE') {
                 // 导诊需要科室和医生数据
                 const departments = await DepartmentService.getAllDepartments();
                 const doctors = await DoctorService.getAllDoctors();
@@ -193,7 +193,7 @@ export class WebSocketController {
                     `已加载导诊所需数据: ${departments.total}个科室, ${doctors.total}个医生`
                 );
             } else if (
-                conversationType === 'REPORT_INTERPRETATION' &&
+                type === 'REPORT_INTERPRETATION' &&
                 metadata &&
                 metadata.reportId
             ) {
@@ -219,26 +219,26 @@ export class WebSocketController {
     private static async generateAiResponse(
         socket: Socket,
         conversation: IConversation,
-        conversationType: string
+        type: string
     ): Promise<void> {
         try {
             logger.info(`开始调用AI处理服务...`);
 
             // 准备上下文数据
             const contextData = await this.prepareContextData(
-                conversationType,
+                type,
                 conversation.metadata
             );
 
             // 构建流式响应处理器
-            const streamHandler = this.createStreamHandler(conversation.id, conversationType);
+            const streamHandler = this.createStreamHandler(conversation.id, type);
             // 获取会话的消息记录
             const messages = await ConversationService.getConversationMessages(conversation.id);
             // 生成AI响应
             const aiResponse = await this.generateAIResponse(
                 messages.map(msg => msg.content),
                 conversation,
-                conversationType,
+                type,
                 streamHandler,
                 contextData
             );
@@ -254,7 +254,7 @@ export class WebSocketController {
                 message: aiMessage,
                 conversation: {
                     id: conversation.id,
-                    conversationType: conversation.conversationType,
+                    type: conversation.type,
                     consultationId: conversation.consultationId,
                 },
             });
@@ -268,7 +268,7 @@ export class WebSocketController {
                     message: aiMessage,
                     conversation: {
                         id: conversation.id,
-                        conversationType: conversation.conversationType,
+                        type: conversation.type,
                         consultationId: conversation.consultationId,
                     },
                 }
@@ -280,7 +280,7 @@ export class WebSocketController {
                 conversation.id,
                 messages.map(msg => msg.content),
                 aiMessage,
-                conversationType
+                type
             );
         } catch (error: any) {
             console.error('AI处理服务调用失败:', error);
@@ -291,7 +291,7 @@ export class WebSocketController {
     // 创建流式响应处理器
     private static createStreamHandler(
         conversationId: string,
-        conversationType: string
+        type: string
     ): (chunk: string) => void {
         return (chunk: string) => {
             try {
@@ -307,7 +307,7 @@ export class WebSocketController {
                 // 尝试发送数据块
                 WebSocketServer.emitToRoom(`conversation_${conversationId}`, 'ai_response_chunk', {
                     chunk,
-                    type: conversationType,
+                    type: type,
                 });
             } catch (error: any) {
                 logger.error(`发送AI响应数据块失败: ${error.message || error}`);
@@ -320,7 +320,7 @@ export class WebSocketController {
     private static async generateAIResponse(
         messages: string[],
         conversation: IConversation,
-        conversationType: string,
+        type: string,
         streamHandler: (chunk: string) => void,
         contextData: any
     ): Promise<string> {
@@ -330,7 +330,7 @@ export class WebSocketController {
             // 构造选项对象
             const options: any = {
                 chunkCallback: streamHandler,
-                consultationType: conversationType,
+                type: type,
             };
 
             // 如果有上下文数据，添加到选项中
@@ -382,7 +382,7 @@ export class WebSocketController {
         conversationId: string,
         userMessages: string[],
         aiMessage: IConversationMessage,
-        conversationType: string
+        type: string
     ): Promise<void> {
         try {
             logger.info(`准备添加消息对到会话...`);
@@ -427,7 +427,7 @@ export class WebSocketController {
                 'ai_response_complete',
                 { 
                     conversation: conversationWithMessages,
-                    conversationType,
+                    type,
                 }
             );
 
@@ -445,7 +445,7 @@ export class WebSocketController {
                     'ai_response_complete',
                     {
                         conversation: updatedConversation,
-                        conversationType,
+                        type,
                     }
                 );
             } catch (secondError: any) {

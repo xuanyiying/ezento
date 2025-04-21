@@ -2,8 +2,7 @@ import { Request, Response } from 'express';
 import ConsultationService from '../services/consultation.service';
 import { ResponseUtil } from '../utils/responseUtil';
 import { logger } from '../utils/logger';
-import { ConsultationType, ConsultationStatus } from '../interfaces/consultation.interface';
-import { generateConsultationId } from '../utils/idGenerator';
+import { Types, ConsultationStatus } from '../interfaces/consultation.interface';
 
 /**
  * 会诊控制器
@@ -16,7 +15,7 @@ class ConsultationController {
     static async createConsultation(req: Request, res: Response): Promise<void> {
         try {
             const {
-                consultationType,
+                type,
                 symptoms,
                 bodyParts,
                 duration,
@@ -31,22 +30,22 @@ class ConsultationController {
             } = req.body;
             const userId = req.user?.userId;
 
-            logger.info(`Creating consultation: type=${consultationType}, userId=${userId}`);
+            logger.info(`Creating consultation: type=${type}, userId=${userId}`);
 
-            if (!userId || !consultationType || !symptoms || !fee) {
+            if (!userId || !type || !symptoms || !fee) {
                 ResponseUtil.badRequest(res, '缺少必要参数');
                 return;
             }
 
             // 验证会诊类型是否有效
-            if (!Object.values(ConsultationType).includes(consultationType)) {
+            if (!Object.values(type).includes(type)) {
                 ResponseUtil.badRequest(res, '无效的会诊类型');
                 return;
             }
 
             const consultation = await ConsultationService.createConsultation({
                 userId: userId,
-                consultationType,
+                type,
                 symptoms,
                 bodyParts,
                 duration,
@@ -75,11 +74,11 @@ class ConsultationController {
      */
     static async getConsultationList(req: Request, res: Response): Promise<void> {
         try {
-            const { userId, consultationType, status, page, limit } = req.query;
+            const { userId, type, status, page, limit } = req.query;
 
             const result = await ConsultationService.getConsultationList({
                 userId: userId as string,
-                consultationType: consultationType as ConsultationType,
+                type: type as Types,
                 status: status as ConsultationStatus,
                 page: page ? parseInt(page as string) : undefined,
                 limit: limit ? parseInt(limit as string) : undefined,

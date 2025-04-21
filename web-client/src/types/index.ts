@@ -6,15 +6,18 @@ export interface ApiResponse<T> {
 }
 
 export interface User {
+    userId: string;
     gender: string | undefined;
     birthDate: string | undefined;
     phone: string | undefined;
-    userId: string;
     name?: string;
     role?: string;
     avatar?: string;
     tenantId?: string;
     email?: string;
+    isIdentityConfirmed?: boolean;
+    age?: number;
+    idCardNumber?: string;
 }
 
 // Pagination type

@@ -2,86 +2,53 @@ import { User } from '@/types';
 import { get, post } from '@/utils/http';
 import { TokenManager } from '@/utils/tokenManager';
 import {
-    LoginCredentials,
     LoginResponse,
-    UserInfoResponse,
     RefreshTokenResponse,
-    AuthError,
 } from '@/types/auth';
 import { ApiResponse } from './conversation';
 
-export const AuthAPI = {
-    login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
-        try {
-            const response = await post<ApiResponse<LoginResponse>>('/auth/login', credentials);
+interface LoginParams {
+    username: string;
+    password: string;
+}
 
-            if (response.success && response.data) {
-                const { token, refreshToken } = response.data;
-                TokenManager.setTokens(token, refreshToken);
-                return response.data;
-            } else {
-                throw new AuthError(response.message || 'Login failed', 'LOGIN_FAILED', 401);
-            }
+export const AuthAPI = {
+    login: async (params: LoginParams): Promise<LoginResponse> => {
+        try {
+            const response = await post<ApiResponse<LoginResponse>>('/auth/login', params);
+            return response.data;
         } catch (error) {
-            if (error instanceof AuthError) {
-                throw error;
-            }
-            throw new AuthError('Login failed', 'LOGIN_FAILED', 401);
+            console.error('Login error:', error);
+            throw error;
         }
     },
 
     logout: async (): Promise<void> => {
         try {
-            await post<ApiResponse<void>>('/auth/logout');
-        } finally {
-            TokenManager.removeTokens();
-            TokenManager.removeCsrfToken();
+            await post<ApiResponse<void>>('/auth/logout', {});
+        } catch (error) {
+            console.error('Logout error:', error);
+            throw error;
         }
     },
 
     refreshToken: async (refreshToken: string): Promise<RefreshTokenResponse> => {
         try {
-            const response = await post<ApiResponse<RefreshTokenResponse>>('/auth/refresh', {
-                refreshToken,
-            });
-
-            if (response.success && response.data) {
-                const { token, refreshToken: newRefreshToken } = response.data;
-                TokenManager.setTokens(token, newRefreshToken);
-                return response.data;
-            } else {
-                throw new AuthError(
-                    response.message || 'Token refresh failed',
-                    'REFRESH_FAILED',
-                    401
-                );
-            }
+            const response = await post<ApiResponse<RefreshTokenResponse>>('/auth/refresh', { refreshToken });
+            return response.data;
         } catch (error) {
-            if (error instanceof AuthError) {
-                throw error;
-            }
-            throw new AuthError('Token refresh failed', 'REFRESH_FAILED', 401);
+            console.error('Refresh token error:', error);
+            throw error;
         }
     },
 
     getUserInfo: async (): Promise<User> => {
         try {
-            const response = await get<ApiResponse<UserInfoResponse>>('/auth/user-info');
-
-            if (response.success && response.data) {
-                return response.data.user;
-            } else {
-                throw new AuthError(
-                    response.message || 'Failed to get user info',
-                    'USER_INFO_FAILED',
-                    500
-                );
-            }
+            const response = await get<ApiResponse<User>>('/auth/user-info');
+            return response.data;
         } catch (error) {
-            if (error instanceof AuthError) {
-                throw error;
-            }
-            throw new AuthError('Failed to get user info', 'USER_INFO_FAILED', 500);
+            console.error('Get user info error:', error);
+            throw error;
         }
     },
 
@@ -93,4 +60,42 @@ export const AuthAPI = {
             return false;
         }
     },
+
+    register: async (params: any): Promise<any> => {
+        try {
+            const response = await post<ApiResponse<any>>('/auth/register', params);
+            return response.data;
+        } catch (error) {
+            console.error('Register error:', error);
+            throw error;
+        }
+    },
+
+    resetPassword: async (params: { email: string }): Promise<void> => {
+        try {
+            await post<ApiResponse<void>>('/auth/reset-password', params);
+        } catch (error) {
+            console.error('Reset password error:', error);
+            throw error;
+        }
+    },
+
+    verifyResetToken: async (token: string): Promise<boolean> => {
+        try {
+            const response = await get<ApiResponse<boolean>>(`/auth/verify-reset-token/${token}`);
+            return response.data;
+        } catch (error) {
+            console.error('Verify reset token error:', error);
+            throw error;
+        }
+    },
+
+    setNewPassword: async (params: { token: string; password: string }): Promise<void> => {
+        try {
+            await post<ApiResponse<void>>('/auth/set-new-password', params);
+        } catch (error) {
+            console.error('Set new password error:', error);
+            throw error;
+        }
+    }
 };

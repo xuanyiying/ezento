@@ -28,7 +28,7 @@ const LoginPage: React.FC = () => {
     const [isRegister, setIsRegister] = useState<boolean>(false);
     const [countdown, setCountdown] = useState<number>(0);
     const navigate = useNavigate();
-    const dispatch = useDispatch();
+  const dispatch = useDispatch();
     const { message } = App.useApp();
 
     const handleLogin = async (values: LoginFormValues) => {
@@ -43,7 +43,7 @@ const LoginPage: React.FC = () => {
             dispatch(
                 loginSuccess({
                     userId: response.user.userId || '',
-                    token: response.token,
+        token: response.token,
                     role: response.user.role || '',
                     name: response.user.name,
                     avatar: response.user.avatar,
@@ -67,7 +67,7 @@ const LoginPage: React.FC = () => {
                 })
             );
 
-            message.success('登录成功');
+      message.success('登录成功');
             // 导航到首页
             navigate('/chat');
         } catch (error) {
@@ -119,7 +119,7 @@ const LoginPage: React.FC = () => {
         message.success(`验证码已发送至${phone}`);
     };
 
-    return (
+  return (
         <XProvider>
             <div className="login-page">
                 <Welcome
@@ -131,34 +131,34 @@ const LoginPage: React.FC = () => {
                 <div className="login-container">
                     {!isRegister ? (
                         <>
-                            <Form
+        <Form
                                 form={loginForm}
-                                name="login"
+          name="login"
                                 initialValues={{ remember: true }}
                                 onFinish={handleLogin}
                                 layout="vertical"
-                            >
-                                <Form.Item
-                                    name="username"
+        >
+          <Form.Item
+            name="username"
                                     rules={[{ required: true, message: '请输入用户名/手机号' }]}
-                                >
-                                    <Input
-                                        prefix={<UserOutlined />}
+          >
+            <Input
+              prefix={<UserOutlined />}
                                         placeholder="用户名/手机号"
-                                        size="large"
-                                    />
-                                </Form.Item>
+              size="large"
+            />
+          </Form.Item>
 
-                                <Form.Item
-                                    name="password"
-                                    rules={[{ required: true, message: '请输入密码' }]}
-                                >
-                                    <Input.Password
-                                        prefix={<LockOutlined />}
-                                        placeholder="密码"
-                                        size="large"
-                                    />
-                                </Form.Item>
+          <Form.Item
+            name="password"
+            rules={[{ required: true, message: '请输入密码' }]}
+          >
+            <Input.Password
+              prefix={<LockOutlined />}
+              placeholder="密码"
+              size="large"
+            />
+          </Form.Item>
 
                                 <Form.Item>
                                     <Form.Item name="remember" valuePropName="checked" noStyle>
@@ -168,20 +168,20 @@ const LoginPage: React.FC = () => {
                                     <a className="forgot-password" href="#">
                                         忘记密码
                                     </a>
-                                </Form.Item>
+          </Form.Item>
 
-                                <Form.Item>
-                                    <Button
-                                        type="primary"
-                                        htmlType="submit"
-                                        loading={loading}
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={loading}
                                         block
-                                        size="large"
-                                    >
-                                        登录
-                                    </Button>
-                                </Form.Item>
-                            </Form>
+              size="large"
+            >
+              登录
+            </Button>
+          </Form.Item>
+        </Form>
 
                             <Divider>或</Divider>
 
@@ -284,9 +284,9 @@ const LoginPage: React.FC = () => {
                         </>
                     )}
                 </div>
-            </div>
+    </div>
         </XProvider>
-    );
+  );
 };
 
 export default LoginPage;

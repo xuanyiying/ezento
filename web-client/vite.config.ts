@@ -22,13 +22,17 @@ export default defineConfig({
         secure: false,
         configure: (proxy, options) => {
           proxy.on('error', (err, req, res) => {
-            console.log('Proxy error:', err);
+            console.log('代理错误:', err);
           });
           proxy.on('proxyReq', (proxyReq, req, res) => {
-            console.log(`Proxy request: ${req.method} ${req.url}`);
+            const headers = req.headers;
+            Object.keys(headers).forEach(key => {
+              proxyReq.setHeader(key, headers[key]);
+            });
+            console.log(`代理请求: ${req.method} ${req.url} -> ${options.target}${req.url}`);
           });
           proxy.on('proxyRes', (proxyRes, req, res) => {
-            console.log(`Proxy response: ${proxyRes.statusCode} for ${req.method} ${req.url}`);
+            console.log(`代理响应: ${proxyRes.statusCode} for ${req.method} ${req.url}`);
           });
         }
       },

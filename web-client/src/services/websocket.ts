@@ -1,25 +1,25 @@
-import { addMessage, setCurrentConversation } from '@/store/slices/conversationSlice';
+import { addMessage, setCurrentConversation, startBatchUpdate, endBatchUpdate } from '@/store/slices/conversationSlice';
 import { store } from '@/store';
 import { io, Socket } from 'socket.io-client';
 import { TokenManager } from '@/utils/tokenManager';
 
 class WebSocketService {
-    private static instance: WebSocketService;
-    private socket: Socket | null = null;
-    private maxReconnectAttempts = 5;
+  private static instance: WebSocketService;
+  private socket: Socket | null = null;
+  private maxReconnectAttempts = 5;
     private reconnectDelay = 3000;
     private reconnectListeners: (() => void)[] = [];
     private disconnectListeners: (() => void)[] = [];
     private connectionAttempts = 0;
 
-    private constructor() {}
+  private constructor() {}
 
     public static getInstance(): WebSocketService {
-        if (!WebSocketService.instance) {
-            WebSocketService.instance = new WebSocketService();
-        }
-        return WebSocketService.instance;
+    if (!WebSocketService.instance) {
+      WebSocketService.instance = new WebSocketService();
     }
+    return WebSocketService.instance;
+  }
 
     // 添加重连事件监听
     onReconnect(callback: () => void): void {
@@ -41,25 +41,25 @@ class WebSocketService {
         this.disconnectListeners = this.disconnectListeners.filter(
             listener => listener !== callback
         );
-    }
+  }
 
-    connect(conversationId: string): void {
-        if (this.socket?.connected) {
+  connect(conversationId: string): void {
+    if (this.socket?.connected) {
             console.log('WebSocket已连接，正在重用连接');
             this.socket.emit('join_conversation', conversationId);
-            return;
-        }
+      return;
+    }
 
         // 获取token和userId
         const token = TokenManager.getToken();
         const userStr = localStorage.getItem('user');
         let userId = '';
 
-        if (!token) {
+    if (!token) {
             console.error('未找到认证token，无法建立WebSocket连接');
-            return;
-        }
-
+      return;
+    }
+    
         if (userStr) {
             try {
                 const user = JSON.parse(userStr);
@@ -69,40 +69,40 @@ class WebSocketService {
             }
         }
 
-        if (!userId) {
+      if (!userId) {
             console.error('未找到用户ID，无法建立WebSocket连接');
-            return;
-        }
-
+      return;
+    }
+    
         // 构建WebSocket URL
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl =
             process.env.NODE_ENV === 'development'
                 ? `${wsProtocol}//${window.location.hostname}:3000`
                 : `${wsProtocol}//${window.location.host}`;
-
-        try {
-            // 先断开现有连接
-            if (this.socket) {
-                console.log('断开旧的WebSocket连接');
-                this.socket.disconnect();
-                this.socket = null;
-            }
+    
+    try {
+      // 先断开现有连接
+      if (this.socket) {
+        console.log('断开旧的WebSocket连接');
+        this.socket.disconnect();
+        this.socket = null;
+      }
 
             console.log('正在创建新的WebSocket连接...', wsUrl);
-
-            // 创建新连接
-            this.socket = io(wsUrl, {
-                path: '/ws',
-                query: { conversationId },
-                auth: {
-                    token,
+      
+      // 创建新连接
+      this.socket = io(wsUrl, {
+        path: '/ws',
+        query: { conversationId },
+        auth: { 
+          token,
                     userId,
-                },
-                transports: ['websocket'],
-                reconnection: true,
-                reconnectionAttempts: this.maxReconnectAttempts,
-                reconnectionDelay: this.reconnectDelay,
+        },
+        transports: ['websocket'],
+        reconnection: true,
+        reconnectionAttempts: this.maxReconnectAttempts,
+        reconnectionDelay: this.reconnectDelay,
                 timeout: 10000,
                 autoConnect: true,
             });
@@ -147,7 +147,7 @@ class WebSocketService {
                 console.log('WebSocket重新连接成功，尝试次数:', attemptNumber);
 
                 // 重新加入会话
-                this.socket?.emit('join_conversation', conversationId);
+        this.socket?.emit('join_conversation', conversationId);
 
                 // 通知所有重连监听器
                 this.reconnectListeners.forEach(listener => listener());
@@ -192,25 +192,43 @@ class WebSocketService {
             console.log('收到消息:', data);
             const { message, conversation } = data;
 
+            // 开始批量更新
+            store.dispatch(startBatchUpdate());
+
             if (message) {
                 // 添加收到的消息到Redux store
                 store.dispatch(
                     addMessage({
                         id: message.id || Date.now().toString(),
-                        content: message.content,
+                        content: message.content || '',
                         role: message.role || 'system',
                         timestamp: message.timestamp || new Date().toISOString(),
-                        conversationId: conversation?.id || message.conversationId,
+                        conversationId: conversation?.id || message.conversationId || '',
+                        consultationId: conversation?.consultationId || message.consultationId || '',
                     })
                 );
                 console.log('已添加收到的消息到Redux存储');
             }
 
-            if (conversation) {
-                store.dispatch(setCurrentConversation(conversation));
+            if (conversation && conversation.id) {
+                // 确保会话对象有必要的字段
+                const safeConversation = {
+                    ...conversation,
+                    messages: conversation.messages || [],
+                    status: conversation.status || 'ACTIVE',
+                    startTime: conversation.startTime || new Date().toISOString(),
+                    patientId: conversation.patientId || '',
+                    referenceId: conversation.referenceId || '',
+                };
+                store.dispatch(setCurrentConversation(safeConversation));
             }
+
+            // 结束批量更新
+            store.dispatch(endBatchUpdate());
         } catch (error) {
             console.error('处理消息时出错:', error);
+            // 确保即使出错也结束批量更新
+            store.dispatch(endBatchUpdate());
         }
     }
 
@@ -221,12 +239,15 @@ class WebSocketService {
                 // 处理AI响应片段
                 store.dispatch(
                     addMessage({
+                        id: Date.now().toString(),
                         content: chunk,
                         role: 'system',
                         timestamp: new Date().toISOString(),
+                        conversationId: '',
+                        consultationId: '',
                     })
                 );
-            }
+          }
         } catch (error) {
             console.error('处理AI响应片段时出错:', error);
         }
@@ -234,53 +255,61 @@ class WebSocketService {
 
     private handleAiResponseComplete(data: any): void {
         try {
-            const { conversation, conversationType } = data;
             console.log('AI响应完成事件数据:', data);
-
-            if (conversation) {
-                // 更新当前会话
-                store.dispatch(setCurrentConversation(conversation));
-
-                // 检查会话中的最后一条消息并添加到消息列表
-                if (conversation.messages && conversation.messages.length > 0) {
+            
+            // 确保数据有效
+            if (!data || !data.conversation || !data.conversation.id) {
+                console.warn('AI响应完成事件缺少必要的会话数据');
+                return;
+            }
+            
+            const { conversation } = data;
+            
+            // 开始批量更新
+            store.dispatch(startBatchUpdate());
+            
+            try {
+                // 安全更新当前会话
+                const safeConversation = {
+                    ...conversation,
+                    messages: Array.isArray(conversation.messages) ? conversation.messages : [],
+                    type: conversation.type || 'PRE_DIAGNOSIS',
+                    status: conversation.status || 'ACTIVE',
+                    startTime: conversation.startTime || new Date().toISOString(),
+                    referenceId: conversation.referenceId || '',
+                    patientId: conversation.patientId || '',
+                    consultationId: conversation.consultationId || '',
+                };
+                
+                // 更新Redux中的当前会话
+                store.dispatch(setCurrentConversation(safeConversation));
+                
+                // 处理最后一条消息
+                if (Array.isArray(conversation.messages) && conversation.messages.length > 0) {
                     const lastMessage = conversation.messages[conversation.messages.length - 1];
-                    if (lastMessage.role === 'system') {
-                        // 添加AI回复到消息列表
+                    
+                    if (lastMessage && lastMessage.role === 'system') {
+                        // 添加响应消息
                         store.dispatch(
                             addMessage({
                                 id: lastMessage.id || Date.now().toString(),
-                                content: lastMessage.content,
-                                role: 'system',
+                                content: lastMessage.content || '',
+                                role: lastMessage.role,
                                 timestamp: lastMessage.timestamp || new Date().toISOString(),
                                 conversationId: conversation.id,
-                                consultationId: conversation.consultationId,
+                                consultationId: conversation.consultationId || '',
                             })
                         );
-                        console.log('已添加AI回复到Redux存储');
-                    }
-                } else {
-                    // 如果会话没有消息数组，尝试通过其他方式获取AI回复
-                    if (data.message && data.message.content) {
-                        store.dispatch(
-                            addMessage({
-                                id: data.message.id || Date.now().toString(),
-                                content: data.message.content,
-                                role: 'system',
-                                timestamp: data.message.timestamp || new Date().toISOString(),
-                                conversationId: conversation.id,
-                                consultationId: conversation.consultationId,
-                            })
-                        );
-                        console.log('已通过message字段添加AI回复到Redux存储');
-                    } else {
-                        console.warn('会话中没有消息，无法显示AI回复');
                     }
                 }
-            } else {
-                console.warn('收到AI响应完成事件，但没有会话数据');
-            }
+            } finally {
+                // 确保总是结束批量更新
+                store.dispatch(endBatchUpdate());
+          }
         } catch (error) {
-            console.error('处理AI响应完成时出错:', error);
+            console.error('处理AI响应完成事件时出错:', error);
+            // 确保即使最外层出错也结束批量更新
+            store.dispatch(endBatchUpdate());
         }
     }
 
@@ -296,77 +325,77 @@ class WebSocketService {
         if (this.socket) {
             this.socket.disconnect();
             this.socket = null;
-        }
     }
+  }
 
-    isConnected(): boolean {
+  isConnected(): boolean {
         return this.socket?.connected || false;
     }
 
     // 发送消息方法
-    sendMessage(message: string, conversationId?: string, conversationType?: string): void {
+    sendMessage(message: string, conversationId?: string, type?: string): void {
         if (!this.socket?.connected) {
             console.error('WebSocket未连接，无法发送消息');
-            return;
-        }
-
+      return;
+    }
+    
         const state = store.getState() as any;
         const msgConversationId = conversationId || state.conversation?.currentConversation?.id;
         const msgConversationType =
-            conversationType || state.conversation?.currentConversation?.type || 'PRE_DIAGNOSIS';
+            type || state.conversation?.currentConversation?.type || 'PRE_DIAGNOSIS';
 
         if (!msgConversationId) {
             console.error('找不到会话ID，无法发送消息');
-            return;
-        }
-
-        const messageData = {
+      return;
+    }
+    
+    const messageData = {
             conversationId: msgConversationId,
-            content: message,
-            conversationType: msgConversationType,
+      content: message,
+            type: msgConversationType,
             metadata: {},
-        };
-
-        try {
-            this.socket.emit('new_message', messageData);
+    };
+    
+    try {
+      this.socket.emit('new_message', messageData);
             console.log('消息已发送:', messageData);
-        } catch (error) {
+    } catch (error) {
             console.error('发送消息失败:', error);
             throw error;
-        }
     }
+  }
 
-    sendImage(imageData: string): void {
-        if (!this.socket || !this.socket.connected) {
-            console.error('WebSocket is not connected');
-            return;
-        }
-        this.socket.emit('image', JSON.stringify({ type: 'image', data: imageData }));
+  sendImage(imageData: string): void {
+    if (!this.socket || !this.socket.connected) {
+      console.error('WebSocket is not connected');
+      return;
     }
+    this.socket.emit('image', JSON.stringify({ type: 'image', data: imageData }));
+  }
 
-    sendOCRRequest(imageData: string): void {
-        if (!this.socket || !this.socket.connected) {
-            console.error('WebSocket is not connected');
-            return;
-        }
-        this.socket.emit('ocr_request', JSON.stringify({ type: 'ocr_request', data: imageData }));
+  sendOCRRequest(imageData: string): void {
+    if (!this.socket || !this.socket.connected) {
+      console.error('WebSocket is not connected');
+      return;
     }
+    this.socket.emit('ocr_request', JSON.stringify({ type: 'ocr_request', data: imageData }));
+  }
 
-    requestAIResponse(prompt: string): void {
-        if (!this.socket || !this.socket.connected) {
-            console.error('WebSocket is not connected');
-            return;
-        }
-        this.socket.emit('ai_request', JSON.stringify({ type: 'ai_request', prompt }));
+  requestAIResponse(prompt: string): void {
+    if (!this.socket || !this.socket.connected) {
+      console.error('WebSocket is not connected');
+      return;
     }
+    this.socket.emit('ai_request', JSON.stringify({ type: 'ai_request', prompt }));
+  }
 
-    requestConversationHistory(): void {
-        if (!this.socket || !this.socket.connected) {
-            console.error('WebSocket is not connected');
-            return;
-        }
-        this.socket.emit('history_request', JSON.stringify({ type: 'history_request' }));
+  requestConversationHistory(): void {
+    if (!this.socket || !this.socket.connected) {
+      console.error('WebSocket is not connected');
+      return;
     }
+    this.socket.emit('history_request', JSON.stringify({ type: 'history_request' }));
+  }
 }
 
 export default WebSocketService;

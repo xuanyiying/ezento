@@ -5,6 +5,7 @@ import {
     CreateConversationRequest,
     AddMessageRequest,
     ExportConversationRequest,
+    Types,
 } from '../interfaces/conversation.interface';
 import logger from '../config/logger';
 import { ConversationRedisService } from './conversation.redis.service';
@@ -14,7 +15,6 @@ import PDFDocument from 'pdfkit';
 import { generateConversationId, generateMessageId } from '../utils/idGenerator';
 import { Message } from '../models';
 import ConsultationService from './consultation.service';
-import { ConsultationType } from '../interfaces/consultation.interface';
 
 /**
  * 会话服务类，处理AI多轮对话相关功能
@@ -30,7 +30,7 @@ class ConversationService {
     /**
      * 创建新会话或返回已存在的会话
      * 本方法根据提供的参数查找现有会话，如果不存在则创建新会话
-     *
+     * 
      * @param params 创建会话的参数，包含会话类型、关联ID、用户ID和初始消息等
      * @returns 会话对象（Mongoose文档）
      * @throws 如果未提供必要的用户ID或创建过程中出现错误
@@ -39,8 +39,8 @@ class ConversationService {
         params: CreateConversationRequest
     ): Promise<IConversation | null> {
         try {
-            const { conversationId, conversationType, userId, initialMessage } = params;
-
+            const { conversationId, type, userId, initialMessage } = params;
+            
             if (!userId) {
                 throw new Error('必须提供userId');
             }
@@ -60,7 +60,7 @@ class ConversationService {
                 const consultation = await ConsultationService.createConsultation({
                     id: consultationId,
                     userId,
-                    consultationType: conversationType as unknown as ConsultationType,
+                    type: type as Types,
                     symptoms: '',
                     fee: 0,
                 });
@@ -68,7 +68,7 @@ class ConversationService {
                 const conversationId = generateConversationId();
                 const conversationData = {
                     id: conversationId,
-                    conversationType,
+                    type,
                     consultationId: consultation.id, // 设置 consultationId
                     userId,
                     status: 'ACTIVE',
@@ -79,16 +79,16 @@ class ConversationService {
                 conversation = await Conversation.create(conversationData);
                 conversation.id = conversationId;
                 logger.info(
-                    `新会话创建成功，会话ID: ${conversation.id}，类型: ${conversationType}，用户ID: ${userId}，consultationId: ${consultation.id}`
+                    `新会话创建成功，会话ID: ${conversation.id}，类型: ${type}，用户ID: ${userId}，consultationId: ${consultation.id}`
                 );
 
                 // 如果提供了初始消息，创建系统欢迎消息并单独保存到Message集合
-                if (initialMessage) {
+            if (initialMessage) {
                     const messageData = {
                         id: generateMessageId(),
-                        content: initialMessage,
+                    content: initialMessage,
                         role: 'system' as const,
-                        timestamp: new Date(),
+                    timestamp: new Date(),
                         conversationId: conversation.id,
                         consultationId: consultation.id,
                         metadata: {},
@@ -113,7 +113,7 @@ class ConversationService {
      * 添加消息到现有会话
      * 本方法将消息添加到指定的会话中，并可能触发AI响应生成
      * 消息会同时保存到Redis缓存和MongoDB数据库
-     *
+     * 
      * @param params 添加消息的参数，包含会话ID、消息内容、发送者类型等
      * @returns 更新后的会话对象
      * @throws 如果会话不存在、已关闭或添加消息过程中出现错误
@@ -177,7 +177,7 @@ class ConversationService {
     /**
      * 批量添加消息到会话
      * 可以同时添加用户消息和AI响应
-     *
+     * 
      * @param userMessage 用户消息
      * @param aiMessage AI响应消息
      * @returns 更新后的会话对象
@@ -324,7 +324,7 @@ class ConversationService {
                 doc.moveDown();
 
                 // 添加会话信息
-                doc.fontSize(12).text(`会话类型: ${conversation.conversationType}`);
+                doc.fontSize(12).text(`会话类型: ${conversation.type}`);
                 doc.text(`创建时间: ${conversation.createdAt.toLocaleString()}`);
                 doc.text(`状态: ${conversation.status === 'ACTIVE' ? '活跃' : '已关闭'}`);
                 doc.moveDown();
@@ -382,7 +382,7 @@ class ConversationService {
                 content += '=================\n\n';
 
                 // 添加会话信息
-                content += `会话类型: ${conversation.conversationType}\n`;
+                content += `会话类型: ${conversation.type}\n`;
                 content += `创建时间: ${conversation.createdAt.toLocaleString()}\n`;
                 content += `状态: ${conversation.status === 'ACTIVE' ? '活跃' : '已关闭'}\n\n`;
 
@@ -427,15 +427,30 @@ class ConversationService {
      * @returns 会话消息数组
      */
     static async getConversationMessages(conversationId: string): Promise<IConversationMessage[]> {
-        try {
-            const messages = await Message.find({
-                conversationId: conversationId,
-            }).sort({ timestamp: 1 });
+        const messages = await Message.find({ conversationId }).sort({ timestamp: 1 });
+        return messages;
+    }
 
-            return messages;
-        } catch (error: any) {
-            logger.error(`获取会话消息失败: ${error.message || error}`);
-            throw new Error(`获取会话消息失败: ${error.message}`);
+    /**
+     * 获取用户的所有会话
+     * 根据用户ID获取该用户的所有会话列表
+     * 
+     * @param userId 用户ID
+     * @returns 会话列表
+     */
+    static async getUserConversations(userId: string): Promise<IConversation[]> {
+        try {
+            if (!userId) {
+                throw new Error('必须提供userId');
+            }
+
+            const conversations = await Conversation.find({ userId })
+                .sort({ updatedAt: -1 }); // 按更新时间倒序排列，最新的在前面
+            
+            return conversations;
+        } catch (error) {
+            logger.error('获取用户会话列表失败', error);
+            throw error;
         }
     }
 }

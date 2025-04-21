@@ -22,7 +22,7 @@ class ConsultationService {
             const consultation = new Consultation({
                 id: generateConsultationId(),
                 userId: userId,
-                consultationType: data.consultationType,
+                type: data.type,
                 symptoms: data.symptoms,
                 bodyParts: data.bodyParts,
                 duration: data.duration,
@@ -52,13 +52,13 @@ class ConsultationService {
      */
     static async getConsultationList(params: GetConsultationListRequest) {
         try {
-            const { userId, consultationType, status, page = 1, limit = 10 } = params;
+            const { userId, type, status, page = 1, limit = 10 } = params;
             const skip = (page - 1) * limit;
 
             // 构建查询条件
             const query: any = {};
             if (userId) query.userId = userId;
-            if (consultationType) query.consultationType = consultationType;
+            if (type) query.type = type;
             if (status) query.status = status;
 
             // 查询总数
@@ -77,7 +77,7 @@ class ConsultationService {
                 // Ensure conversationId exists before converting to string
                 const listItem = {
                     consultationId: consultation._id,
-                    consultationType: consultation.consultationType,
+                    type: consultation.type,
                     symptoms: consultation.symptoms,
                     status: consultation.status,
                     startTime: consultation.startTime,
@@ -122,7 +122,7 @@ class ConsultationService {
             return {
                 consultationId: consultation._id,
                 userId: consultation.userId,
-                consultationType: consultation.consultationType,
+                type: consultation.type,
                 symptoms: consultation.symptoms,
                 bodyParts: consultation.bodyParts,
                 duration: consultation.duration,
