@@ -57,7 +57,6 @@ export const useConversationManagement = ({ userId, isAuthenticated }: UseConver
         const apiResponse = await ConversationAPI.createOrGetConversation({
           type: Types.DIAGNOSIS, 
           userId: userId,
-          referenceId: '',
           messages: [],
         });
 
@@ -76,8 +75,7 @@ export const useConversationManagement = ({ userId, isAuthenticated }: UseConver
         const conversation: Conversation = {
           id: apiResponse.id,
           type: Types.DIAGNOSIS,
-          referenceId: apiResponse.referenceId || '',
-          patientId: userId,
+          userId: userId,
           messages: apiResponse.messages || [],
           status: apiResponse.status || 'ACTIVE',
           startTime: apiResponse.startTime || new Date().toISOString(),
@@ -139,7 +137,6 @@ export const useConversationManagement = ({ userId, isAuthenticated }: UseConver
       const apiResponse = await ConversationAPI.createOrGetConversation({
         type: Types.DIAGNOSIS,
         userId: userId,
-        referenceId: '',
         messages: [],
       });
 
@@ -148,8 +145,7 @@ export const useConversationManagement = ({ userId, isAuthenticated }: UseConver
         const conversation: Conversation = {
           id: apiResponse.id,
           type: Types.DIAGNOSIS,
-          referenceId: apiResponse.referenceId || '',
-          patientId: userId,
+          userId: userId,
           messages: apiResponse.messages || [],
           status: apiResponse.status || 'ACTIVE',
           startTime: apiResponse.startTime || new Date().toISOString(),
@@ -254,20 +250,7 @@ export const useConversationManagement = ({ userId, isAuthenticated }: UseConver
       
       // 如果要删除的是当前会话，先清除当前会话数据
       if (currentConversationId === id) {
-        localStorage.removeItem('currentConversation');
-        // 创建一个空的会话对象，而不是传递null
-        const emptyConversation: Conversation = {
-          id: '',
-          type: Types.DIAGNOSIS,
-          messages: [],
-          status: 'ACTIVE',
-          startTime: new Date().toISOString(),
-          conversationId: '',
-          referenceId: '',
-          patientId: '',
-          consultationId: '',
-        };
-        dispatch(setCurrentConversation(emptyConversation));
+        localStorage.removeItem('currentConversation');       
       }
       
       // 删除本地存储中的会话

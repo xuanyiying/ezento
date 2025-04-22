@@ -27,15 +27,15 @@ const router = express.Router();
  *             type: object
  *             required:
  *               - type
- *               - referenceId
+ *               - consultationId
  *             properties:
  *               type:
  *                 type: string
  *                 enum: [DIAGNOSIS, GUIDE, REPORT]
  *                 description: 会话类型
- *               referenceId:
+ *               consultationId:
  *                 type: string
- *                 description: 关联ID（预问诊ID、导诊ID或报告ID）
+ *                 description: 咨询ID
  *               initialMessage:
  *                 type: string
  *                 description: 初始系统消息

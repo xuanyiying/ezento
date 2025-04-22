@@ -5,7 +5,6 @@ import { ResponseUtil } from '../utils/responseUtil';
 import { logger } from '../utils/logger';
 import path from 'path';
 import fs from 'fs';
-import { Conversation } from '../models';
 
 /**
  * 会话控制器
@@ -281,22 +280,8 @@ class ConversationController {
                 res.status(401).json({ error: 'Unauthorized' });
                 return;
             }
-
-            // 检查会话是否存在且属于当前用户
-            const conversation = await Conversation.findOne({
-                id: conversationId,
-                userId
-            });
-
-            if (!conversation) {
-                res.status(404).json({ error: 'Conversation not found' });
-                return;
-            }
-
-            // 删除会话
-            await Conversation.deleteOne({ id: conversationId });
-
-            res.json({ message: 'Conversation deleted successfully' });
+           await ConversationService.deleteConversation(conversationId, userId);
+           ResponseUtil.success(res, { message: '会话已删除' });
         } catch (error) {
             console.error('Error deleting conversation:', error);
             res.status(500).json({ error: 'Failed to delete conversation' });

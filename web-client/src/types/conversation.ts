@@ -20,8 +20,6 @@ export interface Conversation {
     id: string;
     userId?: string;  // 用户ID
     type: Types;
-    referenceId: string;
-    patientId: string;
     messages: Message[];
     status: 'ACTIVE' | 'CLOSED';
     startTime: string;

@@ -12,7 +12,6 @@ export interface ApiResponse<T> {
 
 export interface CreateConversationRequest {
     type: Types;
-    referenceId: string;
     userId: string;
     initialMessage?: string;
     messages: Message[];

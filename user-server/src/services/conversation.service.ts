@@ -13,13 +13,32 @@ import * as fs from 'fs';
 import * as path from 'path';
 import PDFDocument from 'pdfkit';
 import { generateConversationId, generateMessageId } from '../utils/idGenerator';
-import { Message } from '../models';
+import { Consultation, Message } from '../models';
 import ConsultationService from './consultation.service';
 
 /**
  * 会话服务类，处理AI多轮对话相关功能
  */
 class ConversationService {
+    static async deleteConversation(conversationId: string, userId: string) {
+        // 检查会话是否存在且属于当前用户
+        const conversation = await Conversation.findOne({
+            id: conversationId,
+            userId
+        });
+
+        if (!conversation) {
+            logger.error(`删除会话失败: 会话不存在 [conversationId=${conversationId}]`);
+            throw new Error('会话不存在');
+        }
+        // 删除会诊记录
+        await Consultation.deleteOne({ conversationId, userId, id: conversation.consultationId });
+        // 删除会话的消息记录
+        await Message.deleteMany({ conversationId });
+        // 删除会话
+        await Conversation.deleteOne({ id: conversationId });
+
+    }
     static async getConversationById(conversationId: string): Promise<IConversation> {
         const conversation = await Conversation.findOne({ id: conversationId });
         if (!conversation) {
@@ -40,7 +59,7 @@ class ConversationService {
     ): Promise<IConversation | null> {
         try {
             const { conversationId, type, userId, initialMessage } = params;
-            
+
             if (!userId) {
                 throw new Error('必须提供userId');
             }
@@ -83,12 +102,12 @@ class ConversationService {
                 );
 
                 // 如果提供了初始消息，创建系统欢迎消息并单独保存到Message集合
-            if (initialMessage) {
+                if (initialMessage) {
                     const messageData = {
                         id: generateMessageId(),
-                    content: initialMessage,
+                        content: initialMessage,
                         role: 'system' as const,
-                    timestamp: new Date(),
+                        timestamp: new Date(),
                         conversationId: conversation.id,
                         consultationId: consultation.id,
                         metadata: {},
@@ -338,8 +357,8 @@ class ConversationService {
                         message.role === 'user'
                             ? '患者'
                             : message.role === 'system'
-                              ? '系统'
-                              : '管理员';
+                                ? '系统'
+                                : '管理员';
 
                     doc.fontSize(10).text(`${sender} (${message.timestamp.toLocaleString()})`, {
                         continued: true,
@@ -395,8 +414,8 @@ class ConversationService {
                         message.role === 'user'
                             ? '患者'
                             : message.role === 'system'
-                              ? '系统'
-                              : '管理员';
+                                ? '系统'
+                                : '管理员';
 
                     content += `${sender} (${message.timestamp.toLocaleString()}):\n`;
                     content += `${message.content}\n\n`;
@@ -446,7 +465,7 @@ class ConversationService {
 
             const conversations = await Conversation.find({ userId })
                 .sort({ updatedAt: -1 }); // 按更新时间倒序排列，最新的在前面
-            
+
             return conversations;
         } catch (error) {
             logger.error('获取用户会话列表失败', error);

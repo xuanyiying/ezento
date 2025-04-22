@@ -55,11 +55,15 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             }
         };
 
+        // 初始加载会话列表
         fetchConversations();
 
         // 监听storage事件，当其他页面更新localStorage时更新会话列表
-        const handleStorageChange = () => {
-            fetchConversations();
+        const handleStorageChange = (event: StorageEvent) => {
+            // 只在相关的storage key发生变化时才更新
+            if (event.key === 'conversations' || event.key === 'currentConversation') {
+                fetchConversations();
+            }
         };
 
         // 添加页面可见性变化监听，在重新聚焦时同步数据
@@ -74,17 +78,14 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
         document.addEventListener('visibilitychange', handleVisibilityChange);
         
         // 定期同步（每5分钟）
-        const syncInterval = setInterval(() => {
-            console.log('定期同步会话数据...');
-            fetchConversations();
-        }, 5 * 60 * 1000);
+        const syncInterval = setInterval(fetchConversations, 5 * 60 * 1000);
         
         return () => {
             window.removeEventListener('storage', handleStorageChange);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
             clearInterval(syncInterval);
         };
-    }, [dispatch]);
+    }, [dispatch, message]);
 
     // 处理删除会话
     const handleDeleteConversation = (id: string) => {
@@ -549,4 +550,4 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
     );
 };
 
-export default ConversationSidebar; 
+export default ConversationSidebar;

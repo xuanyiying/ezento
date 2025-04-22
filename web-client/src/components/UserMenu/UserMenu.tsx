@@ -8,12 +8,12 @@ import {
   Dropdown, 
   Form, 
   Input, 
-  message, 
   Modal,
   Space,
   Radio,
   InputNumber,
-  Upload
+  Upload,
+  App
 } from 'antd';
 import { 
   DownOutlined, 
@@ -62,6 +62,8 @@ const UserMenu: React.FC<UserMenuProps> = ({ user: propUser }) => {
   }, [user]);
 
   // 处理登出
+  const { message } = App.useApp();
+
   const handleLogout = async () => {
     console.log('点击了登出按钮');
     try {

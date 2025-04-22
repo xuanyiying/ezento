@@ -6,7 +6,7 @@ import { AiService } from '../services/ai/ai.service';
 import {
     IConversation,
     IConversationMessage,
-    ConversationType,
+    Types,
 } from '../interfaces/conversation.interface';
 import { DepartmentService, DoctorService } from '../services';
 import { generateMessageId } from '../utils/idGenerator';
@@ -66,107 +66,74 @@ export class WebSocketController {
         });
     }
 
-            // 处理加入会话房间
-    private static async handleJoinConversation(
-        socket: Socket,
-        userId: string,
-        conversationId: string
-    ): Promise<void> {
-                try {
-                    if (!conversationId) {
-                        logger.warn(`Join conversation attempt without conversationId by user ${userId}`);
-                        socket.emit('error', { message: '会话ID不能为空' });
-                        return;
-                    }
+    // 处理加入会话房间
+    private static async handleJoinConversation(socket: Socket, userId: string, conversationId: string): Promise<void> {
+        try {
+            if (!conversationId) {
+                logger.warn(`Join conversation attempt without conversationId by user ${userId}`);
+                socket.emit('error', { message: '会话ID不能为空' });
+                return;
+            }
 
-                    await WebSocketServer.joinRoom(socket.id, `conversation_${conversationId}`);
-                    logger.info(`User ${userId} joined conversation ${conversationId}`);
-                    socket.emit('joined_conversation', { conversationId });
-                } catch (error: any) {
-                    logger.error(`Error joining conversation: ${error.message || error}`);
-                    socket.emit('error', { message: '加入会话失败' });
-                }
+            await WebSocketServer.joinRoom(socket.id, `conversation_${conversationId}`);
+            logger.info(`User ${userId} joined conversation ${conversationId}`);
+            socket.emit('joined_conversation', { conversationId });
+        } catch (error: any) {
+            logger.error(`Error joining conversation: ${error.message || error}`);
+            socket.emit('error', { message: '加入会话失败' });
+        }
     }
 
-            // 处理离开会话房间
-    private static async handleLeaveConversation(
-        socket: Socket,
-        userId: string,
-        conversationId: string
-    ): Promise<void> {
-                try {
-                    if (!conversationId) {
-                        logger.warn(`Leave conversation attempt without conversationId by user ${userId}`);
-                        return;
-                    }
+    // 处理离开会话房间
+    private static async handleLeaveConversation(socket: Socket, userId: string, conversationId: string): Promise<void> {
+        try {
+            if (!conversationId) {
+                logger.warn(`Leave conversation attempt without conversationId by user ${userId}`);
+                return;
+            }
 
-                    await WebSocketServer.leaveRoom(socket.id, `conversation_${conversationId}`);
-                    logger.info(`User ${userId} left conversation ${conversationId}`);
-                    socket.emit('left_conversation', { conversationId });
-                } catch (error: any) {
-                    logger.error(`Error leaving conversation: ${error.message || error}`);
-                }
+            await WebSocketServer.leaveRoom(socket.id, `conversation_${conversationId}`);
+            logger.info(`User ${userId} left conversation ${conversationId}`);
+            socket.emit('left_conversation', { conversationId });
+        } catch (error: any) {
+            logger.error(`Error leaving conversation: ${error.message || error}`);
+        }
     }
 
     // 主要消息处理方法
-    static async handleMessage(
-        socket: Socket,
-        data: {
-                conversationId: string;
-                content: string;
-                metadata?: any;
-                type: string;
-        },
-        userId: string
-    ): Promise<void> {
+    static async handleMessage(socket: Socket, data: any, userId: string): Promise<void> {
         try {
             const { conversationId, content, type } = data;
-            if (!conversationId || !content) {
-                throw new Error('Missing required fields');
-            }
 
-            if (!userId) {
-                throw new Error('必须提供用户ID');
-            }
-
-            // 记录详细日志
-            logger.info(
-                `处理新消息: conversationId=${conversationId}, userId=${userId}, contentLength=${content.length}`
-            );
-
-            // 创建或获取会话
+            // 1. 创建会话但不设置initialMessage
             const conversation = await ConversationService.createOrGetConversation({
                 userId: userId,
-                type: type as ConversationType,
-                initialMessage: content,
+                type: type as Types,
                 consultationId: conversationId,
             });
-
             if (!conversation) {
-                throw new Error('无法创建或获取会话');
+                throw new Error('无法获取会话');
             }
-
-            // 添加用户消息
-            await ConversationService.addMessage({
-                conversationId: conversation.id,
+            // 2. 只添加一次用户消息
+            const userMessage = {
+                conversationId: conversation?.id,
                 content: content,
                 role: 'user',
                 timestamp: new Date(),
-                consultationId: conversation.consultationId,
+                consultationId: conversation?.consultationId,
                 id: generateMessageId(),
-            } as IConversationMessage);
+                metadata: {}
+            } as IConversationMessage;
 
-            // 广播消息给房间内所有用户
+            await ConversationService.addMessage(userMessage);
+
+            // 3. 广播消息
             socket.to(conversationId).emit('message_received', {
                 conversation,
-                message: {
-                    content: content,
-                    role: 'user',
-                    timestamp: new Date(),
-                },
+                message: userMessage
             });
 
-            // 生成AI响应
+            // 4. 生成AI响应
             await this.generateAiResponse(socket, conversation, type);
         } catch (error: any) {
             console.error('处理消息时出错:', error);
@@ -175,10 +142,7 @@ export class WebSocketController {
     }
 
     // 准备AI服务所需的上下文数据
-    private static async prepareContextData(
-        type: string,
-        metadata?: Record<string, any>
-    ): Promise<any> {
+    private static async prepareContextData(type: string, metadata?: Record<string, any>): Promise<any> {
         const additionalData: any = {};
 
         try {
@@ -216,11 +180,7 @@ export class WebSocketController {
     }
 
     // 生成AI响应
-    private static async generateAiResponse(
-        socket: Socket,
-        conversation: IConversation,
-        type: string
-    ): Promise<void> {
+    private static async generateAiResponse(socket: Socket, conversation: IConversation, type: string): Promise<void> {
         try {
             logger.info(`开始调用AI处理服务...`);
 
@@ -289,10 +249,7 @@ export class WebSocketController {
     }
 
     // 创建流式响应处理器
-    private static createStreamHandler(
-        conversationId: string,
-        type: string
-    ): (chunk: string) => void {
+    private static createStreamHandler(conversationId: string, type: string): (chunk: string) => void {
         return (chunk: string) => {
             try {
                 // 确保chunk是有效字符串
@@ -317,13 +274,8 @@ export class WebSocketController {
     }
 
     // 生成AI响应
-    private static async generateAIResponse(
-        messages: string[],
-        conversation: IConversation,
-        type: string,
-        streamHandler: (chunk: string) => void,
-        contextData: any
-    ): Promise<string> {
+    private static async generateAIResponse(messages: string[], conversation: IConversation, type: string,
+        streamHandler: (chunk: string) => void, contextData: any): Promise<string> {
         try {
             logger.info(`开始调用AI处理服务...`);
 
@@ -360,15 +312,11 @@ export class WebSocketController {
     }
 
     // 创建AI消息对象
-    private static createAIMessage(
-        conversationId: string,
-        aiResponse: string,
-        conversation: IConversation
-    ): any {
+    private static createAIMessage(conversationId: string, aiResponse: string, conversation: IConversation): any {
         return {
             id: generateMessageId(),
             conversationId: conversationId,
-                content: aiResponse,
+            content: aiResponse,
             role: 'system' as const,
             metadata: {},
             consultationId: conversation.consultationId,
@@ -377,37 +325,10 @@ export class WebSocketController {
     }
 
     // 保存用户消息和AI响应到数据库并广播完成事件
-    private static async saveMessagePair(
-        socket: Socket,
-        conversationId: string,
-        userMessages: string[],
-        aiMessage: IConversationMessage,
-        type: string
-    ): Promise<void> {
+    private static async saveMessagePair(socket: Socket, conversationId: string, userMessages: string[], aiMessage: IConversationMessage, type: string): Promise<void> {
         try {
-            logger.info(`准备添加消息对到会话...`);
-
-            // 获取会话以获取userId
-            const conversation = await ConversationService.getConversationById(conversationId);
-
-            // 使用新的批量添加方法同时保存用户消息和AI响应
-            const userMessageObjects = userMessages.map(
-                content =>
-                    ({
-                        conversationId: conversationId,
-                        content,
-                        role: 'user' as const,
-                        timestamp: new Date(),
-                        consultationId: conversation.consultationId,
-                        id: generateMessageId(),
-                metadata: {},
-                    }) as IConversationMessage
-            );
-
-            const updatedConversation = await ConversationService.addMessagePair(
-                userMessageObjects[0],
-                aiMessage
-            );
+            // 直接保存AI消息，不再创建和保存用户消息
+            const updatedConversation = await ConversationService.addMessage(aiMessage);
 
             // 在发送前获取最新消息
             const latestMessages =
@@ -425,7 +346,7 @@ export class WebSocketController {
             await WebSocketServer.emitToRoom(
                 `conversation_${conversationId}`,
                 'ai_response_complete',
-                { 
+                {
                     conversation: conversationWithMessages,
                     type,
                 }
