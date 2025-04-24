@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { Tenant, User, Doctor, Department } from '../models';
 import logger from '../config/logger';
+import { generateDepartmentId, generateDoctorId, generateTenantId, generateUserId } from '../utils/idGenerator';
 
 // 加载环境变量
 dotenv.config({ path: '.env' });
@@ -9,8 +10,13 @@ dotenv.config({ path: '.env' });
 // 连接数据库
 const connectDB = async () => {
     try {
-        // 在连接字符串中添加authSource=admin
-        const connectionUri = `${process.env.MONGODB_URI || 'mongodb://localhost:27017/ezento'}`;
+        // 在连接字符串中添加认证信息和authSource=admin
+        const username = process.env.MONGODB_USERNAME || 'admin';
+        const password = process.env.MONGODB_PASSWORD || '123456';
+        const host = process.env.MONGODB_HOST || 'localhost';
+        const port = process.env.MONGODB_PORT || '27017';
+        const database = process.env.MONGODB_DATABASE || 'ezento';
+        const connectionUri = process.env.MONGODB_URI ||`mongodb://${username}:${password}@${host}:${port}/${database}?authSource=admin`;
 
         // 设置连接选项
         const mongooseOptions = {
@@ -47,6 +53,7 @@ const createTenant = async () => {
 
         // 创建新租户
         const tenant = new Tenant({
+            id: generateTenantId(),
             name: '默认医院',
             code: 'default',
             description: '默认医院租户',
@@ -80,6 +87,7 @@ const createDepartment = async () => {
 
         // 创建新科室
         const department = new Department({
+            id: generateDepartmentId(),
             name: '内科',
             description: '处理内部器官疾病',
             iconUrl: 'https://example.com/icons/internal-medicine.png',
@@ -113,6 +121,7 @@ const createUser = async (tenantId: mongoose.Types.ObjectId) => {
 
         // 创建患者用户
         const user = new User({
+            id: generateUserId(),
             tenantId,
             openId: 'test_user_openid',
             userType: 'user',
@@ -152,6 +161,7 @@ const createDoctorUser = async (
 
         // 创建医生用户
         const user = new User({
+            id: generateUserId(),
             tenantId,
             openId: 'test_doctor_openid',
             userType: 'doctor',
@@ -169,7 +179,8 @@ const createDoctorUser = async (
 
         // 创建医生记录
         const doctor = new Doctor({
-            userId: savedUser._id,
+            id: generateDoctorId(),
+            userId: savedUser.id,
             departmentId,
             title: '主任医师',
             specialties: ['心脏病', '高血压'],
@@ -182,15 +193,63 @@ const createDoctorUser = async (
             availableTimes: [
                 {
                     dayOfWeek: 1,
-                    timeSlots: ['09:00-10:00', '10:00-11:00', '14:00-15:00', '15:00-16:00'],
+                    startTime: '09:00',
+                    endTime: '10:00'
+                },
+                {
+                    dayOfWeek: 1,
+                    startTime: '10:00',
+                    endTime: '11:00'
+                },
+                {
+                    dayOfWeek: 1,
+                    startTime: '14:00',
+                    endTime: '15:00'
+                },
+                {
+                    dayOfWeek: 1,
+                    startTime: '15:00',
+                    endTime: '16:00'
                 },
                 {
                     dayOfWeek: 3,
-                    timeSlots: ['09:00-10:00', '10:00-11:00', '14:00-15:00', '15:00-16:00'],
+                    startTime: '09:00',
+                    endTime: '10:00'
+                },
+                {
+                    dayOfWeek: 3,
+                    startTime: '10:00',
+                    endTime: '11:00'
+                },
+                {
+                    dayOfWeek: 3,
+                    startTime: '14:00',
+                    endTime: '15:00'
+                },
+                {
+                    dayOfWeek: 3,
+                    startTime: '15:00',
+                    endTime: '16:00'
                 },
                 {
                     dayOfWeek: 5,
-                    timeSlots: ['09:00-10:00', '10:00-11:00', '14:00-15:00', '15:00-16:00'],
+                    startTime: '09:00',
+                    endTime: '10:00'
+                },
+                {
+                    dayOfWeek: 5,
+                    startTime: '10:00',
+                    endTime: '11:00'
+                },
+                {
+                    dayOfWeek: 5,
+                    startTime: '14:00',
+                    endTime: '15:00'
+                },
+                {
+                    dayOfWeek: 5,
+                    startTime: '15:00',
+                    endTime: '16:00'
                 },
             ],
         });

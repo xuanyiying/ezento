@@ -20,8 +20,8 @@ class ConversationController {
      */
     static async createOrGetConversation(req: Request, res: Response): Promise<void> {
         try {
-            // 从请求体中获取参数
-            const { type, initialMessage } = req.body;
+            // 从请求体中获取参数 
+            const { type, conversationId, initialMessage, messages } = req.body;
             const userId = req.user?.userId;
 
             // 验证权限和必要参数
@@ -34,13 +34,14 @@ class ConversationController {
                 ResponseUtil.error(res, 400, '会话类型不能为空');
                 return;
             }
-
             // 创建或获取会话
             try {
                 const conversationData = {
+                    conversationId,
                     type,
                     userId,
                     initialMessage,
+                    messages,
                 };
 
                 const conversation =
@@ -280,8 +281,8 @@ class ConversationController {
                 res.status(401).json({ error: 'Unauthorized' });
                 return;
             }
-           await ConversationService.deleteConversation(conversationId, userId);
-           ResponseUtil.success(res, { message: '会话已删除' });
+            await ConversationService.deleteConversation(conversationId, userId);
+            ResponseUtil.success(res, { message: '会话已删除' });
         } catch (error) {
             console.error('Error deleting conversation:', error);
             res.status(500).json({ error: 'Failed to delete conversation' });

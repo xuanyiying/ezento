@@ -33,10 +33,12 @@ export const useWebSocketConnection = (
       // 监听socket事件
       const handleReconnect = () => {
         console.log('WebSocket 重新连接成功');
+        wsService.connect(conversationId);
       };
 
       const handleDisconnect = () => {
         console.log('WebSocket 连接断开');
+        wsService.disconnect();
       };
 
       wsService.onReconnect(handleReconnect);

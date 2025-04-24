@@ -20,10 +20,7 @@ export class TokenManager {
     }
 
     static removeTokens(): void {
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(REFRESH_TOKEN_KEY);
-        localStorage.removeItem(CSRF_TOKEN_KEY);
-        localStorage.removeItem('user');
+        localStorage.clear();
         window.dispatchEvent(new Event('storage'));
     }
 

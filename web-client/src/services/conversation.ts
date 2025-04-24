@@ -11,6 +11,7 @@ export interface ApiResponse<T> {
 }
 
 export interface CreateConversationRequest {
+    conversationId?: string;
     type: Types;
     userId: string;
     initialMessage?: string;
@@ -31,7 +32,7 @@ export interface ExportResponse {
 }
 
 export const ConversationAPI = {
-    createOrGetConversation: async (params: CreateConversationRequest): Promise<Conversation> => {
+    createConversation: async (params: CreateConversationRequest): Promise<Conversation> => {
         try {
             console.log('Creating or getting conversation with params:', params);
             const response = await post<ApiResponse<Conversation>>(API_URL, params);
@@ -70,14 +71,12 @@ export const ConversationAPI = {
         }
     },
 
-    getConversationHistory: async (
-        type: string,
-        referenceId: string
+    getConversation: async (
+        conversationId: string
     ): Promise<Conversation> => {
         try {
-            console.log(`Getting conversation history for ${type}/${referenceId}`);
             const response = await get<ApiResponse<Conversation>>(
-                `${API_URL}/${type}/${referenceId}/history`
+                `${API_URL}/${conversationId}`
             );
             return response.data;
         } catch (error) {

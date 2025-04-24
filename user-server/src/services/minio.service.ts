@@ -1,9 +1,6 @@
 import { minioClient, defaultBucket, isMinioAvailable } from '../config/minio';
-import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 import logger from '../config/logger';
 import { Readable } from 'stream';
-import * as Minio from 'minio';
 
 interface FileUpload {
     buffer: Buffer;

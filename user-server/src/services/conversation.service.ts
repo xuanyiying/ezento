@@ -67,11 +67,11 @@ class ConversationService {
             // 如果提供了具体的conversationId，则查找对应会话
             let conversation = null;
             if (conversationId) {
-                conversation = await Conversation.findOne({ id: conversationId });
-                logger.info(`找到现有会话，会话: ${conversation}`);
+                conversation = await Conversation.findOne({ id: conversationId ,status: 'ACTIVE' });
                 if (conversation) {
-                    logger.info(`找到现有会话，会话ID: ${conversation.id}`);
                     return conversation;
+                } else {
+                    logger.warn(`会话不存在，尝试使用关联ID创建新会话 [conversationId=${conversationId}]`);
                 }
             } else {
                 // 创建一个新的咨询会话

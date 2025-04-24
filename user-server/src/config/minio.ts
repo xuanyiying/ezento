@@ -16,12 +16,13 @@ try {
         accessKey: process.env.MINIO_ACCESS_KEY || 'minioadmin',
         secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
     });
+    logger.info('MinIO client initialized successfully');
 } catch (error) {
     logger.error(`MinIO client initialization error: ${error}`);
 }
 
 // Default bucket name
-const defaultBucket = process.env.MINIO_BUCKET || 'user-images';
+const defaultBucket = process.env.MINIO_BUCKET || 'ezento';
 
 // Initialize bucket if it doesn't exist
 const initializeBucket = async () => {

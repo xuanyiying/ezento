@@ -14,7 +14,7 @@ const startServer = async () => {
     try {
         // 先连接到数据库
         await connectDB();
-        logger.info('数据库连接成功', { service: 'ezento-api' });
+        logger.info('Mongo数据库连接成功', { service: 'ezento-api' });
 
         // 启动服务器
         const server = app.listen(PORT, () => {
