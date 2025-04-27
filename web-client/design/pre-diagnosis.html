@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧医疗 - 预问诊</title>
+    <style>
+        :root {
+            --primary-color: #1890ff;
+            --secondary-color: #e6f7ff;
+            --success-color: #52c41a;
+            --warning-color: #faad14;
+            --error-color: #f5222d;
+            --text-color: #333333;
+            --light-text: #666666;
+            --border-color: #f0f0f0;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background-color: white;
+            box-shadow: var(--shadow);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo img {
+            height: 30px;
+            margin-right: 10px;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+        }
+        
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--secondary-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .username {
+            font-size: 14px;
+            color: var(--text-color);
+        }
+        
+        .main-container {
+            display: flex;
+            flex: 1;
+            padding: 20px;
+        }
+        
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 100px);
+        }
+        
+        .chat-header {
+            padding: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .appointment-info {
+            font-size: 12px;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .message {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        
+        .message-content {
+            background-color: #f0f2f5;
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 75%;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .message.user {
+            flex-direction: row-reverse;
+        }
+        
+        .message.user .message-avatar {
+            margin-right: 0;
+            margin-left: 10px;
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+        }
+        
+        .message.user .message-content {
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+        }
+        
+        .message.doctor .message-avatar {
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+        }
+        
+        .message-time {
+            font-size: 12px;
+            color: var(--light-text);
+            margin-top: 5px;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            padding: 10px 15px;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--light-text);
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typing 1.5s infinite;
+            opacity: 0.6;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-5px);
+            }
+        }
+        
+        .quick-replies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .quick-reply {
+            background-color: white;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        
+        .quick-reply:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .chat-input {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+        }
+        
+        .input-field {
+            flex: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 10px 15px;
+            font-size: 14px;
+            outline: none;
+            resize: none;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        
+        .input-field:focus {
+            border-color: var(--primary-color);
+        }
+        
+        .send-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .send-button:hover {
+            background-color: #096dd9;
+        }
+        
+        .upload-button {
+            background-color: white;
+            color: var(--primary-color);
+            border: 1px solid var(--border-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .upload-button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .form-block {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        
+        .form-field {
+            margin-bottom: 10px;
+        }
+        
+        .form-label {
+            font-size: 14px;
+            color: var(--text-color);
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+            background-color: white;
+        }
+        
+        .button-group {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+        
+        .form-button {
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .submit-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+        }
+        
+        .submit-button:hover {
+            background-color: #096dd9;
+        }
+        
+        .image-upload {
+            border: 2px dashed var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+        
+        .image-upload-icon {
+            font-size: 32px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .image-upload-text {
+            font-size: 14px;
+            color: var(--light-text);
+        }
+        
+        .image-preview {
+            display: flex;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .image-preview-item {
+            width: 80px;
+            height: 80px;
+            border-radius: 4px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        
+        .image-preview-remove {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            background-color: var(--error-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 10px;
+            }
+            
+            .chat-container {
+                height: calc(100vh - 80px);
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="https://cdn-icons-png.flaticon.com/512/2966/2966327.png" alt="Logo">
+            智慧医疗
+        </div>
+        <div class="user-menu">
+            <div class="avatar">张</div>
+            <div class="username">张先生</div>
+        </div>
+    </header>
+    
+    <div class="main-container">
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="chat-title">预问诊咨询</div>
+                <div class="appointment-info">预约：消化内科 | 2023-10-15 9:30</div>
+            </div>
+            
+            <div class="chat-messages">
+                <div class="message doctor">
+                    <div class="message-avatar">医</div>
+                    <div>
+                        <div class="message-content">
+                            您好！我是您的智能问诊助手。在您就诊前，我想了解一些您的症状和基本情况，这将帮助医生更好地为您诊疗。请问您最近有什么不适？
+                        </div>
+                        <div class="message-time">10:02</div>
+                        <div class="quick-replies">
+                            <div class="quick-reply">胃痛</div>
+                            <div class="quick-reply">头痛</div>
+                            <div class="quick-reply">发热</div>
+                            <div class="quick-reply">咳嗽</div>
+                            <div class="quick-reply">其他症状</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="message user">
+                    <div class="message-avatar">张</div>
+                    <div>
+                        <div class="message-content">
+                            我这两天一直胃痛，吃东西后更明显，还有些反酸。
+                        </div>
+                        <div class="message-time">10:03</div>
+                    </div>
+                </div>
+                
+                <div class="message doctor">
+                    <div class="message-avatar">医</div>
+                    <div>
+                        <div class="message-content">
+                            了解了。您的症状可能与胃炎或胃溃疡有关。请问这种胃痛持续了多久？疼痛的性质是怎样的？是隐痛、钝痛还是刺痛？
+                        </div>
+                        <div class="message-time">10:03</div>
+                    </div>
+                </div>
+                
+                <div class="message user">
+                    <div class="message-avatar">张</div>
+                    <div>
+                        <div class="message-content">
+                            差不多持续了三天，是一种钝痛，有时会比较明显，特别是吃完饭后。
+                        </div>
+                        <div class="message-time">10:04</div>
+                    </div>
+                </div>
+                
+                <div class="message doctor">
+                    <div class="message-avatar">医</div>
+                    <div>
+                        <div class="message-content">
+                            感谢您的描述。请填写以下表格，帮助我们更全面地了解您的情况：
+                        </div>
+                        <div class="message-time">10:05</div>
+                        
+                        <div class="form-block">
+                            <div class="form-title">基本健康信息</div>
+                            <div class="form-field">
+                                <label class="form-label">既往病史</label>
+                                <select class="form-select">
+                                    <option>无</option>
+                                    <option>高血压</option>
+                                    <option>糖尿病</option>
+                                    <option>心脏病</option>
+                                    <option>其他</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label class="form-label">药物过敏史</label>
+                                <select class="form-select">
+                                    <option>无</option>
+                                    <option>有</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label class="form-label">目前是否服用其他药物</label>
+                                <select class="form-select">
+                                    <option>否</option>
+                                    <option>是</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label class="form-label">症状严重程度（1-10）</label>
+                                <input type="range" min="1" max="10" value="6" class="form-input">
+                            </div>
+                            <div class="button-group">
+                                <button class="form-button submit-button">提交</button>
+                            </div>
+                        </div>
+                        
+                        <div class="message-content">
+                            如果您有相关的检查报告或之前的病历，也可以上传，这将有助于医生更准确地评估您的情况。
+                        </div>
+                        <div class="message-time">10:05</div>
+                        
+                        <div class="image-upload">
+                            <div class="image-upload-icon">📁</div>
+                            <div class="image-upload-text">点击上传图片或医疗检查报告</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="message doctor">
+                    <div class="message-avatar">医</div>
+                    <div>
+                        <div class="typing-indicator">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-input">
+                <button class="upload-button">📎</button>
+                <textarea class="input-field" placeholder="请输入您的问题或症状描述..."></textarea>
+                <button class="send-button">➤</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

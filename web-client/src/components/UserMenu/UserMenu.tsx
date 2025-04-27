@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import type { MenuProps, UploadProps } from 'antd';
@@ -55,11 +55,6 @@ const UserMenu: React.FC<UserMenuProps> = ({ user: propUser }) => {
   const [profileForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | undefined>(user?.avatar);
-
-  // 调试日志
-  useEffect(() => {
-    console.log('UserMenu组件挂载，用户信息:', user);
-  }, [user]);
 
   // 处理登出
   const { message } = App.useApp();

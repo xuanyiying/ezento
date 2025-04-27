@@ -2,13 +2,14 @@ import React from 'react';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { message } from 'antd';
 import './ChatComponents.less';
+import './IdentityConfirmation.less';
 
 interface IdentityConfirmationProps {
   user: {
     name?: string;
-    phone?: string;
     gender?: string;
     userId?: string;
+    age?: number
   };
   onConfirm: () => void;
 }
@@ -25,15 +26,15 @@ const IdentityConfirmation: React.FC<IdentityConfirmationProps> = ({ user, onCon
           <span>{user.name || '未设置'}</span>
         </div>
         <div className="info-row">
-          <span className="label">手机号：</span>
-          <span>{user.phone || '未设置'}</span>
+          <span className="label">年龄：</span>
+          <span>{user.age || '未设置'}</span>
         </div>
         <div className="info-row">
           <span className="label">性别：</span>
           <span>
-            {user.gender === 'MALE'
+            {user.gender === '男'
               ? '男'
-              : user.gender === 'FEMALE'
+              : user.gender === '女'
                 ? '女'
                 : '未设置'}
           </span>

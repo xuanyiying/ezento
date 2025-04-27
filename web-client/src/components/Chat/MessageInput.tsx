@@ -4,6 +4,7 @@ import { AudioOutlined, FileImageOutlined, FilePdfOutlined } from '@ant-design/i
 import { Sender } from '@ant-design/x';
 import VoiceInput from '@/components/VoiceInput';
 import './ChatComponents.less';
+import './MessageInput.less';
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;

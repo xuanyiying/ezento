@@ -55,7 +55,7 @@ export const validateToken = createAsyncThunk(
                             const result = await AuthAPI.refreshToken(refreshToken);
                             if (result.token && result.refreshToken) {
                                 // 更新token
-                                TokenManager.setTokens(result.token, result.refreshToken);
+                                TokenManager.saveTokens(result.token, result.refreshToken);
                                 return true;
                             }
                         } catch (refreshError) {
@@ -123,7 +123,7 @@ const authSlice = createSlice({
             // 存储token和用户信息
             localStorage.setItem('user', JSON.stringify(state.user));
             setUser(state.user);
-            TokenManager.setTokens(action.payload.token, action.payload.refreshToken);
+            TokenManager.saveTokens(action.payload.token, action.payload.refreshToken);
             setToken(action.payload.token);
         },
         loginFailure: (state, action: PayloadAction<string>) => {

@@ -15,7 +15,6 @@ export interface Message {
 }
 
 export interface Conversation {
-    conversationId: string;
     consultationId: string;
     id: string;
     userId?: string;  // 用户ID
@@ -28,4 +27,16 @@ export interface Conversation {
     title?: string; // Custom title for the conversation
     pinned?: boolean; // Whether the conversation is pinned to the top
     favorite?: boolean; // Whether the conversation is marked as favorite
+}
+
+export interface CreateConversationRequest {
+    type: Types;
+    userId: string;
+    initialMessage?: string;
+    messages: Message[];
+}
+
+export interface ExportResponse {
+    filePath: string;
+    downloadUrl: string;
 }

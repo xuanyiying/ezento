@@ -1,9 +1,11 @@
 import React, { useMemo, useRef, useEffect } from 'react';
-import { Typography } from 'antd';
+import { Typography, Avatar } from 'antd';
 import { Welcome, Bubble } from '@ant-design/x';
 import MarkdownIt from 'markdown-it';
 import { Message } from '@/types/conversation';
 import './ChatComponents.less';
+import './MessageList.less';
+import { UserOutlined, RobotOutlined } from '@ant-design/icons';
 
 // 配置 Markdown 渲染器
 const md = new MarkdownIt({

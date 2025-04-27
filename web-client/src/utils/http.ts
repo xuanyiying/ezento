@@ -5,13 +5,6 @@ import { AuthError, RefreshTokenError, TokenExpiredError } from '../types/auth';
 const MAX_RETRIES = 1;
 const RETRY_DELAY = 1000; // 1 second
 
-// 定义标准API响应格式
-export interface ApiResponse<T> {
-    success: boolean;
-    message: string;
-    data: T;
-}
-
 // 添加请求计数器和限制
 interface ApiRequestLimit {
     maxRequests: number;
@@ -183,7 +176,7 @@ http.interceptors.response.use(
                 }
 
                 console.log('成功获取新令牌，将重试原始请求');
-                TokenManager.setTokens(token, newRefreshToken);
+                TokenManager.saveTokens(token, newRefreshToken);
 
                 // Retry the original request
                 if (originalRequest.headers) {

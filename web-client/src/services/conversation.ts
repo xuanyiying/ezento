@@ -1,35 +1,10 @@
 import { get, post, put, del } from '@/utils/http';
-import { Types, Message, Conversation } from '@/types/conversation';
-
+import {  Message, Conversation, ExportResponse, CreateConversationRequest } from '@/types/conversation';
+import { ApiResponse } from '@/types';
 const API_URL = '/conversations';
 
 // 定义标准API响应格式
-export interface ApiResponse<T> {
-    success: boolean;
-    message: string;
-    data: T;
-}
 
-export interface CreateConversationRequest {
-    conversationId?: string;
-    type: Types;
-    userId: string;
-    initialMessage?: string;
-    messages: Message[];
-}
-
-export interface AddMessageRequest {
-    content: string;
-    role: 'user' | 'system';
-    conversationId: string;
-    userId: string;
-    metadata?: any;
-}
-
-export interface ExportResponse {
-    filePath: string;
-    downloadUrl: string;
-}
 
 export const ConversationAPI = {
     createConversation: async (params: CreateConversationRequest): Promise<Conversation> => {
@@ -56,7 +31,7 @@ export const ConversationAPI = {
 
     addMessage: async (
         conversationId: string,
-        params: AddMessageRequest
+        params: Message
     ): Promise<Conversation> => {
         try {
             console.log(`Adding message to conversation ${conversationId}:`, params);
@@ -96,10 +71,29 @@ export const ConversationAPI = {
     },
     deleteConversation: async (conversationId: string): Promise<void> => {
         try {
-            await del<ApiResponse<void>>(`${API_URL}/${conversationId}`);
+            console.log(`删除会话 ${conversationId}`);
+            await del<ApiResponse<void>>(
+                `${API_URL}/${conversationId}`
+            );
         } catch (error) {
             console.error('Error deleting conversation:', error);
-            throw error;        
+            throw error;
+        }
+    },
+    toggleFavorite: async (conversationId: string): Promise<void> => {
+        try {
+            await put<ApiResponse<void>>(`${API_URL}/${conversationId}/toggle-favorite`);
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+            throw error;
+        }
+    },
+    togglePin: async (conversationId: string): Promise<void> => {
+        try {
+            await put<ApiResponse<void>>(`${API_URL}/${conversationId}/toggle-pin`);
+        } catch (error) {
+            console.error('Error toggling pin:', error);
+            throw error;
         }
     },
     renameConversation: async (conversationId: string, newName: string): Promise<void> => {

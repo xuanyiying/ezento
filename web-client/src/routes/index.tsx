@@ -2,13 +2,14 @@ import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import LoginPage from '@/pages/LoginPage/LoginPage';
 import ProfilePage from '@/pages/ProfilePage/ProfilePage';
 import GuidePage from '@/pages/GuidePage/GuidePage';
 import ReportsPage from '@/pages/ReportsPage/ReportsPage';
 import ChatPage from '@/pages/ChatPage/ChatPage';
 import { TokenManager } from '@/utils/tokenManager';
 import { App } from 'antd';
+import LoginPage from '@/pages/LoginPage';
+import RegisterPage from '@/pages/RegisterPage';
 
 interface PrivateRouteProps {
     children: React.ReactNode;
@@ -60,11 +61,12 @@ const AuthGuard: React.FC = () => {
     const { isAuthenticated } = useSelector((state: RootState) => state.auth);
     const location = useLocation();
     
-    // 如果访问/login页面，直接显示登录页
-    if (location.pathname === '/login') {
+    // 如果访问/login或/register页面，直接显示对应页面
+    if (location.pathname === '/login' || location.pathname === '/register') {
         return (
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
                 <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
         );
@@ -79,6 +81,7 @@ const AuthGuard: React.FC = () => {
     return (
         <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
             <Route
                 path="/"
                 element={

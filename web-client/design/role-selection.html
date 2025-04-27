@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧医疗 - 角色选择</title>
+    <style>
+        :root {
+            --primary-color: #1890ff;
+            --secondary-color: #e6f7ff;
+            --success-color: #52c41a;
+            --warning-color: #faad14;
+            --error-color: #f5222d;
+            --text-color: #333333;
+            --light-text: #666666;
+            --lighter-text: #999999;
+            --border-color: #f0f0f0;
+            --background-color: #f5f7fa;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background-color: white;
+            box-shadow: var(--shadow);
+            height: 64px;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo img {
+            height: 32px;
+            margin-right: 12px;
+        }
+        
+        .logo-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+        
+        .user-info {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            margin-right: 8px;
+        }
+        
+        .username {
+            color: var(--text-color);
+            font-size: 14px;
+        }
+        
+        .main-content {
+            margin-top: 64px;
+            flex: 1;
+            padding: 40px 20px;
+            max-width: 1200px;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .page-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 24px;
+            color: var(--text-color);
+            text-align: center;
+        }
+        
+        .page-description {
+            text-align: center;
+            color: var(--light-text);
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+        
+        .role-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        
+        .role-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .role-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+        }
+        
+        .role-card.selected {
+            border: 2px solid var(--primary-color);
+        }
+        
+        .role-card.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+        }
+        
+        .role-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--secondary-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+        }
+        
+        .role-icon img {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .role-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: var(--text-color);
+        }
+        
+        .role-description {
+            color: var(--light-text);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .role-features {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        
+        .role-feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--light-text);
+        }
+        
+        .feature-icon {
+            color: var(--success-color);
+            margin-right: 8px;
+            font-size: 14px;
+        }
+        
+        .continue-btn {
+            display: block;
+            width: 200px;
+            padding: 12px 24px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0 auto;
+        }
+        
+        .continue-btn:hover {
+            background-color: #096dd9;
+        }
+        
+        .continue-btn:disabled {
+            background-color: var(--border-color);
+            color: var(--light-text);
+            cursor: not-allowed;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--light-text);
+            font-size: 14px;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .role-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-content {
+                padding: 30px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="https://cdn-icons-png.flaticon.com/512/2966/2966327.png" alt="Logo">
+            <div class="logo-text">智慧医疗</div>
+        </div>
+        <div class="user-info">
+            <div class="user-avatar">张</div>
+            <div class="username">张小明</div>
+        </div>
+    </header>
+    
+    <main class="main-content">
+        <h1 class="page-title">选择服务类型</h1>
+        <p class="page-description">
+            请选择您需要的医疗服务类型，我们将为您提供相应的专业服务和指导。
+        </p>
+        
+        <div class="role-cards">
+            <div class="role-card" id="card-consult">
+                <div class="role-icon">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="智能问诊">
+                </div>
+                <h2 class="role-name">智能问诊</h2>
+                <p class="role-description">
+                    通过AI辅助，快速获取症状初步分析和就医建议，优化线下就诊效率。
+                </p>
+                <div class="role-features">
+                    <div class="role-feature">
+                        <span class="feature-icon">✓</span>
+                        <span>智能症状分析</span>
+                    </div>
+                    <div class="role-feature">
+                        <span class="feature-icon">✓</span>
+                        <span>24小时自助服务</span>
+                    </div>
+                    <div class="role-feature">
+                        <span class="feature-icon">✓</span>
+                        <span>智能分诊建议</span>
+                    </div>
+                    <div class="role-feature">
+                        <span class="feature-icon">✓</span>
+                        <span>就医准备提示</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="role-card" id="card-guide">
+                <div class="role-icon">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3588/3588614.png" alt="专业导诊">
+                </div>
+                <h2 class="role-name">专业导诊</h2>
+                <p class="role-description">
+                    连接真实医护人员，提供更精准的科室选择和就医指导建议。
+                </p>
+                <div class="role-features">
+                    <div class="role-feature">
+                        <span class="feature-icon">✓</span>
+                        <span>真人医护咨询</span>
+                    </div>
+                    <div class="role-feature">
+                        <span class="feature-icon">✓</span>
+                        <span>精准科室推荐</span>
+                    </div>
+                    <div class="role-feature">
+                        <span class="feature-icon">✓</span>
+                        <span>检查项目建议</span>
+                    </div>
+                    <div class="role-feature">
+                        <span class="feature-icon">✓</span>
+                        <span>预约挂号协助</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="role-card" id="card-report">
+                <div class="role-icon">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3004/3004592.png" alt="报告解读">
+                </div>
+                <h2 class="role-name">报告解读</h2>
+                <p class="role-description">
+                    上传您的检查报告，获得通俗易懂的解释和健康建议。
+                </p>
+                <div class="role-features">
+                    <div class="role-feature">
+                        <span class="feature-icon">✓</span>
+                        <span>多种报告解读</span>
+                    </div>
+                    <div class="role-feature">
+                        <span class="feature-icon">✓</span>
+                        <span>异常指标说明</span>
+                    </div>
+                    <div class="role-feature">
+                        <span class="feature-icon">✓</span>
+                        <span>健康风险提示</span>
+                    </div>
+                    <div class="role-feature">
+                        <span class="feature-icon">✓</span>
+                        <span>后续检查建议</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <button class="continue-btn" id="continue-btn" disabled>继续</button>
+    </main>
+    
+    <footer class="footer">
+        © 2023 智慧医疗 All Rights Reserved | 隐私政策 | 用户协议 | 联系我们
+    </footer>
+    
+    <script>
+        // 角色选择功能
+        const roleCards = document.querySelectorAll('.role-card');
+        const continueBtn = document.getElementById('continue-btn');
+        let selectedRole = null;
+        
+        roleCards.forEach(card => {
+            card.addEventListener('click', function() {
+                // 移除之前选中的卡片
+                roleCards.forEach(c => c.classList.remove('selected'));
+                
+                // 选中当前卡片
+                this.classList.add('selected');
+                
+                // 启用继续按钮
+                continueBtn.disabled = false;
+                
+                // 记录选中的角色
+                selectedRole = this.id.replace('card-', '');
+            });
+        });
+        
+        // 继续按钮点击事件
+        continueBtn.addEventListener('click', function() {
+            if (selectedRole) {
+                // 根据选择的角色跳转到相应页面
+                switch (selectedRole) {
+                    case 'consult':
+                        window.location.href = 'chat.html?type=consult';
+                        break;
+                    case 'guide':
+                        window.location.href = 'chat.html?type=guide';
+                        break;
+                    case 'report':
+                        window.location.href = 'report-upload.html';
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

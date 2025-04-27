@@ -1,4 +1,4 @@
-import { addMessage, setCurrentConversation, startBatchUpdate, endBatchUpdate } from '@/store/slices/conversationSlice';
+import { addMessage, setCurrentConversation } from '@/store/slices/conversationSlice';
 import { store } from '@/store';
 import { io, Socket } from 'socket.io-client';
 import { TokenManager } from '@/utils/tokenManager';
@@ -191,10 +191,6 @@ class WebSocketService {
         try {
             console.log('收到消息:', data);
             const { message, conversation } = data;
-
-            // 开始批量更新
-            store.dispatch(startBatchUpdate());
-
             if (message) {
                 // 添加收到的消息到Redux store
                 store.dispatch(
@@ -222,13 +218,8 @@ class WebSocketService {
                 };
                 store.dispatch(setCurrentConversation(safeConversation));
             }
-
-            // 结束批量更新
-            store.dispatch(endBatchUpdate());
         } catch (error) {
             console.error('处理消息时出错:', error);
-            // 确保即使出错也结束批量更新
-            store.dispatch(endBatchUpdate());
         }
     }
 
@@ -236,10 +227,13 @@ class WebSocketService {
         try {
             const { chunk } = data;
             if (chunk) {
+                // 生成唯一ID
+                const uniqueId = `system_chunk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                
                 // 处理AI响应片段
                 store.dispatch(
                     addMessage({
-                        id: Date.now().toString(),
+                        id: uniqueId,
                         content: chunk,
                         role: 'system',
                         timestamp: new Date().toISOString(),
@@ -264,9 +258,6 @@ class WebSocketService {
             }
             
             const { conversation } = data;
-            
-            // 开始批量更新
-            store.dispatch(startBatchUpdate());
             
             try {
                 // 安全更新当前会话
@@ -303,13 +294,9 @@ class WebSocketService {
                     }
                 }
             } finally {
-                // 确保总是结束批量更新
-                store.dispatch(endBatchUpdate());
           }
         } catch (error) {
             console.error('处理AI响应完成事件时出错:', error);
-            // 确保即使最外层出错也结束批量更新
-            store.dispatch(endBatchUpdate());
         }
     }
 
@@ -333,11 +320,11 @@ class WebSocketService {
     }
 
     // 发送消息方法
-    sendMessage(message: string, conversationId?: string, type?: string): void {
+    sendMessage(message: string, conversationId?: string, type?: string, role: 'user' | 'system' = 'user'): void {
         if (!this.socket?.connected) {
             console.error('WebSocket未连接，无法发送消息');
-      return;
-    }
+            return;
+        }
     
         const state = store.getState() as any;
         const msgConversationId = conversationId || state.conversation?.currentConversation?.id;
@@ -346,24 +333,25 @@ class WebSocketService {
 
         if (!msgConversationId) {
             console.error('找不到会话ID，无法发送消息');
-      return;
-    }
+            return;
+        }
     
-    const messageData = {
+        const messageData = {
             conversationId: msgConversationId,
-      content: message,
+            content: message,
             type: msgConversationType,
+            role: role,
             metadata: {},
-    };
+        };
     
-    try {
-      this.socket.emit('new_message', messageData);
+        try {
+            this.socket.emit('new_message', messageData);
             console.log('消息已发送:', messageData);
-    } catch (error) {
+        } catch (error) {
             console.error('发送消息失败:', error);
             throw error;
+        }
     }
-  }
 
   sendImage(imageData: string): void {
     if (!this.socket || !this.socket.connected) {

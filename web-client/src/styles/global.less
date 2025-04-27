@@ -7,15 +7,15 @@ body {
     margin: 0;
     padding: 0;
     font-family: @font-family;
-    font-size: var(--font-size-base);
+    font-size: @font-size-base;
     line-height: @line-height-base;
-    color: var(--text-color);
-    background-color: var(--background-color);
+    color: @text-color;
+    background-color: @background-color;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition:
-        background-color var(--transition-duration) var(--transition-timing-function),
-        color var(--transition-duration) var(--transition-timing-function);
+        background-color 0.3s ease,
+        color 0.3s ease;
 }
 
 // Reset for all elements to use CSS variables
@@ -27,7 +27,7 @@ body {
 
 // Enhanced focus styles for accessibility
 :focus {
-    outline: 2px solid var(--primary-color);
+    outline: 2px solid @primary-color;
     outline-offset: 2px;
 }
 
@@ -36,7 +36,7 @@ body {
     position: absolute;
     top: -40px;
     left: 0;
-    background: var(--primary-color);
+    background: @primary-color;
     color: white;
     padding: 8px;
     z-index: 100;
@@ -182,47 +182,47 @@ body {
 
 // Text colors
 .text-primary {
-    color: var(--primary-color);
+    color: @primary-color;
 }
 .text-secondary {
-    color: var(--text-color-secondary);
+    color: @text-color-secondary;
 }
 .text-success {
-    color: var(--success-color);
+    color: @success-color;
 }
 .text-warning {
-    color: var(--warning-color);
+    color: @warning-color;
 }
 .text-error {
-    color: var(--error-color);
+    color: @error-color;
 }
 .text-info {
-    color: var(--info-color);
+    color: @info-color;
 }
 
 // Background colors
 .bg-primary {
-    background-color: var(--primary-color);
+    background-color: @primary-color;
 }
 .bg-secondary {
-    background-color: var(--secondary-color);
+    background-color: @secondary-color;
 }
 .bg-light {
-    background-color: var(--background-color-light);
+    background-color: @background-color-light;
 }
 
 // Cards and containers
 .card {
-    background-color: var(--background-color-light);
+    background-color: @background-color-light;
     border-radius: @border-radius-lg;
-    box-shadow: var(--shadow-base);
+    box-shadow: @shadow-base;
     padding: @card-padding;
     transition:
-        box-shadow var(--transition-duration) var(--transition-timing-function),
-        transform var(--transition-duration) var(--transition-timing-function);
+        box-shadow 0.3s ease,
+        transform 0.3s ease;
 
     &:hover {
-        box-shadow: var(--shadow-lg);
+        box-shadow: @shadow-lg;
     }
 }
 
@@ -237,12 +237,12 @@ body {
     font-size: @font-size-base;
     font-weight: 500;
     cursor: pointer;
-    transition: all var(--transition-duration) var(--transition-timing-function);
+    transition: all 0.3s ease;
     border: 1px solid transparent;
     user-select: none;
 
     &:focus {
-        outline: 2px solid var(--primary-color);
+        outline: 2px solid @primary-color;
         outline-offset: 2px;
     }
 
@@ -252,48 +252,48 @@ body {
     }
 
     &.btn-primary {
-        background-color: var(--primary-color);
+        background-color: @primary-color;
         color: white;
 
         &:hover {
-            background-color: var(--primary-color-dark);
+            background-color: darken(@primary-color, 5%);
         }
 
         &:active {
-            background-color: var(--primary-color-darker);
+            background-color: darken(@primary-color, 10%);
         }
     }
 
     &.btn-secondary {
         background-color: transparent;
-        border-color: var(--primary-color);
-        color: var(--primary-color);
+        border-color: @primary-color;
+        color: @primary-color;
 
         &:hover {
-            background-color: rgba(var(--primary-color-rgb), 0.05);
+            background-color: fade(@primary-color, 5%);
         }
 
         &:active {
-            background-color: rgba(var(--primary-color-rgb), 0.1);
+            background-color: fade(@primary-color, 10%);
         }
     }
 
     &.btn-accent {
-        background-color: var(--accent-color);
+        background-color: @accent-color;
         color: white;
 
         &:hover {
-            background-color: var(--accent-color-dark);
+            background-color: darken(@accent-color, 5%);
         }
 
         &:active {
-            background-color: var(--accent-color-darker);
+            background-color: darken(@accent-color, 10%);
         }
     }
 
     &.btn-ghost {
         background-color: transparent;
-        color: var(--text-color);
+        color: @text-color;
 
         &:hover {
             background-color: rgba(0, 0, 0, 0.05);
@@ -326,27 +326,27 @@ body {
     height: @input-height;
     padding: 0 @spacing-md;
     border-radius: @border-radius-base;
-    border: 1px solid var(--border-color);
-    background-color: var(--background-color-light);
-    color: var(--text-color);
-    transition: all var(--transition-duration) var(--transition-timing-function);
+    border: 1px solid @border-color-base;
+    background-color: @background-color-light;
+    color: @text-color;
+    transition: all 0.3s ease;
 
     &:hover {
-        border-color: var(--primary-color);
+        border-color: @primary-color;
     }
 
     &:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 2px rgba(var(--primary-color), 0.2);
+        border-color: @primary-color;
+        box-shadow: 0 0 0 2px fade(@primary-color, 20%);
         outline: none;
     }
 
     &::placeholder {
-        color: var(--text-color-tertiary);
+        color: @text-color-secondary;
     }
 
     &:disabled {
-        background-color: var(--divider-color);
+        background-color: @divider-color;
         cursor: not-allowed;
     }
 }
@@ -363,10 +363,6 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 1000;
-
-    html[data-theme='dark'] & {
-        background-color: rgba(0, 0, 0, 0.7);
-    }
 }
 
 // Responsive design
@@ -423,5 +419,54 @@ body {
     // Larger clickable areas
     .card {
         padding: @spacing-lg;
+    }
+}
+
+// Fix for login page
+.login-container {
+    display: flex;
+    width: 900px;
+    height: 580px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    position: relative;
+    margin: 0 auto;
+}
+
+.login-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+// Overrides for Ant Design components
+.ant-btn-primary {
+    background-color: @primary-color;
+    
+    &:hover {
+        background-color: darken(@primary-color, 5%);
+    }
+    
+    &:active {
+        background-color: darken(@primary-color, 10%);
+    }
+}
+
+.ant-input, .ant-input-affix-wrapper {
+    &:hover {
+        border-color: @primary-color;
+    }
+    
+    &:focus, &-focused {
+        border-color: @primary-color;
+        box-shadow: 0 0 0 2px fade(@primary-color, 20%);
     }
 }

@@ -1,39 +1,37 @@
 import React from 'react';
 import { Button } from 'antd';
-import { MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons';
+import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import UserMenu from '../UserMenu/UserMenu';
-import './ChatComponents.less';
+import { ChatHeaderProps } from './types';
+import './ChatHeader.less';
 
-interface ChatHeaderProps {
-  sidebarCollapsed: boolean;
-  toggleSidebar: () => void;
-  user: {
-    name?: string;
-    avatar?: string;
-    userId?: string;
-  };
-}
-
-const ChatHeader: React.FC<ChatHeaderProps> = ({ 
-  sidebarCollapsed, 
-  toggleSidebar, 
-  user 
+const ChatHeader: React.FC<ChatHeaderProps> = ({
+  sidebarCollapsed,
+  toggleSidebar,
+  user
 }) => {
-  console.log('渲染ChatHeader组件，用户信息:', user);
-  
+  const userMenuProps = user ? {
+    name: user.name,
+    avatar: user.avatar,
+    userId: user.userId,
+    email: user.email,
+    age: user.age,
+    gender: user.gender,
+    idCardNumber: user.idCardNumber
+  } : undefined;
+
   return (
-    <div className="chat-app-header">
-      <div className="header-left">
+    <div className="chat-header">
+      <div className="left-section">
         <Button
           type="text"
           icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
           onClick={toggleSidebar}
-          className="sidebar-toggle"
+          className="toggle-button"
         />
-        <span className="app-title">AI问诊</span>
       </div>
-      <div className="header-right">
-        <UserMenu user={user} />
+      <div className="right-section">
+        <UserMenu user={userMenuProps} />
       </div>
     </div>
   );

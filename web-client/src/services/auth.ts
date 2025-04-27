@@ -1,13 +1,13 @@
-import { User } from '@/types';
+import { ApiResponse, User } from '@/types';
 import { get, post } from '@/utils/http';
 import { TokenManager } from '@/utils/tokenManager';
 import {
+    LoginCredentials,
     LoginResponse,
     RefreshTokenResponse,
 } from '@/types/auth';
-import { ApiResponse } from './conversation';
 
-interface LoginParams {
+interface LoginParams extends LoginCredentials {
     username: string;
     password: string;
 }
@@ -67,6 +67,15 @@ export const AuthAPI = {
             return response.data;
         } catch (error) {
             console.error('Register error:', error);
+            throw error;
+        }
+    },
+
+    sendVerificationCode: async (phone: string): Promise<void> => {
+        try {
+            await post<ApiResponse<void>>('/auth/verification-code', { phone });
+        } catch (error) {
+            console.error('Send verification code error:', error);
             throw error;
         }
     },

@@ -12,10 +12,10 @@ import { useSelector } from 'react-redux';
 import { useAppDispatch } from '@/store/hooks';
 import { RootState } from '@/store';
 import {
-    deleteConversation,
     renameConversation,
     toggleFavorite,
-    fetchUserConversations
+    fetchUserConversations,
+    setLoading
 } from '@/store/slices/conversationSlice';
 import './ConversationSidebar.less';
 
@@ -23,7 +23,6 @@ interface ConversationSidebarProps {
     onSelectConversation: (conversationId: string) => void;
     onCreateNewConversation: () => void;
     currentConversationId?: string;
-    conversations: any[];
     onDeleteConversation: (id: string) => void;
     onRenameConversation: (id: string, newTitle: string) => void;
     className?: string;
@@ -35,6 +34,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
     currentConversationId,
     className,
     onDeleteConversation,
+    onRenameConversation,
 }) => {
     const dispatch = useAppDispatch();
     const [searchText, setSearchText] = useState('');
@@ -43,20 +43,52 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
     const { message } = App.useApp();
     const { conversations, loading } = useSelector((state: RootState) => state.conversation);
 
-    // 获取会话列表
+    // 从Redux获取上次获取时间
+    const lastFetchTime = useSelector((state: RootState) => state.conversation.lastFetchTime);
+
+    // 获取会话列表 - 使用useRef确保只在组件挂载时调用一次
+    const hasFetchedRef = React.useRef(false);
+
     useEffect(() => {
+        // 添加防抖机制，避免短时间内多次调用API
+        let fetchTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
         const fetchConversations = async () => {
-            try {
-                // 使用新的异步 action creator 获取会话数据
-                await dispatch(fetchUserConversations() as any);
-            } catch (error) {
-                console.error('获取会话列表失败:', error);
-                message.error('获取会话列表失败，请重试');
+            // 如果已经有一个请求在进行中，取消它
+            if (fetchTimeoutId) {
+                clearTimeout(fetchTimeoutId);
+                fetchTimeoutId = null;
             }
+
+            // 检查上次获取时间，如果在30秒内已经获取过，则不再重复获取
+            const now = Date.now();
+            if (lastFetchTime && now - lastFetchTime < 30000) {
+                console.log('跳过会话列表获取，因为刚刚已经获取过');
+                return;
+            }
+
+            // 延迟300ms执行，合并短时间内的多次请求
+            fetchTimeoutId = setTimeout(async () => {
+                try {
+                    console.log('获取会话列表...');
+                    // 使用新的异步 action creator 获取会话数据
+                    await dispatch(fetchUserConversations() as any);
+                } catch (error) {
+                    console.error('获取会话列表失败:', error);
+                    message.error('获取会话列表失败，请重试');
+                    // 确保在错误时也设置 loading 为 false
+                    dispatch(setLoading(false));
+                } finally {
+                    fetchTimeoutId = null;
+                }
+            }, 300);
         };
 
-        // 初始加载会话列表
-        fetchConversations();
+        // 只在组件首次挂载时获取会话列表
+        if (!hasFetchedRef.current) {
+            fetchConversations();
+            hasFetchedRef.current = true;
+        }
 
         // 监听storage事件，当其他页面更新localStorage时更新会话列表
         const handleStorageChange = (event: StorageEvent) => {
@@ -76,29 +108,32 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
 
         window.addEventListener('storage', handleStorageChange);
         document.addEventListener('visibilitychange', handleVisibilityChange);
-        
+
         // 定期同步（每5分钟）
         const syncInterval = setInterval(fetchConversations, 5 * 60 * 1000);
-        
+
+        // 组件卸载时清理 loading 状态
         return () => {
+            if (fetchTimeoutId) {
+                clearTimeout(fetchTimeoutId);
+            }
             window.removeEventListener('storage', handleStorageChange);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
             clearInterval(syncInterval);
+            dispatch(setLoading(false));
         };
-    }, [dispatch, message]);
+    }, [dispatch, message]); // 移除lastFetchTime依赖，避免重复调用
 
     // 处理删除会话
-    const handleDeleteConversation = (id: string) => {
+    const handleDeleteConversation = async (id: string) => {
         try {
-            // 调用props中的onDeleteConversation回调，让父组件处理API调用
-            if (onDeleteConversation) {
-                onDeleteConversation(id);
-                message.success('会话已删除');
-            } else {
-                // 如果没有提供回调，则尝试使用Redux中的action
-                dispatch(deleteConversation(id) as any);
-                message.success('会话已删除');
-            }
+
+            // 调用删除 API
+            onDeleteConversation(id);
+            // 重新获取会话列表
+            await dispatch(fetchUserConversations() as any);
+            message.success('会话已删除');
+
         } catch (error) {
             console.error('删除会话失败:', error);
             message.error('删除会话失败，请重试');
@@ -113,12 +148,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
         }
 
         try {
-            dispatch(
-                renameConversation({
-                    id,
-                    title: editingTitle,
-                })
-            );
+            onRenameConversation(id, editingTitle);
             setEditingId(null);
             setEditingTitle('');
             message.success('会话已重命名');
@@ -138,9 +168,12 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
         }
     };
 
+    // 从Redux获取会话列表，而不是使用props传入的空数组
+    const reduxConversations = useSelector((state: RootState) => state.conversation.conversations);
+
     // 按搜索文本和收藏状态过滤会话
     const filteredConversations = useMemo(() => {
-        let filtered = [...conversations];
+        let filtered = [...reduxConversations]; // 使用Redux中的会话列表
 
         // 如果有搜索文本，过滤出标题包含搜索文本的会话
         if (searchText) {
@@ -164,7 +197,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
         });
 
         return filtered;
-    }, [conversations, searchText]);
+    }, [reduxConversations, searchText]);
 
     // 将会话分组为"今天"、"昨天"和"更早"
     const groupedConversations = useMemo(() => {
@@ -227,9 +260,6 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                 ) : filteredConversations.length === 0 ? (
                     <div className="empty-state">
                         <p>暂无对话历史</p>
-                        <Button type="primary" onClick={onCreateNewConversation}>
-                            开始新对话
-                        </Button>
                     </div>
                 ) : (
                     <>
@@ -307,13 +337,12 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                                                                     setEditingTitle(
                                                                         item.title || '无标题会话'
                                                                     );
-                                                                    handleRenameConversation(item.id);
                                                                 }}
                                                             />
                                                         </Tooltip>
                                                         <Tooltip title="删除">
                                                             <Popconfirm
-                                                                title="删除此会话"                                        
+                                                                title="删除此会话"
                                                                 description="确定要删除此会话吗？"
                                                                 onConfirm={() => handleDeleteConversation(item.id)}
                                                                 okText="确定"
@@ -322,8 +351,8 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                                                                 <Button
                                                                     danger
                                                                     icon={<DeleteOutlined />}
-                                                                
-                                                                    
+
+
                                                                 />
                                                             </Popconfirm>
                                                         </Tooltip>

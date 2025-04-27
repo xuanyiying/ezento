@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧医疗 - 报告解读</title>
+    <style>
+        :root {
+            --primary-color: #1890ff;
+            --secondary-color: #e6f7ff;
+            --success-color: #52c41a;
+            --warning-color: #faad14;
+            --error-color: #f5222d;
+            --text-color: #333333;
+            --light-text: #666666;
+            --border-color: #f0f0f0;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background-color: white;
+            box-shadow: var(--shadow);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo img {
+            height: 30px;
+            margin-right: 10px;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+        }
+        
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--secondary-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .username {
+            font-size: 14px;
+            color: var(--text-color);
+        }
+        
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 260px;
+            background-color: white;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .new-chat-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .sidebar-body {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .conversation-list {
+            padding: 10px;
+        }
+        
+        .conversation-item {
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+        }
+        
+        .conversation-item:hover {
+            background-color: var(--hover-color);
+        }
+        
+        .conversation-item.active {
+            background-color: var(--secondary-color);
+        }
+        
+        .conversation-title {
+            font-size: 14px;
+            color: var(--text-color);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .conversation-time {
+            font-size: 12px;
+            color: var(--light-text);
+        }
+        
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            padding: 15px 20px;
+            background-color: white;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+        
+        .upload-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .upload-button:hover {
+            background-color: #096dd9;
+        }
+        
+        .upload-icon {
+            margin-right: 5px;
+        }
+        
+        .messages-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message-user {
+            align-items: flex-end;
+        }
+        
+        .message-ai {
+            align-items: flex-start;
+        }
+        
+        .message-content {
+            padding: 12px 16px;
+            border-radius: 10px;
+            max-width: 80%;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .message-user .message-content {
+            background-color: var(--primary-color);
+            color: white;
+            border-top-right-radius: 0;
+        }
+        
+        .message-ai .message-content {
+            background-color: white;
+            color: var(--text-color);
+            border-top-left-radius: 0;
+            box-shadow: var(--shadow);
+        }
+        
+        .message-time {
+            font-size: 12px;
+            color: var(--light-text);
+            margin-top: 5px;
+        }
+        
+        .report-image {
+            max-width: 300px;
+            border-radius: 10px;
+            margin-top: 10px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .report-image:hover {
+            transform: scale(1.05);
+        }
+        
+        .input-container {
+            padding: 15px 20px;
+            background-color: white;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            margin-right: 10px;
+            transition: all 0.3s;
+        }
+        
+        .message-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.1);
+        }
+        
+        .send-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .send-button:hover {
+            background-color: #096dd9;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 500px;
+            max-width: 90%;
+            box-shadow: var(--shadow);
+            animation: slideIn 0.3s;
+        }
+        
+        .modal-header {
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+        
+        .close-button {
+            color: var(--light-text);
+            float: right;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close-button:hover {
+            color: var(--text-color);
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 6px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: var(--secondary-color);
+        }
+        
+        .upload-area-icon {
+            font-size: 36px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .upload-area-text {
+            font-size: 14px;
+            color: var(--light-text);
+        }
+        
+        .upload-tips {
+            font-size: 12px;
+            color: var(--light-text);
+            text-align: center;
+        }
+        
+        @keyframes fadeIn {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+        
+        @keyframes slideIn {
+            from {transform: translateY(-50px); opacity: 0;}
+            to {transform: translateY(0); opacity: 1;}
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            
+            .input-container {
+                padding: 10px;
+            }
+            
+            .message-content {
+                max-width: 90%;
+            }
+            
+            .upload-button {
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="https://cdn-icons-png.flaticon.com/512/2966/2966327.png" alt="Logo">
+            智慧医疗
+        </div>
+        <div class="user-menu">
+            <div class="avatar">张</div>
+            <div class="username">张先生</div>
+        </div>
+    </header>
+    
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-btn">+ 新会话</button>
+            </div>
+            <div class="sidebar-body">
+                <div class="conversation-list">
+                    <div class="conversation-item active">
+                        <div class="conversation-title">血常规报告解读</div>
+                        <div class="conversation-time">今天 15:20</div>
+                    </div>
+                    <div class="conversation-item">
+                        <div class="conversation-title">肝功能检查报告</div>
+                        <div class="conversation-time">昨天 11:45</div>
+                    </div>
+                    <div class="conversation-item">
+                        <div class="conversation-title">胸部CT扫描解读</div>
+                        <div class="conversation-time">2023-06-15</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="chat-title">血常规报告解读</div>
+                <button class="upload-button" onclick="document.getElementById('uploadModal').style.display='block'">
+                    <span class="upload-icon">📤</span>上传报告
+                </button>
+            </div>
+            
+            <div class="messages-container">
+                <div class="message message-ai">
+                    <div class="message-content">
+                        您好！我是您的医疗报告解读助手。您可以上传检查报告，我会帮您解读报告内容，用通俗易懂的语言解释医学术语。
+                    </div>
+                    <div class="message-time">15:20</div>
+                </div>
+                
+                <div class="message message-user">
+                    <div class="message-content">
+                        我想解读一下我最近的血常规报告，已上传图片
+                    </div>
+                    <img src="https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png" class="report-image" onclick="window.open(this.src)">
+                    <div class="message-time">15:22</div>
+                </div>
+                
+                <div class="message message-ai">
+                    <div class="message-content">
+                        感谢您上传的血常规报告。根据您上传的报告，我已经进行了分析，以下是对主要指标的解读：<br><br>
+                        
+                        <strong>整体情况：</strong>您的血常规大部分指标在正常范围内，但有几项需要关注。<br><br>
+                        
+                        <strong>异常指标：</strong><br>
+                        1. <strong>白细胞计数(WBC)：</strong> 8.9 x 10^9/L - 略高，但仍在正常范围上限内。这可能表示有轻微的炎症反应。<br>
+                        2. <strong>血红蛋白(HGB)：</strong> 130 g/L - 正常，表示您的携氧能力良好。<br>
+                        3. <strong>血小板计数(PLT)：</strong> 380 x 10^9/L - 正常，表示凝血功能正常。<br>
+                        4. <strong>淋巴细胞百分比(LYM%)：</strong> 19.8% - 略低，但差异不大，可能是暂时性的变化。<br><br>
+                        
+                        <strong>建议：</strong><br>
+                        1. 您的血常规整体情况良好，不需要特别担心。<br>
+                        2. 白细胞计数略高可能与近期感冒、轻微感染等有关，建议注意休息，保持良好的生活习惯。<br>
+                        3. 如果您近期有发热、疲劳等不适症状，建议咨询医生进一步检查。<br>
+                        4. 为了更全面了解健康状况，建议定期进行体检。
+                    </div>
+                    <div class="message-time">15:25</div>
+                </div>
+                
+                <div class="message message-user">
+                    <div class="message-content">
+                        谢谢解读，请问白细胞计数偏高需要做什么调整吗？
+                    </div>
+                    <div class="message-time">15:28</div>
+                </div>
+                
+                <div class="message message-ai">
+                    <div class="message-content">
+                        关于白细胞计数偏高的情况，以下是一些建议：<br><br>
+                        
+                        1. <strong>不必过度担心</strong> - 您的白细胞计数只是略高于正常范围，而且这种轻微升高可能是暂时性的。<br><br>
+                        
+                        2. <strong>生活调整建议</strong>：<br>
+                           - 保证充足的休息和睡眠<br>
+                           - 均衡饮食，增加新鲜蔬果摄入<br>
+                           - 适量运动，增强免疫力<br>
+                           - 减少压力，保持良好的心态<br>
+                           - 避免过度劳累<br><br>
+                           
+                        3. <strong>观察症状</strong> - 如果您同时有发热、咳嗽、咽痛等症状，可能是感染导致的白细胞升高，应及时就医。<br><br>
+                        
+                        4. <strong>复查建议</strong> - 建议在1-3个月后再做一次血常规检查，观察白细胞计数是否恢复正常。<br><br>
+                        
+                        5. <strong>咨询专业医生</strong> - 如果您有其他不适症状或担忧，建议咨询内科医生获取更专业的建议。
+                    </div>
+                    <div class="message-time">15:30</div>
+                </div>
+            </div>
+            
+            <div class="input-container">
+                <textarea class="message-input" placeholder="请输入您的问题..." rows="2"></textarea>
+                <button class="send-button">发送</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 上传报告模态框 -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close-button" onclick="document.getElementById('uploadModal').style.display='none'">&times;</span>
+                <h2 class="modal-title">上传医疗报告</h2>
+            </div>
+            <div class="upload-area" onclick="alert('上传功能在实际应用中实现')">
+                <div class="upload-area-icon">📄</div>
+                <div class="upload-area-text">点击或拖拽文件到此处上传</div>
+            </div>
+            <div class="upload-tips">
+                支持上传JPG、PNG、PDF格式的报告文件，文件大小不超过10MB
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
