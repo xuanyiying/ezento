@@ -14,25 +14,8 @@ import ConversationSidebar from '@/components/ConversationSidebar';
 import useConversationManagement from '@/hooks/useConversationManagement';
 import useIdentityConfirmation from '@/hooks/useIdentityConfirmation';
 import { Types } from '@/types/conversation';
+import { ROLE_DEFINITIONS } from '@/types';
 
-// 角色定义
-const ROLE_DEFINITIONS = [
-    {
-        type: Types.DIAGNOSIS,
-        title: '问诊',
-        description: '我是你专业的诊前AI医生，有什么问题和疑惑都可以问我，帮助您了解症状和可能的诊断。',
-    },
-    {
-        type: Types.GUIDE,
-        title: '导诊',
-        description: '我是你专业的导诊AI医生，有什么问题和疑惑都可以问我，帮助您找到合适的科室和医生。',
-    },
-    {
-        type: Types.REPORT,
-        title: '报告解读',
-        description: '我是你专业的报告解读AI医生，有什么问题和疑惑都可以问我，帮助您理解检查结果。',
-    }
-];
 
 export const ChatPage: React.FC = () => {
   const { loading, currentConversation } = useSelector((state: RootState) => state.conversation);

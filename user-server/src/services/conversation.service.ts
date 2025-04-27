@@ -35,7 +35,11 @@ class ConversationService {
         await Consultation.deleteOne({ conversationId, userId, id: conversation.consultationId });
         // 删除会话的消息记录
         await Message.deleteMany({ conversationId });
-        // 删除会话
+        // 删除 redis 会话 
+        await ConversationRedisService.deleteConversationState(conversationId)
+        //删除 redis消息数据
+        await ConversationRedisService.deleteMessages(conversationId)
+        // 删除会话.
         await Conversation.deleteOne({ id: conversationId });
 
     }
@@ -67,8 +71,11 @@ class ConversationService {
             // 如果提供了具体的conversationId，则查找对应会话
             let conversation = null;
             if (conversationId) {
-                conversation = await Conversation.findOne({ id: conversationId ,status: 'ACTIVE' });
+                conversation = await Conversation.findOne({ id: conversationId, status: 'ACTIVE' });
                 if (conversation) {
+                    // 获取会话的消息
+                    const messages = await this.getConversationMessages(conversationId);
+                    conversation.messages =  messages;
                     return conversation;
                 } else {
                     logger.warn(`会话不存在，尝试使用关联ID创建新会话 [conversationId=${conversationId}]`);
@@ -141,7 +148,7 @@ class ConversationService {
         try {
             const { conversationId, content, role, metadata } = params;
 
-            // 查找会话，使用 id 字段而不是 _id
+            // 查找会话，使用 id 字段
             const conversation = await Conversation.findOne({ id: conversationId });
             if (!conversation) {
                 logger.error(`添加消息失败: 会话不存在 [conversationId=${conversationId}]`);
@@ -166,15 +173,6 @@ class ConversationService {
                 consultationId: conversation.consultationId, // 使用会话的 consultationId
                 metadata: metadata || {},
             };
-
-            logger.info(
-                `准备添加消息: ${JSON.stringify({
-                    id: message.id,
-                    conversationId: message.conversationId,
-                    consultationId: message.consultationId,
-                    role: message.role,
-                })}`
-            );
 
             // 先保存到Redis缓存，实现快速访问
             await ConversationRedisService.saveMessage(conversationId, message);
