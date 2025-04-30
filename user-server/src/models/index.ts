@@ -5,6 +5,7 @@ import { Conversation } from './Conversation';
 import Doctor from './Doctor';
 import Patient from './Patient';
 import Department from './Department';
-import Tenant, { ITenant } from './Tenant';
+import Tenant from './Tenant';
+import AiRole from './AiRole';
 
-export { User, Consultation, Message, Conversation, Doctor, Patient, Department, Tenant };
+export { User, Consultation, Message, Conversation, Doctor, Patient, Department, Tenant, AiRole };

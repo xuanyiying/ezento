@@ -1,6 +1,6 @@
 import logger from '../config/logger';
 import { Consultation } from '../models';
-import { generateConsultationId } from '../utils/idGenerator';
+import { generateConsultationId } from '../utils/id.generator';
 import {
     IConsultation,
     CreateConsultationRequest,

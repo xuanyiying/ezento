@@ -2,7 +2,7 @@ import { User } from '../models';
 import { UserCreateData } from '../interfaces/user.interface';
 import mongoose from 'mongoose';
 import logger from '../config/logger';
-import { generateUserId } from '../utils/idGenerator';
+import { generateUserId } from '../utils/id.generator';
 import type { UserDocument } from '../models/User';
 
 interface SessionOptions {

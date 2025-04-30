@@ -1,8 +1,4 @@
-export enum Types {
-    DIAGNOSIS = 'DIAGNOSIS',
-    GUIDE = 'GUIDE',
-    REPORT = 'REPORT',
-}
+import { AiRoleType } from './ai.role';
 
 export interface Message {
     id: string;
@@ -18,7 +14,7 @@ export interface Conversation {
     consultationId: string;
     id: string;
     userId?: string;  // 用户ID
-    type: Types;
+    type: AiRoleType;
     messages: Message[];
     status: 'ACTIVE' | 'CLOSED';
     startTime: string;
@@ -30,7 +26,7 @@ export interface Conversation {
 }
 
 export interface CreateConversationRequest {
-    type: Types;
+    type: AiRoleType;
     userId: string;
     initialMessage?: string;
     messages: Message[];

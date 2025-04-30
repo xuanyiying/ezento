@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ResponseUtil } from '../utils/responseUtil';
+import { ResponseHelper } from '../utils/response';
 import { logger } from '../utils/logger';
 import multer from 'multer';
 import OCRService from '../services/ocr.service';
@@ -41,7 +41,7 @@ class UploadController {
         async (req: Request, res: Response) => {
             try {
                 if (!req.file) {
-                    ResponseUtil.badRequest(res, '未提供文件或上传失败');
+                    ResponseHelper.badRequest(res, '未提供文件或上传失败');
                     return;
                 }
 
@@ -50,10 +50,10 @@ class UploadController {
 
                 logger.info(`文件上传成功到MinIO: ${fileInfo.key}`);
 
-                ResponseUtil.success(res, fileInfo);
+                ResponseHelper.success(res, fileInfo);
             } catch (error: any) {
                 logger.error(`文件上传失败: ${error.message}`);
-                ResponseUtil.serverError(res, `文件上传失败: ${error.message}`);
+                ResponseHelper.serverError(res, `文件上传失败: ${error.message}`);
             }
         },
     ];
@@ -66,7 +66,7 @@ class UploadController {
         async (req: Request, res: Response) => {
             try {
                 if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
-                    ResponseUtil.badRequest(res, '未提供文件或上传失败');
+                    ResponseHelper.badRequest(res, '未提供文件或上传失败');
                     return;
                 }
 
@@ -77,10 +77,10 @@ class UploadController {
 
                 logger.info(`多文件上传成功到MinIO，共${filesInfo.length}个文件`);
 
-                ResponseUtil.success(res, filesInfo);
+                ResponseHelper.success(res, filesInfo);
             } catch (error: any) {
                 logger.error(`多文件上传失败: ${error.message}`);
-                ResponseUtil.serverError(res, `多文件上传失败: ${error.message}`);
+                ResponseHelper.serverError(res, `多文件上传失败: ${error.message}`);
             }
         },
     ];
@@ -93,7 +93,7 @@ class UploadController {
         async (req: Request, res: Response) => {
             try {
                 if (!req.file) {
-                    ResponseUtil.badRequest(res, '未提供报告文件或上传失败');
+                    ResponseHelper.badRequest(res, '未提供报告文件或上传失败');
                     return;
                 }
 
@@ -121,7 +121,7 @@ class UploadController {
 
                     logger.info(`医疗报告OCR处理成功，提取文本长度: ${extractedText.length}`);
 
-                    ResponseUtil.success(res, reportData);
+                    ResponseHelper.success(res, reportData);
                 } catch (ocrError: any) {
                     // OCR处理失败，也删除MinIO中的文件
                     await MinioService.deleteFile(fileInfo.key).catch(deleteError => {
@@ -132,7 +132,7 @@ class UploadController {
                 }
             } catch (error: any) {
                 logger.error(`医疗报告处理失败: ${error.message}`);
-                ResponseUtil.serverError(res, `医疗报告处理失败: ${error.message}`);
+                ResponseHelper.serverError(res, `医疗报告处理失败: ${error.message}`);
             }
         },
     ];
@@ -145,7 +145,7 @@ class UploadController {
             const { bucket, key } = req.body;
 
             if (!key) {
-                ResponseUtil.badRequest(res, '未提供文件路径');
+                ResponseHelper.badRequest(res, '未提供文件路径');
                 return;
             }
 
@@ -154,10 +154,10 @@ class UploadController {
 
             logger.info(`文件从MinIO删除成功: ${bucket}/${key}`);
 
-            ResponseUtil.success(res, { message: '文件删除成功' });
+            ResponseHelper.success(res, { message: '文件删除成功' });
         } catch (error: any) {
             logger.error(`文件删除失败: ${error.message}`);
-            ResponseUtil.serverError(res, `文件删除失败: ${error.message}`);
+            ResponseHelper.serverError(res, `文件删除失败: ${error.message}`);
         }
     };
 }

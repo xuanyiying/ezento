@@ -12,7 +12,7 @@ import { ConversationRedisService } from './conversation.redis.service';
 import * as fs from 'fs';
 import * as path from 'path';
 import PDFDocument from 'pdfkit';
-import { generateConversationId, generateMessageId } from '../utils/idGenerator';
+import { generateConversationId, generateMessageId } from '../utils/id.generator';
 import { Consultation, Message } from '../models';
 import ConsultationService from './consultation.service';
 

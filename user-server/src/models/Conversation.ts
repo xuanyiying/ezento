@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
-import { IConversation, Types } from '../interfaces/conversation.interface';
+import { IConversation, Type } from '../interfaces/conversation.interface';
+import AiRole from './AiRole';
 
 /**
  * 会话Schema // 会话类型、关联ID、患者ID、消息列表、状态
@@ -16,8 +17,15 @@ const ConversationSchema: Schema = new Schema(
         },
         type: {
             type: String,
-            enum: Object.values(Types),
             required: true,
+            validate: {
+                validator: async function(value: string) {
+                    // 验证type是否存在于AiRole中
+                    const role = await AiRole.findOne({ type: value });
+                    return !!role;
+                },
+                message: (props: { value: any; }) => `${props.value}不是有效的AI角色类型`
+            }
         },
         consultationId: {
             type: String,

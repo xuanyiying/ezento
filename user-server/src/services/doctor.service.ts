@@ -5,7 +5,7 @@ import MedicalApiService from './third-party/medical-api.service';
 import mongoose from 'mongoose';
 import logger from '../config/logger';
 import { DoctorCacheService } from './cache/doctor-cache.service';
-import { generateUserId } from '../utils/idGenerator';
+import { generateUserId } from '../utils/id.generator';
 /**
  * 医生服务
  * 负责从第三方API获取医生数据，并同步到本地数据库

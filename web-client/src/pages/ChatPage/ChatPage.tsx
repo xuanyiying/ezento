@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { App, Card } from 'antd';
+import { App, Card, message } from 'antd';
 import { RootState } from '@/store';
 import { XProvider } from '@ant-design/x';
 import './ChatPage.less';
@@ -13,23 +13,41 @@ import IdentityConfirmation from '@/components/Chat/IdentityConfirmation';
 import ConversationSidebar from '@/components/ConversationSidebar';
 import useConversationManagement from '@/hooks/useConversationManagement';
 import useIdentityConfirmation from '@/hooks/useIdentityConfirmation';
-import { Types } from '@/types/conversation';
-import { ROLE_DEFINITIONS } from '@/types';
 
+// AI角色定义 - 从API获取
+import { AiRoleAPI } from '@/services/ai.role';
+import { AiRoleType } from '@/types/ai.role';
+const [roleDefinitions, setRoleDefinitions] = React.useState<any[]>([]);
+
+// 获取AI角色定义
+React.useEffect(() => {
+    const fetchRoles = async () => {
+        try {
+            const response = await AiRoleAPI.getAllRoles();
+            if (response.success && response.data.roles) {
+                setRoleDefinitions(response.data.roles);
+            }
+        } catch (error) {
+            console.error('获取角色定义出错:', error);
+        }
+    };
+
+    fetchRoles();
+}, [message]);
 
 export const ChatPage: React.FC = () => {
   const { loading, currentConversation } = useSelector((state: RootState) => state.conversation);
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const { message } = App.useApp();
-    
+
     // 使用自定义hooks
     const { isIdentityConfirmed, confirmIdentity } = useIdentityConfirmation(user);
-    
+
     // 侧边栏显示/隐藏
     const [sidebarCollapsed, setSidebarCollapsed] = React.useState(() => {
-        return localStorage.getItem('sidebarCollapsed') === 'true';
-    });
-    
+      return localStorage.getItem('sidebarCollapsed') === 'true';
+  });
+  
     // 会话管理
     const {
         createNewConversation,
@@ -42,7 +60,7 @@ export const ChatPage: React.FC = () => {
     });
 
     // 处理角色选择
-    const handleRoleSelect = async (type: Types) => {
+    const handleRoleSelect = async (type: AiRoleType) => {
         if (!user) {
             message.error('请先登录');
             return;
@@ -52,7 +70,7 @@ export const ChatPage: React.FC = () => {
             message.loading({ content: '正在初始化会话...', key: 'createConversation' });
             const newConversation = await createNewConversation(type);
             if (newConversation) {
-                const roleInfo = ROLE_DEFINITIONS.find(role => role.type === type);
+                const roleInfo = roleDefinitions.find(role => role.type === type);
                 const welcomeMessage = `您好，我是${roleInfo?.title}助手。${roleInfo?.description}`;
                 await sendMessage(welcomeMessage, newConversation.id);
                 message.success({ content: '会话创建成功', key: 'createConversation' });
@@ -96,8 +114,8 @@ export const ChatPage: React.FC = () => {
     return (
         <XProvider>
             <div className={`chat-page ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-                <ChatHeader 
-                    sidebarCollapsed={sidebarCollapsed} 
+                <ChatHeader
+                    sidebarCollapsed={sidebarCollapsed}
                     toggleSidebar={toggleSidebar}
                     user={{
                             name: user?.name,
@@ -109,7 +127,7 @@ export const ChatPage: React.FC = () => {
                 <div className="page-content">
                     <ConversationSidebar
                         onSelectConversation={selectConversationById}
-                        onCreateNewConversation={() => {}} // 禁用侧边栏的创建会话功能
+                        onCreateNewConversation={() => { }} // 禁用侧边栏的创建会话功能
                         currentConversationId={currentConversation?.id}
                         onDeleteConversation={(id) => {
                             console.log('删除会话:', id, '当前会话ID:', currentConversation?.id);
@@ -132,7 +150,7 @@ export const ChatPage: React.FC = () => {
                             <div className="role-selection-container">
                                 <h2>请选择服务类型</h2>
                                 <div className="role-cards">
-                                    {ROLE_DEFINITIONS.map(role => (
+                                    {roleDefinitions.map(role => (
                                         <Card
                                             key={role.type}
                                             className="role-card"
@@ -154,7 +172,7 @@ export const ChatPage: React.FC = () => {
                                     messages={currentConversation?.messages || []}
                                     username={user?.name}
                                 />
-                                
+
                                 <MessageInput
                                     onSendMessage={handleSendMessage}
                                                 disabled={loading || !currentConversation?.id}

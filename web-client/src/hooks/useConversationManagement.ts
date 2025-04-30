@@ -1,11 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { App } from 'antd';
-import { addMessage, setCurrentConversation, setLoading, fetchUserConversations } from '@/store/slices/conversationSlice';
+import { 
+    addMessage, 
+    setCurrentConversation, 
+    setLoading, 
+    fetchUserConversations, 
+    createConversation,
+    updateConversation,
+    sendMessage,
+    deleteConversation,
+} from '@/store/slices/conversationSlice';
 import { ConversationAPI } from '@/services/conversation';
-import { Types, Conversation } from '@/types/conversation';
+import {Conversation } from '@/types/conversation';
 import WebSocketService from '@/services/websocket';
 import { RootState } from '@/store';
+import { AiRoleType } from '@/types/ai.role';
 
 interface UseConversationManagementProps {
     userId?: string;
@@ -17,6 +27,8 @@ export const useConversationManagement = ({ userId, isAuthenticated }: UseConver
     const { message } = App.useApp();
     const wsService = WebSocketService.getInstance();
     const conversations = useSelector((state: RootState) => state.conversation.conversations);
+    const currentConversation = useSelector((state: RootState) => state.conversation.currentConversation);
+    const loading = useSelector((state: RootState) => state.conversation.loading);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     // 处理错误消息
@@ -66,12 +78,16 @@ export const useConversationManagement = ({ userId, isAuthenticated }: UseConver
 
             // 3. 如果本地没有有效会话或服务器验证失败，创建新会话
             const initMessage = '我是你专业的诊前AI医生，有什么问题和疑惑都可以问我，帮助您了解症状和可能的诊断。';
-            const apiResponse = await ConversationAPI.createConversation({
-                type: Types.DIAGNOSIS,
+            const newConversationData = {
+                type: type,
                 userId: userId,
                 messages: [],
                 initialMessage: initMessage
-            });
+            };
+            
+            // 使用Redux action创建会话
+            const result = await dispatch(createConversation(newConversationData) as any);
+            const apiResponse = result.payload;
 
             if (!apiResponse || !apiResponse.id) {
                 throw new Error('服务器创建会话失败，请稍后再试');
@@ -79,7 +95,7 @@ export const useConversationManagement = ({ userId, isAuthenticated }: UseConver
 
             const conversation: Conversation = {
                 id: apiResponse.id,
-                type: Types.DIAGNOSIS,
+                type: type,
                 userId: userId,
                 messages: apiResponse.messages || [],
                 status: apiResponse.status || 'ACTIVE',
@@ -104,7 +120,7 @@ export const useConversationManagement = ({ userId, isAuthenticated }: UseConver
     }, [userId, isAuthenticated, dispatch, message]);
 
     // 创建新会话
-    const createNewConversation = useCallback(async (type: Types = Types.DIAGNOSIS) => {
+    const createNewConversation = useCallback(async (type: AiRoleType = AiRoleType.DIAGNOSIS) => {
         try {
             // 显示加载状态
             message.loading({ content: '正在创建新会话...', key: 'createConversation' });
@@ -115,21 +131,25 @@ export const useConversationManagement = ({ userId, isAuthenticated }: UseConver
 
             // 根据类型选择合适的初始消息
             let initMessage = '';
-            if (type === Types.DIAGNOSIS) {
+            if (type === AiRoleType.DIAGNOSIS) {
                 initMessage = '我是你专业的诊前AI医生，有什么问题和疑惑都可以问我，帮助您了解症状和可能的诊断。';
-            } else if (type === Types.GUIDE) {
+            } else if (type === AiRoleType.GUIDE) {
                 initMessage = '我是您的智能导诊助手，请告诉我您的症状，我将帮您找到合适的科室和医生。';
-            } else if (type === Types.REPORT) {
+            } else if (type === AiRoleType.REPORT) {
                 initMessage = '我是您的报告解读助手，请上传您的医学检查报告，我将帮您解读报告内容。';
             }
 
-            // 创建新会话
-            const apiResponse = await ConversationAPI.createConversation({
+            // 创建新会话数据
+            const newConversationData = {
                 type,
                 userId: userId,
                 messages: [],
                 initialMessage: initMessage,
-            });
+            };
+
+            // 使用Redux action创建会话
+            const result = await dispatch(createConversation(newConversationData) as any);
+            const apiResponse = result.payload;
 
             if (!apiResponse || !apiResponse.id) {
                 throw new Error('Failed to create conversation: Missing required fields in response');
@@ -138,8 +158,8 @@ export const useConversationManagement = ({ userId, isAuthenticated }: UseConver
             // 确保对象符合Conversation类型定义
             const conversation: Conversation = {
                 id: apiResponse.id,
-                type,
                 userId: userId,
+                type: type,
                 messages: apiResponse.messages || [],
                 status: apiResponse.status || 'ACTIVE',
                 startTime: apiResponse.startTime || new Date().toISOString(),
@@ -227,19 +247,23 @@ export const useConversationManagement = ({ userId, isAuthenticated }: UseConver
             if (conversation) {
                 return selectConversation(conversation);
             } else {
-                setErrorMessage('找不到指定的会话');
                 // 如果在 Redux store 中找不到会话，尝试重新获取会话列表
-                dispatch(fetchUserConversations() as any);
+                if (userId) {
+                    setErrorMessage('无法获取指定会话');
+                    dispatch(fetchUserConversations(userId) as any);
+                } else {
+                    setErrorMessage('无法获取会话列表：用户ID未定义');
+                }
             }
         } catch (error) {
             console.error('选择会话失败:', error);
             setErrorMessage('加载会话失败，请重试');
         }
         return null;
-    }, [selectConversation, conversations, dispatch, setErrorMessage]);
+    }, [selectConversation, conversations, dispatch, setErrorMessage, userId]);
 
     // 删除会话
-    const deleteConversation = useCallback(async (id: string, currentConversationId?: string) => {
+    const handleDeleteConversation = useCallback(async (id: string, currentConversationId?: string) => {
         try {
             message.loading({ content: '正在删除会话...', key: 'deleteConversation' });
 
@@ -247,16 +271,14 @@ export const useConversationManagement = ({ userId, isAuthenticated }: UseConver
             if (currentConversationId === id) {
                 localStorage.removeItem('currentConversation');
             }
-            // 调用API删除服务器上的会话
-            try {
-                await ConversationAPI.deleteConversation(id);
-            } catch (apiError: any) {
-                console.error('API删除会话失败:', apiError);
-            }
+            
+            // 调用Redux动作删除服务器上的会话
+            await dispatch(deleteConversation(id) as any);
+            
             // 触发 storage 事件，使侧边栏更新
             window.dispatchEvent(new Event('storage'));
 
-            message.success({ content: '会话已删除', key: 'deleteConversation' });
+           // message.success({ content: '会话已删除', key: 'deleteConversation' });
             return true;
         } catch (error: any) {
             console.error('删除会话失败:', error);
@@ -266,12 +288,11 @@ export const useConversationManagement = ({ userId, isAuthenticated }: UseConver
             });
             return false;
         }
-    }, [dispatch, message]);
+    }, [message, dispatch]);
 
     // 发送消息
-    const sendMessage = useCallback((content: string, conversationId: string) => {
+    const handleSendMessage = useCallback((content: string, conversationId: string) => {
         try {
-            // 开始批量更新
             // 添加用户消息到界面
             dispatch(
                 addMessage({
@@ -284,8 +305,8 @@ export const useConversationManagement = ({ userId, isAuthenticated }: UseConver
                 })
             );
 
-            // 通过WebSocket发送消息
-            wsService.sendMessage(content, conversationId);
+            // 发送消息到服务器
+            dispatch(sendMessage({ content, conversationId }) as any);
 
             // 延迟更新 localStorage，避免频繁写入
             setTimeout(() => {
@@ -317,8 +338,14 @@ export const useConversationManagement = ({ userId, isAuthenticated }: UseConver
         createNewConversation,
         selectConversation,
         selectConversationById,
-        deleteConversation,
-        sendMessage,
+        deleteConversation: handleDeleteConversation,
+        sendMessage: handleSendMessage,
+        conversations,
+        currentConversation,
+        isLoading: loading,
+        loadConversations: (userId: string) => dispatch(fetchUserConversations(userId) as any),
+        updateConversationTitle: (id: string, title: string) => 
+            dispatch(updateConversation({ id, changes: { title } }) as any)
     };
 };
 

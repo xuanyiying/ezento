@@ -168,51 +168,42 @@
   }
 }
 
-/* 更精确地定位带有特定类名的输入框，移除聚焦时的蓝色边框 */
-.ant-x-sender .ant-input.css-dev-only-do-not-override-1d4w9r2,
-.ant-x-sender .ant-input.css-dev-only-do-not-override-1d4w9r2:focus,
-.ant-x-sender .ant-input.css-dev-only-do-not-override-1d4w9r2:focus-within,
-.ant-x-sender .ant-input.css-dev-only-do-not-override-1d4w9r2:hover,
-.ant-x-sender .ant-input.css-dev-only-do-not-override-1d4w9r2:active,
+/* 专门针对带有长类名的输入框 */
 .ant-input.css-dev-only-do-not-override-1d4w9r2.ant-input-borderless.ant-sender-input,
 .ant-input.css-dev-only-do-not-override-1d4w9r2.ant-input-borderless.ant-sender-input:focus,
 .ant-input.css-dev-only-do-not-override-1d4w9r2.ant-input-borderless.ant-sender-input:focus-within,
-.ant-input.css-dev-only-do-not-override-1d4w9r2.ant-input-borderless.ant-sender-input:hover,
-.ant-input.css-dev-only-do-not-override-1d4w9r2.ant-input-borderless.ant-sender-input:active {
+.ant-input.css-dev-only-do-not-override-1d4w9r2.ant-input-borderless.ant-sender-input:active,
+.ant-input.css-dev-only-do-not-override-1d4w9r2.ant-input-borderless.ant-sender-input:hover {
   border: none !important;
   box-shadow: none !important;
   outline: none !important;
-  --ant-primary-color: transparent !important;
-  --ant-primary-color-hover: transparent !important;
-  --ant-primary-color-outline: transparent !important;
-  --ant-primary-1: transparent !important;
-  --ant-primary-2: transparent !important;
-  --ant-primary-3: transparent !important;
-  --ant-primary-4: transparent !important;
-  --ant-primary-5: transparent !important;
-  --ant-primary-6: transparent !important;
-  --ant-primary-7: transparent !important;
 }
 
-/* 使用更通用的选择器匹配所有动态生成的类名 */
-.ant-x-sender .ant-input[class*="css-dev-only-do-not-override"],
-.ant-x-sender .ant-input[class*="css-dev-only-do-not-override"]:focus,
-.ant-x-sender .ant-input[class*="css-dev-only-do-not-override"]:focus-within,
-.ant-input[class*="css-dev-only-do-not-override"].ant-input-borderless.ant-sender-input,
-.ant-input[class*="css-dev-only-do-not-override"].ant-input-borderless.ant-sender-input:focus,
-.ant-input[class*="css-dev-only-do-not-override"].ant-input-borderless.ant-sender-input:focus-within {
+/* 覆盖所有可能的css-dev-only类名 */
+[class*="css-dev-only-do-not-override"],
+[class*="css-dev-only-do-not-override"]:focus,
+[class*="css-dev-only-do-not-override"]:focus-within,
+[class*="css-dev-only-do-not-override"]:active,
+[class*="css-dev-only-do-not-override"]:hover {
   border: none !important;
   box-shadow: none !important;
   outline: none !important;
-  --ant-primary-color: transparent !important;
-  --ant-primary-color-hover: transparent !important;
-  --ant-primary-color-outline: transparent !important;
 }
 
-/* 禁用任何聚焦状态的轮廓和阴影 */
-*:focus,
-*:focus-visible,
-*:focus-within {
-  outline: none !important;
+/* 覆盖Ant Design的所有输入框聚焦效果 */
+.ant-sender-input.ant-input-focused,
+input:focus-visible,
+textarea:focus-visible,
+.ant-input:focus,
+.ant-input-focused {
+  border: none !important;
   box-shadow: none !important;
+  outline: none !important;
+}
+
+/* 最高优先级的覆盖规则 */
+.sender-container *:focus {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
 } 

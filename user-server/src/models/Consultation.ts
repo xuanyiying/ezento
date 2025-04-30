@@ -1,14 +1,15 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import {
-    Types,
     ConsultationStatus,
     IAiSuggestion,
 } from '../interfaces/consultation.interface';
+import { Type } from '../interfaces/conversation.interface';
+import AiRole from './AiRole';
 
 export interface IConsultation extends Document {
     id: string;
     userId: string;
-    type: Types;
+    type: Type;
     symptoms?: string;
     bodyParts?: string[];
     duration?: string;
@@ -44,8 +45,15 @@ const ConsultationSchema: Schema = new Schema(
         },
         type: {
             type: String,
-            enum: Object.values(Types),
             required: true,
+            validate: {
+                validator: async function(value: string) {
+                    // 验证type是否存在于AiRole中
+                    const role = await AiRole.findOne({ type: value });
+                    return !!role;
+                },
+                message: (props: { value: any; }) => `${props.value}不是有效的AI角色类型`
+            }
         },
         symptoms: {
             type: String,

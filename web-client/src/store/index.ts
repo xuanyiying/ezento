@@ -4,11 +4,13 @@ import authReducer from './slices/authSlice';
 import userReducer from './slices/userSlice';
 import { createSlice } from '@reduxjs/toolkit';
 import { User } from '@/types';
+import TokenManager from '@/utils/tokenManager';
+import { TOKEN_KEY, USER_KEY } from '@/utils/consts';
 
 // 从localStorage获取用户信息
 const getUser = (): User | null => {
     try {
-        const storedUser = localStorage.getItem('user');
+        const storedUser = localStorage.getItem(USER_KEY);
         if (storedUser) {
             return JSON.parse(storedUser);
         }
@@ -21,7 +23,7 @@ const getUser = (): User | null => {
 // 从localStorage获取token
 const getToken = (): string | null => {
     try {
-        return localStorage.getItem('token');
+        return localStorage.getItem(TOKEN_KEY);
     } catch (error) {
         console.error('Failed to get token from localStorage:', error);
     }
@@ -47,16 +49,16 @@ const userSlice = createSlice({
             state.user = userData;
             // 保存到localStorage
             console.log('Saving user to localStorage:', JSON.stringify(userData));
-            localStorage.setItem('user', JSON.stringify(userData));
+            localStorage.setItem(USER_KEY, JSON.stringify(userData));
         },
         clearUser: () => {
-            localStorage.removeItem('user');
+            localStorage.removeItem(USER_KEY);
         },
     },
 });
 
 const tokenSlice = createSlice({
-    name: 'token',
+    name: TOKEN_KEY,
     initialState: {
         token: getToken(),
     } as AuthState,
@@ -66,10 +68,10 @@ const tokenSlice = createSlice({
             state.token = token;
             // 保存到localStorage
             console.log('Saving token to localStorage:', token);
-            localStorage.setItem('token', token);
+            localStorage.setItem(TOKEN_KEY, token);
         },
         clearToken: () => {
-            localStorage.removeItem('token');
+            localStorage.removeItem(TOKEN_KEY);
         },
     },
 });

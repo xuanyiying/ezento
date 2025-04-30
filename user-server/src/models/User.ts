@@ -1,5 +1,5 @@
 import mongoose, { Document } from 'mongoose';
-import PasswordUtil from '../utils/passwordUtil';
+import PasswordUtil from '../utils/password';
 import { UserBase } from '../interfaces/user.interface';
 
 export interface UserDocument extends Omit<UserBase, keyof Document>, Document {

@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
 import ConsultationService from '../services/consultation.service';
-import { ResponseUtil } from '../utils/responseUtil';
+import { ResponseHelper } from '../utils/response';
+
 import { logger } from '../utils/logger';
-import { Types, ConsultationStatus } from '../interfaces/consultation.interface';
+import { ConsultationStatus } from '../interfaces/consultation.interface';
+import { Type } from '../interfaces/conversation.interface';
 
 /**
  * 会诊控制器
@@ -33,13 +35,13 @@ class ConsultationController {
             logger.info(`Creating consultation: type=${type}, userId=${userId}`);
 
             if (!userId || !type || !symptoms || !fee) {
-                ResponseUtil.badRequest(res, '缺少必要参数');
+                ResponseHelper.badRequest(res, '缺少必要参数');
                 return;
             }
 
             // 验证会诊类型是否有效
             if (!Object.values(type).includes(type)) {
-                ResponseUtil.badRequest(res, '无效的会诊类型');
+                ResponseHelper.badRequest(res, '无效的会诊类型');
                 return;
             }
 
@@ -58,14 +60,14 @@ class ConsultationController {
                 description,
                 fee,
             });
-            ResponseUtil.success(res, {
+            ResponseHelper.success(res, {
                 consultationId: consultation.id,
                 status: consultation.status,
                 createTime: consultation.createdAt,
             });
         } catch (error: any) {
             logger.error(`创建会诊失败: ${error.message}`);
-            ResponseUtil.serverError(res, `创建会诊失败: ${error.message}`);
+            ResponseHelper.serverError(res, `创建会诊失败: ${error.message}`);
         }
     }
 
@@ -78,16 +80,16 @@ class ConsultationController {
 
             const result = await ConsultationService.getConsultationList({
                 userId: userId as string,
-                type: type as Types,
+                type: type as Type,
                 status: status as ConsultationStatus,
                 page: page ? parseInt(page as string) : undefined,
                 limit: limit ? parseInt(limit as string) : undefined,
             });
 
-            ResponseUtil.success(res, result);
+            ResponseHelper.success(res, result);
         } catch (error: any) {
             logger.error(`获取会诊列表失败: ${error.message}`);
-            ResponseUtil.serverError(res, `获取会诊列表失败: ${error.message}`);
+            ResponseHelper.serverError(res, `获取会诊列表失败: ${error.message}`);
         }
     }
 
@@ -99,22 +101,22 @@ class ConsultationController {
             const { id } = req.params;
 
             if (!id) {
-                ResponseUtil.badRequest(res, '缺少会诊ID');
+                ResponseHelper.badRequest(res, '缺少会诊ID');
                 return;
             }
 
             const details = await ConsultationService.getConsultationDetails(id);
 
             if (!details) {
-                ResponseUtil.notFound(res, '未找到会诊信息');
+                ResponseHelper.notFound(res, '未找到会诊信息');
                 return;
             }
 
-            ResponseUtil.success(res, details);
+            ResponseHelper.success(res, details);
             return;
         } catch (error: any) {
             logger.error(`获取会诊详情失败: ${error.message}`);
-            ResponseUtil.serverError(res, `获取会诊详情失败: ${error.message}`);
+            ResponseHelper.serverError(res, `获取会诊详情失败: ${error.message}`);
         }
     }
 
@@ -127,7 +129,7 @@ class ConsultationController {
             const { diagnosis, prescription, notes, status, endTime, doctorAdvice } = req.body;
 
             if (!id) {
-                ResponseUtil.badRequest(res, '缺少会诊ID');
+                ResponseHelper.badRequest(res, '缺少会诊ID');
                 return;
             }
             const result = await ConsultationService.updateConsultation({
@@ -140,17 +142,17 @@ class ConsultationController {
             });
 
             if (!result) {
-                ResponseUtil.notFound(res, '未找到会诊信息');
+                ResponseHelper.notFound(res, '未找到会诊信息');
             }
 
-            ResponseUtil.success(res, {
+            ResponseHelper.success(res, {
                 consultationId: result.id,
                 status: result.status,
                 message: '会诊更新成功',
             });
         } catch (error: any) {
             logger.error(`更新会诊失败: ${error.message}`);
-            ResponseUtil.serverError(res, `更新会诊失败: ${error.message}`);
+            ResponseHelper.serverError(res, `更新会诊失败: ${error.message}`);
         }
     }
 
@@ -163,7 +165,7 @@ class ConsultationController {
             const { page, limit } = req.query;
 
             if (!userId) {
-                ResponseUtil.badRequest(res, '无法识别患者身份，请重新登录');
+                ResponseHelper.badRequest(res, '无法识别患者身份，请重新登录');
                 return;
             }
 
@@ -173,10 +175,10 @@ class ConsultationController {
                 limit ? parseInt(limit as string) : 10
             );
 
-            ResponseUtil.success(res, result);
+            ResponseHelper.success(res, result);
         } catch (error: any) {
             logger.error(`获取患者会诊列表失败: ${error.message}`);
-            ResponseUtil.serverError(res, `获取患者会诊列表失败: ${error.message}`);
+            ResponseHelper.serverError(res, `获取患者会诊列表失败: ${error.message}`);
         }
     }
 }

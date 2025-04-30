@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
  * 密码工具类
  * 提供统一的密码加密和比较方法
  */
-export class PasswordUtil {
+export class PasswordHelper {
     /**
      * 标准盐值轮数
      */
@@ -36,4 +36,4 @@ export class PasswordUtil {
     }
 }
 
-export default PasswordUtil;
+export default PasswordHelper;

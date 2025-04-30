@@ -1,13 +1,9 @@
 import { Document } from 'mongoose';
 
 /**
- * 会话类型枚举
+ * 会话类型使用AiRole类型
  */
-export enum Types {
-    DIAGNOSIS = 'DIAGNOSIS', // 诊断
-    GUIDE = 'GUIDE', // 导诊
-    REPORT = 'REPORT', // 报告解读
-}
+export type Type = string;
 
 /**
  * 会话消息接口
@@ -27,7 +23,7 @@ export interface IConversationMessage {
  */
 export interface IConversation extends Document {
     id: string; // 会话ID
-    type: Types; // 会话类型
+    type: Type; // 会话类型，对应AiRole的type字段
     consultationId: string; // 关联ID（预问诊ID、导诊ID或报告ID）
     userId: string; // 用户ID
     messages?: IConversationMessage[]; // 消息记录 - 可能来自关联查询，使用可选标记
@@ -45,7 +41,7 @@ export interface IConversation extends Document {
  */
 export interface CreateConversationRequest {
     conversationId?: string; // 会话ID (可选)
-    type: Types;
+    type: Type;
     consultationId?: string;
     userId: string; // Changed from patientId to userId
     initialMessage?: string;
@@ -68,7 +64,7 @@ export interface AddMessageRequest {
  * 获取会话历史记录请求接口
  */
 export interface GetConversationHistoryRequest {
-    type: Types;
+    type: Type;
     consultationId: string;
 }
 

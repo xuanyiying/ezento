@@ -1,4 +1,5 @@
-import { Types } from "./conversation.interface";
+import { Type } from "./conversation.interface";
+
 /**
  * 会诊状态枚举
  */
@@ -37,7 +38,7 @@ export interface IDoctorAdvice {
 export interface CreateConsultationRequest {
     id?: string;
     userId: string; // 患者ID
-    type: Types; // 会诊类型
+    type: Type; // 会诊类型
     symptoms: string; // 症状描述
     bodyParts?: string[]; // 身体部位
     duration?: string; // 持续时间
@@ -72,7 +73,7 @@ export interface UpdateConsultationRequest {
  */
 export interface GetConsultationListRequest {
     userId?: string; // 患者ID
-    type?: Types; // 会诊类型
+    type?: Type; // 会诊类型
     status?: ConsultationStatus; // 状态
     page?: number; // 页码
     limit?: number; // 每页数量
@@ -85,7 +86,7 @@ export interface ConsultationListItem {
     consultationId: string; // 会诊ID
     conversationId?: string; // 会话ID
     userName?: string; // 患者姓名
-    type: Types; // 会诊类型
+    type: Type; // 会诊类型
     symptoms: string; // 症状描述
     status: ConsultationStatus; // 状态
     startTime: Date; // 开始时间
@@ -99,7 +100,7 @@ export interface IConsultation {
     id: string; // 会诊ID
     userId: string; // 患者ID
     conversationId?: string; // 会话ID
-    type: Types; // 会诊类型
+    type: Type; // 会诊类型
     symptoms?: string; // 症状描述
     bodyParts?: string[]; // 身体部位
     duration?: string; // 持续时间
@@ -121,5 +122,3 @@ export interface IConsultation {
     createdAt: Date; // 创建时间
     updatedAt: Date; // 更新时间
 }
-
-export { Types };

@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import { Message } from '../models';
 import ConversationService from '../services/conversation.service';
-import { ResponseUtil } from '../utils/responseUtil';
+import { ResponseHelper } from '../utils/response';
+
 import { logger } from '../utils/logger';
 import path from 'path';
 import fs from 'fs';
@@ -26,12 +27,12 @@ class ConversationController {
 
             // 验证权限和必要参数
             if (!userId) {
-                ResponseUtil.unauthorized(res, '未授权，请先登录');
+                ResponseHelper.unauthorized(res, '未授权，请先登录');
                 return;
             }
 
             if (!type) {
-                ResponseUtil.error(res, 400, '会话类型不能为空');
+                ResponseHelper.error(res, 400, '会话类型不能为空');
                 return;
             }
             // 创建或获取会话
@@ -46,20 +47,20 @@ class ConversationController {
 
                 const conversation =
                     await ConversationService.createOrGetConversation(conversationData);
-                ResponseUtil.success(res, conversation);
+                ResponseHelper.success(res, conversation);
             } catch (convError) {
                 logger.error(
                     'ConversationController.createOrGetConversation 创建会话失败',
                     convError
                 );
-                ResponseUtil.serverError(res, '创建会话失败');
+                ResponseHelper.serverError(res, '创建会话失败');
             }
         } catch (error) {
             logger.error(
                 'ConversationController.createOrGetConversation 创建或获取会话失败',
                 error
             );
-            ResponseUtil.serverError(res, '创建或获取会话失败');
+            ResponseHelper.serverError(res, '创建或获取会话失败');
         }
     }
 
@@ -77,12 +78,12 @@ class ConversationController {
             const userId = req.user?.userId;
 
             if (!userId) {
-                ResponseUtil.unauthorized(res, '未授权，请先登录');
+                ResponseHelper.unauthorized(res, '未授权，请先登录');
                 return;
             }
 
             if (!content) {
-                ResponseUtil.error(res, 400, '消息内容不能为空');
+                ResponseHelper.error(res, 400, '消息内容不能为空');
                 return;
             }
 
@@ -98,10 +99,10 @@ class ConversationController {
 
             const conversation = await ConversationService.addMessage(addMessageRequest);
 
-            ResponseUtil.success(res, conversation);
+            ResponseHelper.success(res, conversation);
         } catch (error) {
             logger.error('添加消息失败', error);
-            ResponseUtil.serverError(res, '添加消息失败');
+            ResponseHelper.serverError(res, '添加消息失败');
         }
     }
 
@@ -118,14 +119,14 @@ class ConversationController {
             const userId = req.user?.userId;
 
             if (!userId) {
-                ResponseUtil.unauthorized(res, '未授权，请先登录');
+                ResponseHelper.unauthorized(res, '未授权，请先登录');
                 return;
             }
 
             const conversation = await ConversationService.getConversationById(conversationId);
 
             if (!conversation) {
-                ResponseUtil.notFound(res, '未找到会话');
+                ResponseHelper.notFound(res, '未找到会话');
                 return;
             }
 
@@ -134,13 +135,13 @@ class ConversationController {
                 conversationId: conversation.id, // 注意这里使用conversation.id而不是_id
             }).sort({ timestamp: 1 });
 
-            ResponseUtil.success(res, {
+            ResponseHelper.success(res, {
                 conversation,
                 messages,
             });
         } catch (error) {
             logger.error('获取会话历史失败', error);
-            ResponseUtil.serverError(res, '获取会话历史失败');
+            ResponseHelper.serverError(res, '获取会话历史失败');
         }
     }
 
@@ -157,21 +158,21 @@ class ConversationController {
             const userId = req.user?.userId;
 
             if (!userId) {
-                ResponseUtil.unauthorized(res, '未授权，请先登录');
+                ResponseHelper.unauthorized(res, '未授权，请先登录');
                 return;
             }
 
             const success = await ConversationService.closeConversation(conversationId);
 
             if (!success) {
-                ResponseUtil.notFound(res, '未找到会话');
+                ResponseHelper.notFound(res, '未找到会话');
                 return;
             }
 
-            ResponseUtil.success(res, { message: '会话已关闭' });
+            ResponseHelper.success(res, { message: '会话已关闭' });
         } catch (error) {
             logger.error('关闭会话失败', error);
-            ResponseUtil.serverError(res, '关闭会话失败');
+            ResponseHelper.serverError(res, '关闭会话失败');
         }
     }
 
@@ -189,7 +190,7 @@ class ConversationController {
             const userId = req.user?.userId;
 
             if (!userId) {
-                ResponseUtil.unauthorized(res, '未授权，请先登录');
+                ResponseHelper.unauthorized(res, '未授权，请先登录');
                 return;
             }
 
@@ -201,13 +202,13 @@ class ConversationController {
 
             const filePath = await ConversationService.exportConversationHistory(exportRequest);
 
-            ResponseUtil.success(res, {
+            ResponseHelper.success(res, {
                 filePath,
                 downloadUrl: `/api/conversations/exports/download/${path.basename(filePath)}`,
             });
         } catch (error) {
             logger.error('导出会话失败', error);
-            ResponseUtil.serverError(res, '导出会话失败');
+            ResponseHelper.serverError(res, '导出会话失败');
         }
     }
 
@@ -224,7 +225,7 @@ class ConversationController {
             const userId = req.user?.userId;
 
             if (!userId) {
-                ResponseUtil.unauthorized(res, '未授权，请先登录');
+                ResponseHelper.unauthorized(res, '未授权，请先登录');
                 return;
             }
 
@@ -234,7 +235,7 @@ class ConversationController {
 
             // 检查文件是否存在
             if (!fs.existsSync(fullPath)) {
-                ResponseUtil.notFound(res, '文件不存在');
+                ResponseHelper.notFound(res, '文件不存在');
                 return;
             }
 
@@ -242,7 +243,7 @@ class ConversationController {
             return res.download(fullPath);
         } catch (error) {
             logger.error('下载导出文件失败', error);
-            ResponseUtil.serverError(res, '下载导出文件失败');
+            ResponseHelper.serverError(res, '下载导出文件失败');
         }
     }
 
@@ -257,15 +258,15 @@ class ConversationController {
         try {
             const userId = req.user?.userId;
             if (!userId) {
-                ResponseUtil.unauthorized(res, '未授权，请先登录');
+                ResponseHelper.unauthorized(res, '未授权，请先登录');
                 return;
             }
 
             const conversations = await ConversationService.getUserConversations(userId);
-            ResponseUtil.success(res, conversations);
+            ResponseHelper.success(res, conversations);
         } catch (error) {
             logger.error('获取用户会话列表失败', error);
-            ResponseUtil.serverError(res, '获取用户会话列表失败');
+            ResponseHelper.serverError(res, '获取用户会话列表失败');
         }
     }
 
@@ -282,7 +283,7 @@ class ConversationController {
                 return;
             }
             await ConversationService.deleteConversation(conversationId, userId);
-            ResponseUtil.success(res, { message: '会话已删除' });
+            ResponseHelper.success(res, { message: '会话已删除' });
         } catch (error) {
             console.error('Error deleting conversation:', error);
             res.status(500).json({ error: 'Failed to delete conversation' });

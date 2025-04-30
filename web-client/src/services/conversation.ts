@@ -12,6 +12,9 @@ export const ConversationAPI = {
             console.log('Creating or getting conversation with params:', params);
             const response = await post<ApiResponse<Conversation>>(API_URL, params);
             console.log('API Response:', response);
+            if (!response.data) {
+                throw new Error('Invalid response: missing conversation data');
+            }
             return response.data;
         } catch (error) {
             console.error('Error creating conversation:', error);
@@ -19,10 +22,10 @@ export const ConversationAPI = {
         }
     },
 
-    getUserConversations: async (): Promise<Conversation[]> => {
+    getUserConversations: async (userId :string): Promise<Conversation[]> => {
         try {
-            const response = await get<ApiResponse<Conversation[]>>(`${API_URL}/user/all`);
-            return response.data;
+            const response = await get<ApiResponse<Conversation[]>>(`${API_URL}/${userId}/all`);
+            return response.data || [];
         } catch (error) {
             console.error('Error getting user conversations:', error);
             throw error;
@@ -39,6 +42,9 @@ export const ConversationAPI = {
                 `${API_URL}/${conversationId}/messages`,
                 params
             );
+            if (!response.data) {
+                throw new Error('Invalid response: missing conversation data');
+            }
             return response.data;
         } catch (error) {
             console.error('Error adding message:', error);
@@ -53,6 +59,9 @@ export const ConversationAPI = {
             const response = await get<ApiResponse<Conversation>>(
                 `${API_URL}/${conversationId}`
             );
+            if (!response.data) {
+                throw new Error('Invalid response: missing conversation data');
+            }
             return response.data;
         } catch (error) {
             console.error('Error getting conversation history:', error);
@@ -116,6 +125,9 @@ export const ConversationAPI = {
                     params: { format },
                 }
             );
+            if (!response.data) {
+                throw new Error('Invalid response: missing export data');
+            }
             return response.data;
         } catch (error) {
             console.error('Error exporting conversation:', error);

@@ -2,11 +2,12 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import logger from '../config/logger';
 import { UserService } from '../services';
-import { ResponseUtil } from '../utils/responseUtil';
-import PasswordUtil from '../utils/passwordUtil';
+import { ResponseHelper } from '../utils/response';
+
+import PasswordUtil from '../utils/password';
 import axios from 'axios';
 import crypto from 'crypto';
-import { generateUserId } from '../utils/idGenerator';
+import { generateUserId } from '../utils/id.generator';
 
 /**
  * 认证控制器
@@ -22,18 +23,18 @@ export class AuthController {
             const { username, password } = req.body;
 
             if (!username || !password) {
-                ResponseUtil.badRequest(res, '用户名和密码不能为空');
+                ResponseHelper.badRequest(res, '用户名和密码不能为空');
                 return;
             }
 
             const user = await UserService.findUserByUsername(username);
             if (!user) {
-                ResponseUtil.unauthorized(res, '用户不存在');
+                ResponseHelper.unauthorized(res, '用户不存在');
                 return;
             }
             // 检查用户是否有密码
             if (!user.password) {
-                ResponseUtil.unauthorized(res, '密码为空');
+                ResponseHelper.unauthorized(res, '密码为空');
                 return;
             }
 
@@ -41,7 +42,7 @@ export class AuthController {
                 // 使用标准化的密码工具进行比较
                 const isPasswordValid = await PasswordUtil.comparePassword(password, user.password);
                 if (!isPasswordValid) {
-                    ResponseUtil.unauthorized(res, '密码错误');
+                    ResponseHelper.unauthorized(res, '密码错误');
                     return;
                 }
 
@@ -79,15 +80,15 @@ export class AuthController {
                     },
                     isNewUser: false,
                 };
-                ResponseUtil.success(res, responseData);
+                ResponseHelper.success(res, responseData);
                 logger.info(`--用户 ${user.username} 登录成功`, JSON.stringify(responseData));
             } catch (bcryptError: any) {
                 logger.error(`密码验证错误: ${bcryptError.message}`);
-                ResponseUtil.unauthorized(res, '用户名或密码错误');
+                ResponseHelper.unauthorized(res, '用户名或密码错误');
             }
         } catch (error: any) {
             logger.error(`登录错误: ${error.message}`);
-            ResponseUtil.serverError(res, '登录失败，请稍后重试');
+            ResponseHelper.serverError(res, '登录失败，请稍后重试');
         }
     }
 
@@ -100,7 +101,7 @@ export class AuthController {
             const { code, encryptedData, iv } = req.body;
 
             if (!code) {
-                ResponseUtil.badRequest(res, '微信临时凭证不能为空');
+                ResponseHelper.badRequest(res, '微信临时凭证不能为空');
                 return;
             }
 
@@ -109,7 +110,7 @@ export class AuthController {
             const appSecret = process.env.WECHAT_APP_SECRET;
 
             if (!appId || !appSecret) {
-                ResponseUtil.serverError(res, '微信配置缺失');
+                ResponseHelper.serverError(res, '微信配置缺失');
                 return;
             }
 
@@ -120,7 +121,7 @@ export class AuthController {
 
             if (wechatResponse.data.errcode) {
                 logger.error(`微信API错误: ${JSON.stringify(wechatResponse.data)}`);
-                ResponseUtil.badRequest(res, `微信登录失败: ${wechatResponse.data.errmsg}`);
+                ResponseHelper.badRequest(res, `微信登录失败: ${wechatResponse.data.errmsg}`);
                 return;
             }
 
@@ -170,7 +171,7 @@ export class AuthController {
                 { expiresIn: '7d' }
             );
 
-            ResponseUtil.success(res, {
+            ResponseHelper.success(res, {
                 token,
                 refreshToken,
                 user: {
@@ -183,7 +184,7 @@ export class AuthController {
             });
         } catch (error: any) {
             logger.error(`微信登录错误: ${error.message}`);
-            ResponseUtil.serverError(res, '微信登录失败，请稍后重试');
+            ResponseHelper.serverError(res, '微信登录失败，请稍后重试');
         }
     }
 
@@ -231,7 +232,7 @@ export class AuthController {
             const { userId, name, phone, gender, birthDate, role } = req.body;
 
             if (!userId || !name || !phone || !gender || !birthDate || !role) {
-                ResponseUtil.badRequest(res, '所有字段都是必填的');
+                ResponseHelper.badRequest(res, '所有字段都是必填的');
                 return;
             }
 
@@ -244,17 +245,17 @@ export class AuthController {
             });
 
             if (!user) {
-                ResponseUtil.notFound(res, '用户不存在');
+                ResponseHelper.notFound(res, '用户不存在');
                 return;
             }
 
-            ResponseUtil.success(res, {
+            ResponseHelper.success(res, {
                 userId: user._id,
                 profileComplete: true,
             });
         } catch (error: any) {
             logger.error(`更新微信用户信息错误: ${error.message}`);
-            ResponseUtil.serverError(res, '更新用户信息失败，请稍后重试');
+            ResponseHelper.serverError(res, '更新用户信息失败，请稍后重试');
         }
     }
 
@@ -267,14 +268,14 @@ export class AuthController {
             const userId = req.user?.userId;
 
             if (!userId) {
-                ResponseUtil.unauthorized(res, '需要认证');
+                ResponseHelper.unauthorized(res, '需要认证');
                 return;
             }
 
             const user = await UserService.findUserById(userId);
 
             if (!user) {
-                ResponseUtil.notFound(res, '用户不存在');
+                ResponseHelper.notFound(res, '用户不存在');
                 return;
             }
 
@@ -290,7 +291,7 @@ export class AuthController {
                 }
             }
 
-            ResponseUtil.success(res, {
+            ResponseHelper.success(res, {
                 userId: user._id,
                 username: user.username,
                 name: user.name,
@@ -304,7 +305,7 @@ export class AuthController {
             });
         } catch (error: any) {
             logger.error(`获取用户信息错误: ${error.message}`);
-            ResponseUtil.serverError(res, '获取用户信息失败，请稍后重试');
+            ResponseHelper.serverError(res, '获取用户信息失败，请稍后重试');
         }
     }
 
@@ -317,7 +318,7 @@ export class AuthController {
             let { username, password, name, phone, role } = req.body;
 
             if (!username || !password || !phone) {
-                ResponseUtil.badRequest(res, '所有字段都是必填的');
+                ResponseHelper.badRequest(res, '所有字段都是必填的');
                 return;
             }
             if (!role) {
@@ -327,7 +328,7 @@ export class AuthController {
             // 检查用户名是否已存在
             const existingUser = await UserService.findUserByUsername(username);
             if (existingUser) {
-                ResponseUtil.badRequest(res, '用户名已存在');
+                ResponseHelper.badRequest(res, '用户名已存在');
                 return;
             }
             // 创建新用户
@@ -341,12 +342,12 @@ export class AuthController {
                 isActive: true,
             });
 
-            ResponseUtil.created(res, {
+            ResponseHelper.created(res, {
                 userId: user._id,
             });
         } catch (error: any) {
             logger.error(`注册错误: ${error.message}`);
-            ResponseUtil.serverError(res, '注册失败，请稍后重试');
+            ResponseHelper.serverError(res, '注册失败，请稍后重试');
         }
     }
 
@@ -360,18 +361,18 @@ export class AuthController {
             const userId = req.user?.userId;
 
             if (!userId) {
-                ResponseUtil.unauthorized(res, '未授权');
+                ResponseHelper.unauthorized(res, '未授权');
                 return;
             }
 
             // 这里可以添加任何需要的清理操作
             // 例如：清除Redis中的会话数据，更新用户的最后登出时间等
 
-            ResponseUtil.success(res, { message: '登出成功' });
+            ResponseHelper.success(res, { message: '登出成功' });
             logger.info(`用户 ${userId} 登出成功`);
         } catch (error: any) {
             logger.error(`登出错误: ${error.message}`);
-            ResponseUtil.serverError(res, '登出失败，请稍后重试');
+            ResponseHelper.serverError(res, '登出失败，请稍后重试');
         }
     }
 
@@ -384,7 +385,7 @@ export class AuthController {
             const { refreshToken } = req.body;
 
             if (!refreshToken) {
-                ResponseUtil.badRequest(res, '刷新令牌不能为空');
+                ResponseHelper.badRequest(res, '刷新令牌不能为空');
                 return;
             }
 
@@ -398,7 +399,7 @@ export class AuthController {
                 // 获取用户信息
                 const user = await UserService.findUserById(decoded.userId);
                 if (!user) {
-                    ResponseUtil.unauthorized(res, '用户不存在');
+                    ResponseHelper.unauthorized(res, '用户不存在');
                     return;
                 }
 
@@ -423,7 +424,7 @@ export class AuthController {
                 );
 
                 // 确保响应格式与前端期望的格式一致
-                ResponseUtil.success(res, {
+                ResponseHelper.success(res, {
                     token: newToken,
                     refreshToken: newRefreshToken,
                     user: {
@@ -441,11 +442,11 @@ export class AuthController {
                 logger.info(`--用户 ${user.username || user._id} 刷新令牌成功`);
             } catch (jwtError) {
                 logger.error(`刷新令牌验证失败: ${jwtError}`);
-                ResponseUtil.unauthorized(res, '刷新令牌无效或已过期');
+                ResponseHelper.unauthorized(res, '刷新令牌无效或已过期');
             }
         } catch (error: any) {
             logger.error(`刷新令牌错误: ${error.message}`);
-            ResponseUtil.serverError(res, '刷新令牌失败，请稍后重试');
+            ResponseHelper.serverError(res, '刷新令牌失败，请稍后重试');
         }
     }
 }

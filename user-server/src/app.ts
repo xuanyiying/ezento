@@ -10,6 +10,7 @@ import { WebSocketController } from './controllers/websocket.controller';
 import { ConversationRedisService } from './services/conversation.redis.service';
 import logger from './config/logger';
 import router from './routes';
+import AiRoleController from './controllers/ai.role.controller';
 
 /**
  * 应用程序类

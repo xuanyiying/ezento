@@ -5,6 +5,7 @@ import consultationRoutes from './consultation.routes';
 import conversationRoutes from './conversation.routes';
 import uploadRoutes from './upload.routes';
 import doctorRoutes from './doctor.routes';
+import aiRoleRoutes from './ai.role.routes';
 
 const router = express.Router();
 
@@ -25,5 +26,8 @@ router.use('/conversations', conversationRoutes);
 
 // 文件上传相关路由
 router.use('/uploads', uploadRoutes);
+
+// 角色相关路由
+router.use('/roles', aiRoleRoutes);
 
 export default router;

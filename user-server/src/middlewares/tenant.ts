@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { Tenant } from '../models';
-import { Resp } from '../utils/response';
-import mongoose from 'mongoose';
 import { ITenant } from '../models/Tenant';
+import { ResponseHelper } from '../utils/response';
 
 // Add tenant to request object with proper type definition
 declare global {
@@ -27,10 +26,7 @@ export const tenantContext = (req: Request, res: Response, next: NextFunction) =
         const tenantCode = getTenantFromRequest(req);
 
         if (!tenantCode) {
-            // If no tenant is specified, use the default tenant
-            // In a real application, you might want to redirect to a tenant selection page
-            // or return an error
-            res.status(400).json(Resp.fail('Tenant not specified', 400));
+            ResponseHelper.notFound(res, 'Tenant not specified');
             return;
         }
 
@@ -38,7 +34,7 @@ export const tenantContext = (req: Request, res: Response, next: NextFunction) =
         Tenant.findOne({ code: tenantCode, isActive: true })
             .then((tenant: ITenant | null) => {
                 if (!tenant) {
-                    res.status(404).json(Resp.fail('Tenant not found', 404));
+                    ResponseHelper.notFound(res, 'Tenant not found');
                     return;
                 }
 
@@ -53,11 +49,11 @@ export const tenantContext = (req: Request, res: Response, next: NextFunction) =
             })
             .catch(error => {
                 console.error('Error finding tenant:', error);
-                res.status(500).json(Resp.fail('Error finding tenant', 500));
+                ResponseHelper.serverError(res, 'Error finding tenant');
             });
     } catch (error) {
         console.error('Error in tenant middleware:', error);
-        res.status(500).json(Resp.fail('Error in tenant middleware', 500));
+        ResponseHelper.serverError(res, 'Error in tenant middleware');
     }
 };
 
@@ -85,7 +81,7 @@ function getTenantFromRequest(req: Request): string | null {
  */
 export const requireTenant = (req: Request, res: Response, next: NextFunction) => {
     if (!req.tenant) {
-        res.status(400).json(Resp.fail('Tenant context not set', 400));
+        ResponseHelper.notFound(res, 'Tenant not found');
         return;
     }
     next();

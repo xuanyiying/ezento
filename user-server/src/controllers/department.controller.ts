@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import DepartmentService from '../services/department.service';
 import { DepartmentCreateData, DepartmentUpdateData } from '../interfaces/department.interface';
 import logger from '../config/logger';
-import { successResponse, errorResponse, notFoundResponse } from '../utils/response';
+import { ResponseHelper } from '../utils/response';
 
 /**
  * 科室管理控制器
@@ -18,13 +18,13 @@ class DepartmentController {
             const forceRefresh = req.query.refresh === 'true';
             const { total, departments } = await DepartmentService.getAllDepartments(!forceRefresh);
 
-            successResponse(res, {
+            ResponseHelper.success(res, {
                 total,
                 departments,
             });
         } catch (error: any) {
             logger.error(`获取所有科室失败: ${error.message}`);
-            errorResponse(res, '获取科室列表失败', 500);
+            ResponseHelper.serverError(res, '获取科室列表失败');
         }
     }
 
@@ -40,14 +40,14 @@ class DepartmentController {
             const department = await DepartmentService.getDepartmentById(id, !forceRefresh);
 
             if (!department) {
-                notFoundResponse(res, '科室不存在');
+                ResponseHelper.notFound(res, '科室不存在');
                 return;
             }
 
-            successResponse(res, department);
+            ResponseHelper.success(res, department);
         } catch (error: any) {
             logger.error(`获取科室详情失败: ${error.message}`);
-            errorResponse(res, '获取科室详情失败', 500);
+            ResponseHelper.serverError(res, '获取科室详情失败');
         }
     }
 
@@ -61,7 +61,7 @@ class DepartmentController {
 
             // 验证必填字段
             if (!name || !description || !iconUrl) {
-                errorResponse(res, '科室名称、描述和图标URL为必填字段', 400);
+                ResponseHelper.badRequest(res, '科室名称、描述和图标URL为必填字段');
                 return;
             }
 
@@ -76,14 +76,14 @@ class DepartmentController {
             };
 
             const department = await DepartmentService.createDepartment(departmentData);
-            successResponse(res, department, 201);
+            ResponseHelper.created(res, department);
         } catch (error: any) {
             logger.error(`创建科室失败: ${error.message}`);
 
             if (error.message.includes('已存在')) {
-                errorResponse(res, error.message, 400);
+                ResponseHelper.badRequest(res, error.message);
             } else {
-                errorResponse(res, '创建科室失败', 500);
+                ResponseHelper.serverError(res, '创建科室失败');
             }
         }
     }
@@ -106,7 +106,7 @@ class DepartmentController {
                 parentId === undefined &&
                 order === undefined
             ) {
-                errorResponse(res, '请提供至少一个要更新的字段', 400);
+                ResponseHelper.badRequest(res, '请提供至少一个要更新的字段');
                 return;
             }
 
@@ -122,18 +122,18 @@ class DepartmentController {
             const department = await DepartmentService.updateDepartment(id, departmentData);
 
             if (!department) {
-                notFoundResponse(res, '科室不存在');
+                ResponseHelper.notFound(res, '科室不存在');
                 return;
             }
 
-            successResponse(res, department);
+            ResponseHelper.success(res, department);
         } catch (error: any) {
             logger.error(`更新科室失败: ${error.message}`);
 
             if (error.message.includes('已存在')) {
-                errorResponse(res, error.message, 400);
+                ResponseHelper.badRequest(res, error.message);
             } else {
-                errorResponse(res, '更新科室失败', 500);
+                ResponseHelper.serverError(res, '更新科室失败');
             }
         }
     }
@@ -148,14 +148,14 @@ class DepartmentController {
             const deleted = await DepartmentService.deleteDepartment(id);
 
             if (!deleted) {
-                notFoundResponse(res, '科室不存在');
+                ResponseHelper.notFound(res, '科室不存在');
                 return;
             }
 
-            successResponse(res, { message: '科室已成功删除' });
+            ResponseHelper.success(res, { message: '科室已成功删除' });
         } catch (error: any) {
             logger.error(`删除科室失败: ${error.message}`);
-            errorResponse(res, '删除科室失败', 500);
+            ResponseHelper.serverError(res, '删除科室失败');
         }
     }
 }

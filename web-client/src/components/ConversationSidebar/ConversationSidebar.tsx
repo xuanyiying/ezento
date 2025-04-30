@@ -12,7 +12,6 @@ import { useSelector } from 'react-redux';
 import { useAppDispatch } from '@/store/hooks';
 import { RootState } from '@/store';
 import {
-    renameConversation,
     toggleFavorite,
     fetchUserConversations,
     setLoading
@@ -42,6 +41,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
     const [editingTitle, setEditingTitle] = useState('');
     const { message } = App.useApp();
     const { conversations, loading } = useSelector((state: RootState) => state.conversation);
+    const user = useSelector((state: RootState) => state.auth.user);
 
     // 从Redux获取上次获取时间
     const lastFetchTime = useSelector((state: RootState) => state.conversation.lastFetchTime);
@@ -71,8 +71,13 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             fetchTimeoutId = setTimeout(async () => {
                 try {
                     console.log('获取会话列表...');
-                    // 使用新的异步 action creator 获取会话数据
-                    await dispatch(fetchUserConversations() as any);
+                    if (user) {
+                        // 使用新的异步 action creator 获取会话数据
+                        await dispatch(fetchUserConversations(user?.userId) as any);
+                    } else {
+
+                    }
+
                 } catch (error) {
                     console.error('获取会话列表失败:', error);
                     message.error('获取会话列表失败，请重试');
@@ -131,7 +136,11 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             // 调用删除 API
             onDeleteConversation(id);
             // 重新获取会话列表
-            await dispatch(fetchUserConversations() as any);
+            if (!user) {
+                message.warning('登录失效，请重新登录')
+                return;
+            }
+            await dispatch(fetchUserConversations(user.userId) as any);
             message.success('会话已删除');
 
         } catch (error) {

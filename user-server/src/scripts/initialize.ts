@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { Tenant, User, Doctor, Department } from '../models';
+import { Tenant, User, Doctor, Department, AiRole } from '../models';
 import logger from '../config/logger';
-import { generateDepartmentId, generateDoctorId, generateTenantId, generateUserId } from '../utils/idGenerator';
+import { generateAiRoleId, generateDepartmentId, generateDoctorId, generateTenantId, generateUserId } from '../utils/id.generator';
 
 // 加载环境变量
 dotenv.config({ path: '.env' });
@@ -16,7 +16,7 @@ const connectDB = async () => {
         const host = process.env.MONGODB_HOST || 'localhost';
         const port = process.env.MONGODB_PORT || '27017';
         const database = process.env.MONGODB_DATABASE || 'ezento';
-        const connectionUri = process.env.MONGODB_URI ||`mongodb://${username}:${password}@${host}:${port}/${database}?authSource=admin`;
+        const connectionUri = process.env.MONGODB_URI || `mongodb://${username}:${password}@${host}:${port}/${database}?authSource=admin`;
 
         // 设置连接选项
         const mongooseOptions = {
@@ -276,7 +276,8 @@ const initializeUsers = async () => {
             tenant._id as mongoose.Types.ObjectId,
             department._id as mongoose.Types.ObjectId
         );
-
+        // 关闭数据库连接
+        await mongoose.connection.close();
         logger.info('初始化完成');
         process.exit(0);
     } catch (error: any) {
@@ -284,6 +285,48 @@ const initializeUsers = async () => {
         process.exit(1);
     }
 };
+const initializeAiRoles = async() =>{
+    const defaultRoles = [
+        {
+            type: 'DIAGNOSIS',
+            title: '问诊',
+            description: '我是你专业的诊前AI医生，有什么问题和疑惑都可以问我，帮助您了解症状和可能的诊断。',
+            systemPrompt: `
+                        你是一名专业的诊前AI医生，你会根据患者的年龄、性别、病史、症状等因素，帮助医生更好地理解患者的症状和情况，
+                        提供可能的诊断和治疗方案, 提高医生工作效率，将结果以标准病历形式展现给用户。`,
+            status: 'active',
+            order: 1,
+            id: generateAiRoleId()
+        },
+        {
+            type: 'GUIDE',
+            title: '导诊',
+            description: '我是你专业的导诊AI医生，有什么问题和疑惑都可以问我，帮助您找到合适的科室和医生。',
+            systemPrompt: `
+                        你是一名专业的导诊AI医生，你的任务是帮助患者找到合适的科室和医生。
+                        你会根据患者的年龄、性别、病史、症状等因素，提供可能的科室和医生。`,
+            status: 'active',
+            order: 2,
+            id: generateAiRoleId()
+        },
+        {
+            type: 'REPORT',
+            title: '报告解读',
+            description: '我是你专业的报告解读AI医生，有什么问题和疑惑都可以问我，帮助您理解检查结果。',
+            systemPrompt: `
+                        你是一名专业的报告解读AI医生，你的任务是帮助患者理解检查结果。
+                        你会根据患者的检查结果，提供可能的诊断和治疗方案。`,
+            status: 'active',
+            order: 3,
+            id: generateAiRoleId()
+        }
+    ];
+    AiRole.insertMany(defaultRoles);
+}
+
+
 
 // 执行初始化
 initializeUsers();
+initializeAiRoles();
+ 

@@ -6,10 +6,10 @@ import { AiService } from '../services/ai/ai.service';
 import {
     IConversation,
     IConversationMessage,
-    Types,
+    Type
 } from '../interfaces/conversation.interface';
 import { DepartmentService, DoctorService } from '../services';
-import { generateMessageId } from '../utils/idGenerator';
+import { generateMessageId } from '../utils/id.generator';
 
 export class WebSocketController {
     static async handleConnection(socket: Socket): Promise<void> {
@@ -108,7 +108,7 @@ export class WebSocketController {
             // 1. 创建会话但不设置initialMessage
             const conversation = await ConversationService.createOrGetConversation({
                 userId: userId,
-                type: type as Types,
+                type: type as Type,
                 consultationId: conversationId,
             });
             if (!conversation) {
@@ -157,7 +157,7 @@ export class WebSocketController {
                     `已加载导诊所需数据: ${departments.total}个科室, ${doctors.total}个医生`
                 );
             } else if (
-                type === 'REPORT_INTERPRETATION' &&
+                type === 'REPORT' &&
                 metadata &&
                 metadata.reportId
             ) {
