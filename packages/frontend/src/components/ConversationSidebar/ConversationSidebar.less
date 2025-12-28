@@ -1,0 +1,141 @@
+.conversation-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 200px;
+  height: 100%;
+  background-color: #f5f5f5;
+  border-right: 1px solid #e8e8e8;
+  overflow: hidden;
+  position: fixed;
+  left: 0;
+  top: 64px;
+  bottom: 0;
+  z-index: 999;
+  transition: transform 0.3s ease;
+
+  .sidebar-header {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-bottom: 1px solid #e8e8e8;
+
+    h4 {
+      margin: 0;
+    }
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .search-container {
+    padding: 8px 16px;
+    border-bottom: 1px solid #e8e8e8;
+  }
+
+  .conversations-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 16px;
+
+    .conversation-group {
+      margin-bottom: 16px;
+
+      .ant-divider {
+        margin: 8px 0;
+        
+        .ant-divider-inner-text {
+          font-size: 12px;
+          color: rgba(0, 0, 0, 0.45);
+        }
+      }
+    }
+
+    .conversation-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.03);
+      }
+
+      &.active {
+        background-color: rgba(0, 0, 0, 0.06);
+      }
+
+      .conversation-item-content {
+        flex: 1;
+        overflow: hidden;
+        
+        .conversation-title {
+          font-weight: 500;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .conversation-time {
+          font-size: 12px;
+          color: rgba(0, 0, 0, 0.45);
+        }
+      }
+
+      .conversation-actions {
+        display: flex;
+        align-items: center;
+        visibility: hidden;
+
+        .favorite-button {
+          padding: 0 4px;
+          margin-right: 4px;
+        }
+
+        .favorite-icon {
+          color: #faad14;
+        }
+
+        .more-button {
+          padding: 0 4px;
+        }
+      }
+
+      &:hover .conversation-actions {
+        visibility: visible;
+      }
+
+      &.active .conversation-actions {
+        visibility: visible;
+      }
+    }
+  }
+}
+
+// 侧边栏折叠状态
+.sidebar-collapsed .conversation-sidebar {
+  transform: translateX(-100%);
+}
+
+// Media queries for responsive design
+@media screen and (max-width: 768px) {
+  .conversation-sidebar {
+    position: fixed;
+    left: 0;
+    top: 64px;
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+    width: 250px;
+
+    &.visible {
+      transform: translateX(0);
+    }
+  }
+} 

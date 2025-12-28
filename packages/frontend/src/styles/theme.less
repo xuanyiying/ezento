@@ -1,0 +1,286 @@
+@import './variables.less';
+
+// Base theme (light mode)
+:root {
+    // Colors
+    --primary-color: @primary-color;
+    --primary-color-dark: darken(@primary-color, 5%);
+    --primary-color-darker: darken(@primary-color, 10%);
+    --primary-color-rgb: 74, 144, 226; // RGB values for #4A90E2
+
+    --secondary-color: @secondary-color;
+    --secondary-color-dark: darken(@secondary-color, 5%);
+    --secondary-color-darker: darken(@secondary-color, 10%);
+
+    --accent-color: @accent-color;
+    --accent-color-dark: darken(@accent-color, 5%);
+    --accent-color-darker: darken(@accent-color, 10%);
+
+    --success-color: @success-color;
+    --warning-color: @warning-color;
+    --error-color: @error-color;
+    --info-color: @info-color;
+
+    // Neutral colors
+    --background-color: @background-color;
+    --background-color-light: @background-color-light;
+    --text-color: @text-color;
+    --text-color-secondary: @text-color-secondary;
+    --text-color-tertiary: @text-color-tertiary;
+    --border-color: @border-color;
+    --divider-color: @divider-color;
+
+    // Shadows
+    --shadow-sm: @shadow-sm;
+    --shadow-base: @shadow-base;
+    --shadow-lg: @shadow-lg;
+    --shadow-xl: @shadow-xl;
+
+    // Font sizes
+    --font-size-base: @font-size-base;
+
+    // Transitions
+    --transition-duration: @transition-duration;
+    --transition-timing-function: @transition-timing-function;
+}
+
+// Dark mode theme
+html.dark-mode,
+html[data-theme='dark'] {
+    // Colors
+    --primary-color: lighten(@primary-color, 5%);
+    --primary-color-dark: @primary-color;
+    --primary-color-darker: darken(@primary-color, 5%);
+    --primary-color-rgb: 94, 164, 246; // RGB values for lightened primary color
+
+    --secondary-color: lighten(@secondary-color, 5%);
+    --secondary-color-dark: @secondary-color;
+    --secondary-color-darker: darken(@secondary-color, 5%);
+
+    --accent-color: lighten(@accent-color, 5%);
+    --accent-color-dark: @accent-color;
+    --accent-color-darker: darken(@accent-color, 5%);
+
+    // Neutral colors
+    --background-color: @dark-background;
+    --background-color-light: @dark-background-light;
+    --text-color: @dark-text;
+    --text-color-secondary: @dark-text-secondary;
+    --text-color-tertiary: darken(@dark-text-secondary, 10%);
+    --border-color: @dark-border;
+    --divider-color: @dark-divider;
+
+    // Shadows - more subtle in dark mode
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-base: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.4);
+
+    // Specific component overrides for dark mode
+    .ant-card {
+        background-color: var(--background-color-light);
+        border-color: var(--border-color);
+    }
+
+    .ant-btn {
+        &:not(.ant-btn-primary):not(.ant-btn-link):not(.ant-btn-text) {
+            background-color: var(--background-color-light);
+            border-color: var(--border-color);
+            color: var(--text-color);
+        }
+    }
+
+    .ant-input,
+    .ant-select {
+        background-color: var(--background-color-light);
+        border-color: var(--border-color);
+        color: var(--text-color);
+
+        &::placeholder {
+            color: var(--text-color-tertiary);
+        }
+    }
+
+    .ant-modal-content {
+        background-color: var(--background-color-light);
+
+        .ant-modal-header {
+            background-color: var(--background-color-light);
+            border-bottom-color: var(--border-color);
+        }
+
+        .ant-modal-footer {
+            border-top-color: var(--border-color);
+        }
+    }
+
+    .ant-table {
+        background-color: var(--background-color-light);
+        color: var(--text-color);
+
+        .ant-table-thead > tr > th {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            border-bottom-color: var(--border-color);
+        }
+
+        .ant-table-tbody > tr > td {
+            border-bottom-color: var(--border-color);
+        }
+
+        .ant-table-tbody > tr:hover > td {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+    }
+}
+
+// High contrast mode
+html.high-contrast,
+html[data-high-contrast='true'] {
+    // Colors
+    --primary-color: @high-contrast-primary;
+    --primary-color-dark: darken(@high-contrast-primary, 10%);
+    --primary-color-darker: darken(@high-contrast-primary, 20%);
+    --primary-color-rgb: 0, 191, 255; // RGB values for #00BFFF
+
+    --accent-color: @high-contrast-accent;
+    --accent-color-dark: darken(@high-contrast-accent, 10%);
+    --accent-color-darker: darken(@high-contrast-accent, 20%);
+
+    // Neutral colors
+    --background-color: @high-contrast-background;
+    --background-color-light: lighten(@high-contrast-background, 5%);
+    --text-color: @high-contrast-text;
+    --text-color-secondary: darken(@high-contrast-text, 15%);
+    --border-color: @high-contrast-border;
+    --divider-color: @high-contrast-border;
+
+    // Increase contrast and visibility
+    * {
+        border-color: var(--border-color) !important;
+    }
+
+    a {
+        color: var(--primary-color) !important;
+        text-decoration: underline !important;
+    }
+
+    .ant-btn {
+        &:not(.ant-btn-primary):not(.ant-btn-link):not(.ant-btn-text) {
+            border: 2px solid var(--border-color) !important;
+        }
+
+        &.ant-btn-primary {
+            background-color: var(--primary-color) !important;
+            border: 2px solid var(--border-color) !important;
+            color: var(--background-color) !important;
+        }
+    }
+
+    .ant-form-item-label > label {
+        color: var(--text-color) !important;
+    }
+
+    .ant-input,
+    .ant-select {
+        border: 2px solid var(--border-color) !important;
+
+        &:focus,
+        &-focused {
+            border-color: var(--primary-color) !important;
+            outline: 2px solid var(--primary-color) !important;
+        }
+    }
+
+    // Increase focus visibility
+    *:focus {
+        outline: 3px solid var(--primary-color) !important;
+        outline-offset: 2px !important;
+    }
+}
+
+// Font size adjustments
+html[data-font-size='small'] {
+    --font-size-base: @font-size-base-small;
+
+    .ant-typography {
+        &.ant-typography-h1 {
+            font-size: 28px;
+        }
+        &.ant-typography-h2 {
+            font-size: 22px;
+        }
+        &.ant-typography-h3 {
+            font-size: 18px;
+        }
+        &.ant-typography-h4 {
+            font-size: 16px;
+        }
+        &.ant-typography-h5 {
+            font-size: 14px;
+        }
+    }
+}
+
+html[data-font-size='medium'] {
+    --font-size-base: @font-size-base-medium;
+
+    .ant-typography {
+        &.ant-typography-h1 {
+            font-size: 32px;
+        }
+        &.ant-typography-h2 {
+            font-size: 24px;
+        }
+        &.ant-typography-h3 {
+            font-size: 20px;
+        }
+        &.ant-typography-h4 {
+            font-size: 18px;
+        }
+        &.ant-typography-h5 {
+            font-size: 16px;
+        }
+    }
+}
+
+html[data-font-size='large'] {
+    --font-size-base: @font-size-base-large;
+
+    .ant-typography {
+        &.ant-typography-h1 {
+            font-size: 36px;
+        }
+        &.ant-typography-h2 {
+            font-size: 28px;
+        }
+        &.ant-typography-h3 {
+            font-size: 24px;
+        }
+        &.ant-typography-h4 {
+            font-size: 20px;
+        }
+        &.ant-typography-h5 {
+            font-size: 18px;
+        }
+    }
+
+    .ant-btn {
+        font-size: 16px;
+        padding: 6px 16px;
+        height: auto;
+    }
+
+    .ant-input,
+    .ant-select {
+        font-size: 16px;
+        padding: 8px 12px;
+        height: auto;
+    }
+
+    .ant-menu-item {
+        font-size: 16px;
+        height: 48px;
+        line-height: 48px;
+    }
+}

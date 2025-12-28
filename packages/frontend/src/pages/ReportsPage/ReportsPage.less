@@ -1,0 +1,147 @@
+@import '../../styles/variables.less';
+
+.reports-page {
+    background-color: @background-color;
+    min-height: 100vh;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .reports-container {
+        width: 100%;
+        max-width: 1000px;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+    }
+
+    .page-header {
+        text-align: left;
+    }
+
+    .glass-dragger {
+        background: @white;
+        border: 2px dashed @border-color;
+        border-radius: @border-radius-xl;
+        padding: 32px;
+        transition: all 0.3s ease;
+
+        &:hover {
+            border-color: @primary-color;
+            background: @primary-color-light;
+        }
+    }
+
+    .analysis-progress {
+        background: @white;
+        padding: 24px;
+        border-radius: @border-radius-lg;
+        box-shadow: @soft-shadow;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .dashboard-section {
+        .indicator-card {
+            border-radius: @border-radius-lg;
+            border: 1px solid @border-color;
+            transition: all 0.3s ease;
+
+            &:hover {
+                transform: translateY(-4px);
+                box-shadow: @soft-shadow;
+            }
+
+            &.normal {
+                border-top: 4px solid @success-color;
+            }
+
+            &.warning {
+                border-top: 4px solid @warning-color;
+                background: tint(@warning-color, 95%);
+            }
+
+            &.abnormal {
+                border-top: 4px solid @error-color;
+                background: tint(@error-color, 95%);
+            }
+
+            .indicator-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
+            }
+
+            .indicator-value {
+                display: flex;
+                align-items: baseline;
+                gap: 4px;
+                margin-bottom: 4px;
+            }
+        }
+    }
+
+    .chat-container {
+        background: @glass-background;
+        backdrop-filter: blur(@glass-blur);
+        border: @glass-border;
+        border-radius: @border-radius-xl;
+        padding: 24px;
+        box-shadow: @soft-shadow;
+        min-height: 300px;
+    }
+
+    .input-area {
+        margin-top: 24px;
+        display: flex;
+        gap: 12px;
+        background: @white;
+        padding: 12px 16px;
+        border-radius: @border-radius-lg;
+        box-shadow: @soft-shadow;
+        border: 1px solid @border-color;
+
+        input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 16px;
+        }
+
+        button {
+            background: @primary-color;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: @border-radius-base;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+
+            &:hover {
+                background: @primary-color-dark;
+            }
+        }
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

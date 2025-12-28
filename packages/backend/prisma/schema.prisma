@@ -1,0 +1,824 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SubscriptionTier {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum Role {
+  USER
+  ADMIN
+  DOCTOR
+  PATIENT
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  TERMINATED
+}
+
+enum CircuitBreakerStatus {
+  CLOSED
+  OPEN
+  HALF_OPEN
+}
+
+enum CircuitBreakerRuleType {
+  ERROR_RATE
+  LATENCY
+  CUSTOM
+}
+
+enum CircuitBreakerEventType {
+  TRIGGER
+  RECOVER
+  RESET
+}
+
+enum ApiGatewayStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+}
+
+enum ApiRouteMethod {
+  GET
+  POST
+  PUT
+  DELETE
+  PATCH
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+}
+
+enum RechargeCardStatus {
+  UNUSED
+  USED
+  EXPIRED
+}
+
+enum RechargeRecordType {
+  RECHARGE
+  CONSUME
+}
+
+enum RechargeCardBatchStatus {
+  ACTIVE
+  COMPLETED
+  EXPIRED
+}
+
+enum BillingCycle {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum InvoiceItemType {
+  SUBSCRIPTION
+  USAGE
+  CREDIT
+  TAX
+  OTHER
+}
+
+enum ModelType {
+  TEXT
+  IMAGE
+  AUDIO
+  MULTIMODAL
+}
+
+model User {
+  id                    String           @id @default(uuid())
+  email                 String           @unique
+  password              String?
+  username              String?
+  name                  String?
+  avatar                String?
+  role                  Role             @default(USER)
+  tenantId              String?
+  subscriptionTier      SubscriptionTier @default(FREE)
+  subscriptionExpiresAt DateTime?
+  isActive              Boolean          @default(true)
+  emailVerified         Boolean          @default(false)
+  provider              String           @default("email") // email, google, github
+  googleId              String?          @unique
+  githubId              String?          @unique
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  verificationToken     String?
+  resetPasswordToken    String?
+  resetPasswordExpires  DateTime?
+  lastLoginAt           DateTime?
+
+  // Subscription Fields
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  paddleCustomerId     String?
+  paddleSubscriptionId String?
+  subscriptionStatus   String? // active, past_due, canceled, etc.
+  subscriptionPlan     String? // pro, basic
+  subscriptionProvider String? // stripe, paddle
+
+  accounts      Account[]
+  storages      Storage[]
+  agentSessions AgentSession[]
+  tenant        Tenant?        @relation(fields: [tenantId], references: [id])
+  invoices      Invoice[]
+  rechargeRecords RechargeRecord[]
+
+  @@index([tenantId])
+  @@map("users")
+}
+
+model CircuitBreaker {
+  id              String                @id @default(uuid())
+  tenantId        String
+  name            String
+  description     String?
+  target          String // 目标服务或接口
+  threshold       Int // 失败阈值
+  timeout         Int // 熔断超时时间（毫秒）
+  halfOpenTimeout Int // 半开超时时间（毫秒）
+  status          CircuitBreakerStatus
+  failureCount    Int                   @default(0)
+  lastFailureTime DateTime?
+  lastSuccessTime DateTime?
+  metadata        Json?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  rules           CircuitBreakerRule[]
+  events          CircuitBreakerEvent[]
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("circuit_breakers")
+}
+
+model CircuitBreakerRule {
+  id               String                 @id @default(uuid())
+  circuitBreakerId String
+  type             CircuitBreakerRuleType
+  condition        String // 条件表达式
+  threshold        Float // 阈值
+  action           String // 动作类型
+  priority         Int // 优先级
+  metadata         Json?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  breaker          CircuitBreaker         @relation(fields: [circuitBreakerId], references: [id], onDelete: Cascade)
+
+  @@index([circuitBreakerId])
+  @@index([type])
+  @@map("circuit_breaker_rules")
+}
+
+model CircuitBreakerEvent {
+  id               String                  @id @default(uuid())
+  circuitBreakerId String
+  type             CircuitBreakerEventType
+  reason           String // 事件原因
+  metadata         Json?
+  createdAt        DateTime                @default(now())
+  breaker          CircuitBreaker          @relation(fields: [circuitBreakerId], references: [id], onDelete: Cascade)
+
+  @@index([circuitBreakerId])
+  @@index([type])
+  @@map("circuit_breaker_events")
+}
+
+model ApiGateway {
+  id             String           @id @default(uuid())
+  tenantId       String
+  name           String
+  description    String?
+  baseUrl        String
+  status         ApiGatewayStatus
+  rateLimit      Json // { requests: number, period: number }
+  cors           Json // { enabled: boolean, allowedOrigins: string[], allowedMethods: string[], allowedHeaders: string[] }
+  authentication Json // { type: string, config: any }
+  metadata       Json?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  routes         ApiRoute[]
+  apiKeys        ApiKey[]
+  logs           ApiLog[]
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("api_gateways")
+}
+
+model ApiRoute {
+  id             String         @id @default(uuid())
+  gatewayId      String
+  path           String
+  method         ApiRouteMethod
+  target         Json // { service: string, path: string, timeout: number }
+  rateLimit      Json? // { requests: number, period: number }
+  authentication Json? // { required: boolean, type: string, config: any }
+  validation     Json? // { requestSchema?: any, responseSchema?: any }
+  transformation Json? // { request?: any, response?: any }
+  metadata       Json?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  gateway        ApiGateway     @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+  logs           ApiLog[]
+
+  @@index([gatewayId])
+  @@index([path, method])
+  @@map("api_routes")
+}
+
+model ApiKey {
+  id          String       @id @default(uuid())
+  gatewayId   String
+  key         String       @unique
+  name        String
+  description String?
+  status      ApiKeyStatus
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  gateway     ApiGateway   @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+
+  @@index([gatewayId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("api_keys")
+}
+
+model ApiLog {
+  id              String         @id @default(uuid())
+  gatewayId       String
+  routeId         String
+  requestId       String
+  method          ApiRouteMethod
+  path            String
+  statusCode      Int
+  duration        Int
+  clientIp        String
+  userAgent       String?
+  requestHeaders  Json?
+  requestBody     Json?
+  responseHeaders Json?
+  responseBody    Json?
+  error           String?
+  metadata        Json?
+  createdAt       DateTime       @default(now())
+  gateway         ApiGateway     @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+  route           ApiRoute       @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  @@index([gatewayId])
+  @@index([routeId])
+  @@index([requestId])
+  @@index([createdAt])
+  @@index([statusCode])
+  @@index([clientIp])
+  @@map("api_logs")
+}
+
+model RechargeCard {
+  id        String             @id @default(uuid())
+  tenantId  String
+  code      String             @unique
+  amount    Float
+  status    RechargeCardStatus
+  usedBy    String?
+  usedAt    DateTime?
+  expiredAt DateTime
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([expiredAt])
+  @@index([code])
+  @@map("recharge_cards")
+}
+
+model RechargeRecord {
+  id            String             @id @default(uuid())
+  tenantId      String
+  userId        String
+  cardId        String
+  amount        Float
+  balanceBefore Float
+  balanceAfter  Float
+  type          RechargeRecordType
+  description   String
+  metadata      Json?
+  createdAt     DateTime           @default(now())
+  user          User               @relation(fields: [userId], references: [id])
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([cardId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("recharge_records")
+}
+
+model RechargeCardBatch {
+  id        String                  @id @default(uuid())
+  tenantId  String
+  name      String
+  amount    Float
+  count     Int
+  usedCount Int                     @default(0)
+  expiredAt DateTime
+  status    RechargeCardBatchStatus
+  metadata  Json?
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([expiredAt])
+  @@map("recharge_card_batches")
+}
+
+model Rate {
+  id             String    @id @default(uuid())
+  resourceType   String
+  modelId        String?
+  unitPrice      Float
+  currency       String
+  effectiveDate  DateTime
+  expirationDate DateTime?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([resourceType])
+  @@index([modelId])
+  @@index([isActive])
+  @@map("rates")
+}
+
+model OverageSettings {
+  id                    String   @id @default(uuid())
+  tenantId              String   @unique
+  allowOverage          Boolean  @default(false)
+  notificationThreshold Float
+  notificationEmail     String?
+  autoDisable           Boolean  @default(false)
+  disableThreshold      Float?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("overage_settings")
+}
+
+model BillingPlan {
+  id                String       @id @default(uuid())
+  name              String
+  code              String       @unique
+  description       String?
+  basePrice         Float
+  currency          String
+  billingCycle      BillingCycle
+  includedResources Json // { apiCalls?: number, tokens?: number, storage?: number, models?: string[] }
+  overagePricing    Json // { apiCalls?: number, tokens?: number, storage?: number }
+  isActive          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+  @@index([billingCycle])
+  @@map("billing_plans")
+}
+
+model Invoice {
+  id                 String        @id @default(uuid())
+  tenantId           String
+  userId             String?
+  invoiceNumber      String        @unique
+  status             InvoiceStatus
+  amount             Float
+  currency           String
+  dueDate            DateTime
+  paidDate           DateTime?
+  billingPeriodStart DateTime
+  billingPeriodEnd   DateTime
+  items              InvoiceItem[]
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  user               User?         @relation(fields: [userId], references: [id])
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String          @id @default(uuid())
+  invoiceId   String
+  type        InvoiceItemType
+  description String
+  amount      Float
+  quantity    Float           @default(1)
+  unitPrice   Float
+  metadata    Json?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  invoice     Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([type])
+  @@map("invoice_items")
+}
+
+model Usage {
+  id           String   @id @default(uuid())
+  tenantId     String
+  date         DateTime
+  modelId      String?
+  endpoint     String?
+  requestCount Int
+  tokenCount   Int
+  costAmount   Float
+  isOverage    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([date])
+  @@index([modelId])
+  @@map("usage_records_legacy")
+}
+
+model Tenant {
+  id            String              @id @default(uuid())
+  name          String
+  code          String              @unique
+  status        TenantStatus        @default(ACTIVE)
+  plan          String?
+  domains       Json?
+  settings      Json?
+  theme         Json?
+  apiCallLimits Json?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  users         User[]
+  modelConfigs  TenantModelConfig[]
+
+  @@index([status])
+  @@map("tenants")
+}
+
+model TenantPlan {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  price     Float
+  features  Json
+  limits    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@map("tenant_plans")
+}
+
+model Model {
+  id              String              @id @default(uuid())
+  name            String
+  provider        String
+  type            ModelType
+  version         String
+  description     String?
+  contextWindow   Int
+  maxOutputTokens Int
+  isActive        Boolean             @default(true)
+  baseEndpoint    String
+  credentials     Json?
+  pricing         Json
+  parameters      Json
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  tenantConfigs   TenantModelConfig[]
+
+  @@index([provider])
+  @@index([type])
+  @@index([isActive])
+  @@map("models")
+}
+
+model TenantModelConfig {
+  id               String   @id @default(uuid())
+  tenantId         String
+  modelId          String
+  isEnabled        Boolean  @default(true)
+  customParameters Json?
+  quotaLimit       Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  tenant           Tenant   @relation(fields: [tenantId], references: [id])
+  model            Model    @relation(fields: [modelId], references: [id])
+
+  @@index([tenantId])
+  @@index([modelId])
+  @@index([isEnabled])
+  @@map("tenant_model_configs")
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// -- Enums --
+
+enum FileType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  AUDIO
+  OTHER
+}
+
+enum OssType {
+  MINIO
+  AWS_S3
+  ALIYUN_OSS
+  TENCENT_COS
+  LOCAL
+}
+
+// -- Storage --
+
+model Storage {
+  id           String   @id @default(uuid())
+  userId       String
+  filename     String
+  originalName String
+  fileSize     Int
+  mimeType     String
+  fileUrl      String
+  filePath     String // OSS Key
+  hashMd5      String
+  fileType     FileType
+  category     String?
+  thumbnailUrl String?
+  ossType      OssType
+  isPublic     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([fileType])
+  @@index([hashMd5])
+  @@map("storages")
+}
+
+// -- AI Infrastructure --
+
+model ModelConfig {
+  id                 String   @id @default(uuid())
+  name               String   @unique
+  provider           String
+  apiKey             String   @db.Text
+  endpoint           String?
+  defaultTemperature Float    @default(0.7)
+  defaultMaxTokens   Int      @default(2000)
+  costPerInputToken  Float    @default(0)
+  costPerOutputToken Float    @default(0)
+  rateLimitPerMinute Int      @default(0)
+  rateLimitPerDay    Int      @default(0)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([provider])
+  @@index([isActive])
+  @@map("model_configs")
+}
+
+model PromptTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  scenario    String
+  language    String   @default("en")
+  template    String   @db.Text
+  variables   String[]
+  provider    String?
+  isEncrypted Boolean  @default(false)
+  version     Int      @default(1)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  versions PromptTemplateVersion[]
+
+  @@unique([name, language])
+  @@index([scenario])
+  @@index([language])
+  @@index([provider])
+  @@index([isActive])
+  @@map("prompt_templates")
+}
+
+model PromptTemplateVersion {
+  id         String   @id @default(uuid())
+  templateId String
+  version    Int
+  content    String   @db.Text
+  variables  String[]
+  author     String
+  reason     String?
+  isActive   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  promptTemplate PromptTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, version])
+  @@index([templateId])
+  @@map("prompt_template_versions")
+}
+
+model UsageRecord {
+  id           String   @id @default(uuid())
+  userId       String
+  model        String
+  provider     String
+  scenario     String?
+  inputTokens  Int
+  outputTokens Int
+  cost         Float
+  latency      Int
+  success      Boolean
+  errorCode    String?
+  agentType    String?
+  workflowStep String?
+  timestamp    DateTime @default(now())
+
+  @@index([userId])
+  @@index([model])
+  @@index([provider])
+  @@index([timestamp])
+  @@index([agentType])
+  @@index([workflowStep])
+  @@map("usage_records")
+}
+
+// Audit Log model
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  resource  String
+  userId    String?
+  details   Json?
+  timestamp DateTime @default(now())
+
+  @@index([action])
+  @@index([resource])
+  @@index([userId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+model PerformanceMetrics {
+  id              String   @id @default(uuid())
+  model           String   @unique
+  provider        String
+  totalCalls      Int      @default(0)
+  successfulCalls Int      @default(0)
+  failedCalls     Int      @default(0)
+  averageLatency  Float    @default(0)
+  maxLatency      Int      @default(0)
+  minLatency      Int      @default(0)
+  successRate     Float    @default(0)
+  failureRate     Float    @default(0)
+  lastUpdated     DateTime @default(now())
+
+  @@index([provider])
+  @@map("performance_metrics")
+}
+
+model AICallLog {
+  id              String   @id @default(uuid())
+  model           String
+  provider        String
+  scenario        String?
+  requestContent  String?  @db.Text
+  responseContent String?  @db.Text
+  inputTokens     Int?
+  outputTokens    Int?
+  latency         Int
+  success         Boolean
+  errorCode       String?
+  errorMessage    String?
+  stackTrace      String?  @db.Text
+  userId          String?
+  timestamp       DateTime @default(now())
+
+  @@index([model])
+  @@index([provider])
+  @@index([scenario])
+  @@index([success])
+  @@index([timestamp])
+  @@index([userId])
+  @@map("ai_call_logs")
+}
+
+model AIRetryLog {
+  id           String   @id @default(uuid())
+  model        String
+  provider     String
+  attempt      Int
+  maxAttempts  Int
+  errorCode    String?
+  errorMessage String?
+  timestamp    DateTime @default(now())
+
+  @@index([model])
+  @@index([provider])
+  @@index([timestamp])
+  @@map("ai_retry_logs")
+}
+
+model AIDegradationLog {
+  id               String   @id @default(uuid())
+  model            String
+  provider         String
+  reason           String
+  fallbackModel    String?
+  fallbackProvider String?
+  timestamp        DateTime @default(now())
+
+  @@index([model])
+  @@index([provider])
+  @@index([timestamp])
+  @@map("ai_degradation_logs")
+}
+
+model AgentSession {
+  id          String    @id @default(cuid())
+  userId      String
+  agentType   String
+  status      String
+  input       Json?
+  output      Json?
+  tokenUsage  Json?
+  cost        Float     @default(0)
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([agentType])
+  @@index([status])
+  @@index([startedAt])
+  @@map("agent_sessions")
+}

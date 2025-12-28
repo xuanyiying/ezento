@@ -1,0 +1,129 @@
+// Colors - Professional Medical Theme
+@primary-color: #0052D9; // Deep Sea Blue - Trust and Professionalism
+@primary-color-light: tint(@primary-color, 90%);
+@primary-color-dark: shade(@primary-color, 20%);
+
+@secondary-color: #2BA471; // Lake Water Green - Success and Health
+@secondary-color-light: tint(@secondary-color, 90%);
+@secondary-color-dark: shade(@secondary-color, 20%);
+
+@accent-color: #0052D9; // Use primary for accent consistency
+@accent-color-light: @primary-color-light;
+@accent-color-dark: @primary-color-dark;
+
+@success-color: #2BA471; 
+@warning-color: #E37318; // Soft orange
+@error-color: #D54941;   // Professional red
+@info-color: @primary-color;
+
+// Neutral Colors
+@white: #ffffff;
+@background-color: #F3F6F9; // Soft medical background
+@background-color-light: #ffffff; 
+@text-color: #1D2129; // Rich dark gray
+@text-color-secondary: #4E5969; 
+@text-color-tertiary: #86909C; 
+@border-color: #E5E6EB; 
+@divider-color: #F2F3F5;
+
+// Glassmorphism & Effects
+@glass-background: rgba(255, 255, 255, 0.7);
+@glass-blur: 20px;
+@glass-border: 1px solid rgba(255, 255, 255, 0.3);
+@soft-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+
+// Dark Mode Colors
+@dark-background: #121212;
+@dark-background-light: #1f1f1f;
+@dark-text: #e0e0e0;
+@dark-text-secondary: #a0a0a0;
+@dark-border: #333333;
+@dark-divider: #2c2c2c;
+
+// High Contrast Mode Colors
+@high-contrast-background: #000000;
+@high-contrast-text: #ffffff;
+@high-contrast-primary: #00bfff;
+@high-contrast-accent: #ffff00;
+@high-contrast-border: #ffffff;
+
+// Typography
+@font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+@font-size-base: 14px;
+@font-size-sm: 12px;
+@font-size-lg: 16px;
+@font-size-xl: 20px;
+@font-size-xxl: 24px;
+@line-height-base: 1.5;
+
+// Font Sizes for Accessibility
+@font-size-base-small: 12px;
+@font-size-base-medium: 14px;
+@font-size-base-large: 16px;
+
+// Spacing
+@spacing-xs: 4px;
+@spacing-sm: 8px;
+@spacing-md: 16px;
+@spacing-lg: 24px;
+@spacing-xl: 32px;
+@spacing-xxl: 48px;
+
+// Border Radius
+@border-radius-sm: 2px;
+@border-radius-base: 4px;
+@border-radius-lg: 8px;
+@border-radius-xl: 16px;
+@border-radius-circle: 50%;
+
+// Shadows
+@shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+@shadow-base: 0 2px 8px rgba(0, 0, 0, 0.1);
+@shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.1);
+@shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.1);
+
+// Transitions
+@transition-duration: 0.3s;
+@transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+
+// Z-index
+@z-index-dropdown: 1050;
+@z-index-modal: 1060;
+@z-index-tooltip: 1070;
+@z-index-notification: 1080;
+
+// Breakpoints
+@screen-xs: 480px;
+@screen-sm: 576px;
+@screen-md: 768px;
+@screen-lg: 992px;
+@screen-xl: 1200px;
+@screen-xxl: 1600px;
+
+// Layout
+@header-height: 64px;
+@footer-height: 64px;
+@sidebar-width: 256px;
+@content-padding: @spacing-lg;
+
+// Components
+@card-padding: @spacing-lg;
+@input-height: 40px;
+@button-height: 40px;
+@button-padding: 0 @spacing-md;
+
+// Animation Durations
+@animation-duration-slow: 0.5s;
+@animation-duration-base: 0.3s;
+@animation-duration-fast: 0.2s;
+
+// Reduced Motion
+@reduced-motion-duration: 0.001s;

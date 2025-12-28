@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧医疗 - 身份确认</title>
+    <style>
+        :root {
+            --primary-color: #1890ff;
+            --secondary-color: #e6f7ff;
+            --success-color: #52c41a;
+            --warning-color: #faad14;
+            --error-color: #f5222d;
+            --text-color: #333333;
+            --light-text: #666666;
+            --border-color: #f0f0f0;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background-color: white;
+            box-shadow: var(--shadow);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo img {
+            height: 30px;
+            margin-right: 10px;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+        }
+        
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--secondary-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .username {
+            font-size: 14px;
+            color: var(--text-color);
+        }
+        
+        .main-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        .identity-card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 30px;
+        }
+        
+        .card-header {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .card-header h2 {
+            font-size: 24px;
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+        
+        .card-header p {
+            font-size: 14px;
+            color: var(--light-text);
+            line-height: 1.6;
+        }
+        
+        .info-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .info-row {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        .info-label {
+            flex: 0 0 120px;
+            font-size: 14px;
+            color: var(--light-text);
+        }
+        
+        .info-value {
+            flex: 1;
+            font-size: 14px;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+        
+        .edit-link {
+            font-size: 14px;
+            color: var(--primary-color);
+            margin-left: 10px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .edit-link:hover {
+            text-decoration: underline;
+        }
+        
+        .privacy-notice {
+            background-color: var(--secondary-color);
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .privacy-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .privacy-icon {
+            color: var(--primary-color);
+            margin-right: 8px;
+        }
+        
+        .privacy-content {
+            font-size: 14px;
+            color: var(--light-text);
+            line-height: 1.6;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .confirm-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 12px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .confirm-button:hover {
+            background-color: #096dd9;
+        }
+        
+        .edit-button {
+            background-color: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            border-radius: 6px;
+            padding: 12px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .edit-button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                margin: 20px auto;
+            }
+            
+            .identity-card {
+                padding: 20px;
+            }
+            
+            .info-row {
+                flex-direction: column;
+            }
+            
+            .info-label {
+                margin-bottom: 5px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="https://cdn-icons-png.flaticon.com/512/2966/2966327.png" alt="Logo">
+            智慧医疗
+        </div>
+        <div class="user-menu">
+            <div class="avatar">张</div>
+            <div class="username">张先生</div>
+        </div>
+    </header>
+    
+    <div class="main-container">
+        <div class="identity-card">
+            <div class="card-header">
+                <h2>请确认您的身份信息</h2>
+                <p>为了给您提供更准确的医疗建议，请确认以下信息是否正确</p>
+            </div>
+            
+            <div class="info-section">
+                <div class="section-title">个人基本信息</div>
+                <div class="info-row">
+                    <div class="info-label">姓名</div>
+                    <div class="info-value">张三</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">性别</div>
+                    <div class="info-value">男</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">年龄</div>
+                    <div class="info-value">32岁</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">手机号码</div>
+                    <div class="info-value">138****6789</div>
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <div class="section-title">健康基本信息</div>
+                <div class="info-row">
+                    <div class="info-label">过敏史</div>
+                    <div class="info-value">无</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">慢性病史</div>
+                    <div class="info-value">高血压</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">家族病史</div>
+                    <div class="info-value">未填写 <a href="#" class="edit-link">添加</a></div>
+                </div>
+            </div>
+            
+            <div class="privacy-notice">
+                <div class="privacy-title">
+                    <span class="privacy-icon">🔒</span>
+                    数据隐私声明
+                </div>
+                <div class="privacy-content">
+                    您的个人信息和健康数据将受到严格保护，仅用于为您提供更准确的医疗咨询服务。我们遵循相关法律法规，不会将您的信息用于其他商业用途。详情请参阅我们的隐私政策。
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="confirm-button" onclick="location.href='service-selection.html'">确认信息，继续</button>
+                <button class="edit-button" onclick="location.href='profile-edit.html'">修改信息</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
